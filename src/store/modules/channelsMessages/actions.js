@@ -3,6 +3,7 @@ export default function (Vue) {
         let params = {}
         if (state.limit) { params.limit_count = state.limit }
         if (state.from) { params.curr_key = state.from }
+        if (state.mode === 1) { params.timeout = 20 }
         return params
     }
 
@@ -35,35 +36,47 @@ export default function (Vue) {
         }
     }
 
-    async function get ({ state, commit, rootState }) {
-        commit('reqStart')
-        if (!state.timerId) {
-            commit('clearMessages')
-        }
+    async function getData({ state, commit, rootState }) {
+        let data = {}
         if (rootState.token && state.active) {
             try {
                 let resp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}/messages`, {
                     params: {data: JSON.stringify(getParams(state))}
                 })
-                let data = await resp.json()
-                commit('setMessages', data.result)
-                if (data.result.length) { commit('setFrom', data.next_key) }
-                else { commit('setFrom', data.last_key) }
+                data = await resp.json()
             }
             catch (e) { console.log(e) }
         }
+        return data
     }
 
-    function pullingGet ({ state, commit, rootState }, delay) {
-        if (state.timerId) {
-            commit('clearTimer')
+    async function get ({ state, commit, rootState }) {
+        commit('reqStart')
+        let data = await getData({ state, commit, rootState })
+        if (data.result) {
+            commit('setMessages', data.result)
+            if (data.result.length) { commit('setFrom', data.next_key) }
+            else { commit('setFrom', data.last_key) }
         }
-        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, delay)
+    }
+
+    async function pollingGet ({ state, commit, rootState }) {
+        commit('reqStart')
+        let data = await getData({ state, commit, rootState })
+        if (data.errors) {
+            setTimeout(() => { pollingGet({ state, commit, rootState }) }, 4000)
+        }
+        if (data.result) {
+            commit('setMessages', data.result)
+            if (data.result.length) { commit('setFrom', data.next_key) }
+            else { commit('setFrom', data.last_key) }
+        }
+        if (state.mode === 1) { pollingGet({ state, commit, rootState }) }
     }
 
     return {
         get,
-        pullingGet,
+        pollingGet,
         getCols
     }
 

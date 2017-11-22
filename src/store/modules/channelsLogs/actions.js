@@ -48,7 +48,12 @@ export default function (Vue) {
                     params: {data: JSON.stringify(params)}
                 })
                 let data = await resp.json()
-                commit('setDate', Math.round(data.result[0].time * 1000))
+                if (data.result.length) {
+                    commit('setDate', Math.round(data.result[0].time * 1000))
+                }
+                else {
+                    commit('setDate', Date.now())
+                }
             }
             catch (e) { console.log(e) }
         }
@@ -102,7 +107,7 @@ export default function (Vue) {
         }
     }
 
-    function pullingGet ({ state, commit, rootState }, delay) {
+    function pollingGet ({ state, commit, rootState }, delay) {
         if (state.timerId) {
             commit('clearTimer')
         }
@@ -111,7 +116,7 @@ export default function (Vue) {
 
     return {
         get,
-        pullingGet,
+        pollingGet,
         initTime,
         getCols
     }

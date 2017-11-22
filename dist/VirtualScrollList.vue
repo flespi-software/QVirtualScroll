@@ -431,6 +431,10 @@
       this.uid = uid().split('-')[0]
       this.resetParams()
       this.updateDynamicCSS()
+    },
+    destroyed () {
+        let head = document.head || document.getElementsByTagName('head')[0]
+        head.removeChild(this.dynamicCSS)
     }
   }
 </script>

@@ -123,7 +123,7 @@ export default function (Vue) {
         }
     }
 
-    function pullingGet ({ state, commit, rootState }, delay) {
+    function pollingGet ({ state, commit, rootState }, delay) {
         if (state.timerId) {
             commit('clearTimer')
         }
@@ -132,7 +132,7 @@ export default function (Vue) {
 
     return {
         get,
-        pullingGet,
+        pollingGet,
         getCols
     }
 

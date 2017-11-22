@@ -29,10 +29,6 @@ export default function (Vue) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
-                if (state.timerId) {
-                    clearInterval(state.timerId)
-                    state.timerId = 0
-                }
                 state.from = 0
                 state.messages = []
                 state.limit = 1000
@@ -59,19 +55,11 @@ export default function (Vue) {
         }
     }
 
-    function clearTimer (state) {
-        clearInterval(state.timerId)
-        state.timerId = 0
-    }
-
     function setActive (state, id) {
         Vue.set(state, 'active', id)
     }
 
     function clear (state) {
-        if (state.timerId) {
-            clearTimer(state)
-        }
         clearMessages(state)
         state.filter = ''
         state.mode = null
@@ -91,7 +79,6 @@ export default function (Vue) {
         setMode,
         setFrom,
         reqStart,
-        clearTimer,
         clear,
         setActive,
         setCols

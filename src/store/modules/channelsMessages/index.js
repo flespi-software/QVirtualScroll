@@ -6,7 +6,6 @@ export default function (Store, Vue) {
         mutations = getMutations(Vue)
 
     const state = {
-        timerId: 0,
         active: 0,
         messages: [],
         filter: '',
