@@ -10,10 +10,7 @@
       :actions="actions"
       :date="date"
       :mode="mode"
-      :needShowMode="true"
-      :needShowPageScroll="'right left'"
-      :needShowDate="true"
-      :needShowFilter="true"
+      :viewConfig="viewConfig"
       :colsConfigurator="'toolbar'"
       :i18n="{from: 'FROM', to: 'TO'}"
       :filter="filter"
@@ -60,7 +57,13 @@
         timerId: 0,
         date: Date.now(),
         currentVal: 1000,
-        defaultLimit: 1000
+        defaultLimit: 1000,
+        viewConfig: {
+          needShowMode: true,
+          needShowPageScroll: 'right left',
+          needShowDate: true,
+          needShowFilter: true
+        }
       }
     },
     computed: {

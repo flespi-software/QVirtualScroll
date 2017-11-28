@@ -11,6 +11,7 @@ export default function (Store, Vue) {
         messages: [],
         filter: '',
         sysFilter: '',
+        delay: 2000,
         mode: null,
         from: 0,
         to: 0,

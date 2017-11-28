@@ -28,13 +28,13 @@ export default function (Vue) {
         else if (!state.sysFilter && state.filter) { params.filter = `${state.filter}` }
         if (state.from && !state.reverse) {
             if (state.mode) {
-                state.from += 2000
+                state.from += state.delay
             }
             params.from = Math.floor(state.from / 1000)
         }
         if (state.to) {
             if (state.mode) {
-                state.to += 2000
+                state.to += state.delay
             }
             params.to = Math.floor(state.to / 1000)
         }
@@ -69,6 +69,29 @@ export default function (Vue) {
                 }
                 else {
                     commit('setCols', [])
+                }
+            }
+            catch (e) { console.log(e) }
+        }
+    }
+
+    async function initTime({ state, commit, rootState }) {
+        if (rootState.token && state.active) {
+            try {
+                let params = {
+                    reverse: true,
+                    count: 1,
+                    fields: 'timestamp'
+                }
+                let resp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}/messages`, {
+                    params: {data: JSON.stringify(params)}
+                })
+                let data = await resp.json()
+                if (data.result.length) {
+                    commit('setDate', Math.round(data.result[0].timestamp * 1000))
+                }
+                else {
+                    commit('setDate', Date.now())
                 }
             }
             catch (e) { console.log(e) }
@@ -123,17 +146,19 @@ export default function (Vue) {
         }
     }
 
-    function pollingGet ({ state, commit, rootState }, delay) {
+    function pollingGet ({ state, commit, rootState }) {
         if (state.timerId) {
             commit('clearTimer')
         }
-        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, delay)
+        get({ state, commit, rootState })
+        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, state.delay)
     }
 
     return {
         get,
         pollingGet,
-        getCols
+        getCols,
+        initTime
     }
 
 }

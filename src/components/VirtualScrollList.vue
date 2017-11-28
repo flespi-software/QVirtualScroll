@@ -1,13 +1,13 @@
 <template>
   <div class="message-viewer" :class="{[`uid${uid}`]: true}">
     <q-toolbar class="viewer__toolbar" :color="currentTheme.bgColor" v-if="needShowToolbar">
-      <q-icon :color="currentTheme.color" name="search" @click="showSearch = true" v-if="$q.platform.is.mobile && needShowFilter && !showSearch" :style="{fontSize: '24px', marginBottom: currentTheme.controlsInverted ? '' : '8px', paddingLeft: currentTheme.controlsInverted ? '8px' : ''}"></q-icon>
+      <q-icon :color="currentTheme.color" name="search" @click="showSearch = true" v-if="$q.platform.is.mobile && currentViewConfig.needShowFilter && !showSearch" :style="{fontSize: '24px', marginBottom: currentTheme.controlsInverted ? '' : '8px', paddingLeft: currentTheme.controlsInverted ? '8px' : ''}"></q-icon>
       <q-search
               :class="{'full-width': $q.platform.is.mobile && showSearch, collapsed: $q.platform.is.mobile && !showSearch}"
               @focus="showSearch = true"
               :autofocus="$q.platform.is.mobile"
               @blur="searchBlurHandler"
-              v-if="needShowFilter && ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
+              v-if="currentViewConfig.needShowFilter && ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
               @keyup.enter="searchSubmitHandler"
               type="text" v-model="currentFilter"
               :inverted="currentTheme.controlsInverted"
@@ -16,15 +16,15 @@
               :before="[{icon: 'search', handler: openSearch}]"
       />
       <q-btn :color="currentTheme.color" flat class="on-left" v-if="colsConfigurator === 'toolbar'" @click="colsModalOpenHandler"><q-icon name="tune"></q-icon></q-btn>
-      <div class="pagination on-left" v-if="!currentMode && needShowPageScroll && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
-        <q-icon :color="currentTheme.color" class="cursor-pointer on-right" v-if="needShowPageScroll.indexOf('left') !== -1" @click="$emit('change:pagination-prev')" size="1.5rem" name="arrow_back">
+      <div class="pagination on-left" v-if="!currentMode && currentViewConfig.needShowPageScroll && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
+        <q-icon :color="currentTheme.color" class="cursor-pointer on-right" v-if="currentViewConfig.needShowPageScroll.indexOf('left') !== -1" @click="$emit('change:pagination-prev')" size="1.5rem" name="arrow_back">
           <q-tooltip>{{i18n.from}}</q-tooltip>
         </q-icon>
-        <q-icon :color="currentTheme.color" class="cursor-pointer on-right" v-if="needShowPageScroll.indexOf('right') !== -1" @click="$emit('change:pagination-next')" size="1.5rem" name="arrow_forward">
+        <q-icon :color="currentTheme.color" class="cursor-pointer on-right" v-if="currentViewConfig.needShowPageScroll.indexOf('right') !== -1" @click="$emit('change:pagination-next')" size="1.5rem" name="arrow_forward">
           <q-tooltip>{{i18n.to}}</q-tooltip>
         </q-icon>
       </div>
-      <div class="on-left date" v-if="!currentMode && needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
+      <div class="on-left date" v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
         <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click="$emit('change:date-prev')" class="cursor-pointer" size="1.5rem" name="keyboard_arrow_left"/>
         <q-datetime
            format="DD-MM-YYYY"
@@ -38,7 +38,7 @@
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
         <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click="$emit('change:date-next')" class="cursor-pointer" size="1.5rem" name="keyboard_arrow_right"/>
       </div>
-      <q-checkbox v-if="needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="no-margin" @change="$emit('change:mode', Number(currentMode))" :color="currentTheme.color" v-model="currentMode" checked-icon="playlist_play" unchecked-icon="history" />
+      <q-checkbox v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="no-margin" @change="$emit('change:mode', Number(currentMode))" :color="currentTheme.color" v-model="currentMode" checked-icon="playlist_play" unchecked-icon="history" />
     </q-toolbar>
     <q-modal ref="colsModal" :content-css="{minWidth: '50vw', minHeight: '50vh', maxWidth: '500px'}" class="modal-cols-configurator">
       <q-modal-layout>
@@ -98,8 +98,8 @@
             <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
           <div class="header__item" v-for="(prop, index) in activeCols" :key="index" :class="{[`item_${index}`]: true}">
-            <q-tooltip v-if="prop.description">{{prop.description}}</q-tooltip>
-            <span class="item__label">{{prop.name}}</span>
+            <q-tooltip v-if="prop.description || prop.title">{{`${prop.title ? `${prop.name}: ` : ''}${prop.description ? prop.description : ''}`}}</q-tooltip>
+            <span class="item__label">{{prop.title || prop.name}}</span>
             <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
           </div>
           <div v-if="etcField.display" class="header__item item_etc">
@@ -185,27 +185,12 @@
         type: Number,
         default: 0
       },
-      needShowMode: {
-        type: Boolean,
-        default: false
-      },
-      needShowFilter: {
-        type: Boolean,
-        default: false
-      },
-      needShowPageScroll: {
-        type: String,
-        default: ''
-      },
-      needShowDate: {
-        type: Boolean,
-        default: false
-      },
       colsConfigurator: {
         type: String,
         default: 'none'
       },
-      theme: Object
+      theme: Object,
+      viewConfig: Object
     },
     components: { VirtualList, QWindowResizeObservable, VueDraggableResizable, QInput, QToggle, QToolbar, QField, QToolbarTitle, QCheckbox, QDatetime, QSlider, QBtn, QIcon, QSearch, ListItem, QTooltip, QModal, QModalLayout },
     data () {
@@ -239,19 +224,26 @@
         etcField: {
           name: 'etc',
           width: 150,
-          display: false
+          display: this.viewConfig.needShowEtc || false
         },
         defaultTheme: {
           color: 'dark',
           bgColor: 'white',
           controlsInverted: false,
           contentInverted: false
+        },
+        defaultConfig: {
+          needShowFilter: false,
+          needShowMode: false,
+          needShowPageScroll: '',
+          needShowDate: false,
+          needShowEtc: false
         }
       }
     },
     computed: {
       needShowToolbar () {
-        return this.needShowMode || this.needShowFilter || this.needShowDate || this.needShowPageScroll
+        return this.currentViewConfig.needShowMode || this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDate || this.currentViewConfig.needShowPageScroll
       },
       scrollerStart () {
         return this.needAutoScroll ? this.items.length : this.start
@@ -264,6 +256,9 @@
       },
       currentTheme () {
         return Object.assign(this.defaultTheme, this.theme)
+      },
+      currentViewConfig () {
+        return Object.assign(this.defaultConfig, this.viewConfig)
       },
       rowWidth () {
         let res = 0

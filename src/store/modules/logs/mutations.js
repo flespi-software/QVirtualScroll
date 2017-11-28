@@ -44,14 +44,12 @@ export default function (Vue) {
                 state.from = timeObj.from
                 state.to = timeObj.to
                 state.messages = []
-                state.limit = 1000
                 break
             }
             case 1: {
-                let now = Date.now()
-                state.from = now - 4000 - 1000
-                state.to = now - 4000
-                state.limit = 1000
+                let now = Date.now() - state.delay - 6000
+                state.from = now - (state.delay - 1000)
+                state.to = now
                 state.messages = []
                 break
             }
@@ -102,7 +100,7 @@ export default function (Vue) {
 
     function paginationPrev (state, firstTimestamp) {
         state.reverse = true
-        state.sysFilter += `time>=${state.from / 1000}`
+        setSysFilter(state, `timestamp>=${state.from / 1000}`)
         if (firstTimestamp) {
             state.from = getFromTo(firstTimestamp).from
             state.to = firstTimestamp - 1000
@@ -110,7 +108,7 @@ export default function (Vue) {
     }
 
     function paginationNext (state, lastTimestamp) {
-        state.sysFilter += `time<=${state.to / 1000}`
+        setSysFilter(state, `timestamp<=${state.to / 1000}`)
         if (lastTimestamp) {
             state.to = getFromTo(lastTimestamp).to
             state.from = lastTimestamp + 1000
@@ -122,7 +120,29 @@ export default function (Vue) {
         setFrom(state, timeObj.from)
         setTo(state, timeObj.to)
         if (state.reverse) { setReverse(state, false) }
-        state.sysFilter = ''
+        let timestampIndex = state.sysFilter.indexOf('timestamp'),
+            sliceFromTo = (start, end) => string => `${start ? string.slice(0, start) : ''}${end ? string.slice(end) : ''}`
+        if (timestampIndex === 0) {
+            let commaIndex = state.sysFilter.indexOf(',', timestampIndex)
+            commaIndex !== -1
+                ? state.sysFilter = sliceFromTo(0, commaIndex + 1)(state.sysFilter)
+                : state.sysFilter = ''
+        }
+        else if (timestampIndex > 0) {
+            let commaIndex = state.sysFilter.indexOf(',', timestampIndex)
+            commaIndex !== -1
+                ? state.sysFilter = sliceFromTo(timestampIndex, commaIndex + 1)(state.sysFilter)
+                : state.sysFilter = sliceFromTo(timestampIndex - 1)(state.sysFilter)
+        }
+    }
+
+    function setSysFilter (state, filter) {
+        if (state.sysFilter) {
+            state.sysFilter += `,${filter}`
+        }
+        else {
+            state.sysFilter = filter
+        }
     }
 
     function clear (state) {
@@ -139,8 +159,8 @@ export default function (Vue) {
         state.reverse = false
     }
 
-    function setActive (state, id) {
-        Vue.set(state, 'active', id)
+    function setOrigin (state, origin) {
+        Vue.set(state, 'origin', origin)
     }
 
     function setCols (state, cols) {
@@ -150,19 +170,14 @@ export default function (Vue) {
         else {
             let defaultCols = [
                 {
-                    name: 'channel_id',
-                    width: 85,
+                    name: 'timestamp',
+                    width: 100,
                     display: true,
-                    description: 'Log refferes to a given chanel'
+                    description: 'Log event time'
                 },
                 {
-                    name: 'duration',
-                    width: 85,
-                    display: true,
-                    description: 'Connection duration in seconds'
-                },
-                {
-                    name: 'event',
+                    name: 'event_code',
+                    title: 'event',
                     width: 400,
                     display: true,
                     description: 'Log event code and description'
@@ -192,26 +207,40 @@ export default function (Vue) {
                     description: 'Number of bytes sent'
                 },
                 {
-                    name: 'transport',
-                    width: 85,
-                    display: true,
-                    description: 'Connected device\'s transport: tcp, udp, http etc'
-                },
-                {
                     name: 'source',
                     width: 150,
                     display: true,
                     description: 'Connected device\'s address'
                 },
                 {
-                    name: 'time',
+                    name: 'host',
                     width: 150,
                     display: true,
-                    description: 'Log event time'
+                    description: 'IP address from which HTTP request was received'
+                },
+                {
+                    name: 'duration',
+                    width: 85,
+                    display: true,
+                    description: 'Connection duration in seconds'
+                },
+                {
+                    name: 'transport',
+                    width: 85,
+                    display: true,
+                    description: 'Connected device\'s transport: tcp, udp, http etc'
                 }
             ]
             Vue.set(state, 'cols', defaultCols)
         }
+    }
+
+    function setDelay(state, delay) {
+        Vue.set(state, 'delay', delay)
+        let now = Date.now() - delay - 6000
+        state.from = now - (delay - 1000)
+        state.to = now
+        state.messages = []
     }
 
     return {
@@ -232,7 +261,9 @@ export default function (Vue) {
         setDate,
         postaction,
         clear,
-        setActive,
-        setCols
+        setOrigin,
+        setSysFilter,
+        setCols,
+        setDelay
     }
 }

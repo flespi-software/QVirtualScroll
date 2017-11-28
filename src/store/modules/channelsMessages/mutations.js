@@ -31,13 +31,11 @@ export default function (Vue) {
             case 0: {
                 state.from = 0
                 state.messages = []
-                state.limit = 1000
                 break
             }
             case 1: {
                 let now = Date.now()
                 state.from = Math.ceil((now - 4000 - 1000) / 1000)
-                state.limit = 1000
                 state.messages = []
                 break
             }

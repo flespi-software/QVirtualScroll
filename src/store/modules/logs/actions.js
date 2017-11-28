@@ -1,30 +1,32 @@
 export default function (Vue) {
     function getParams (state) {
-        let params = {}
+        let params = {
+            filter: `event_origin=${state.origin}`
+        }
         if (state.limit) { params.count = state.limit }
         if (state.filter && state.sysFilter) {
             if (state.mode === 1) {
-                params.filter = `${state.sysFilter}`
+                params.filter += `,${state.sysFilter}`
             }
             else {
-                params.filter = `${state.sysFilter},${state.filter}`
+                params.filter += `,${state.sysFilter},${state.filter}`
             }
         }
-        else if (state.sysFilter && !state.filter) { params.filter = `${state.sysFilter}`}
+        else if (state.sysFilter && !state.filter) { params.filter += `,${state.sysFilter}`}
         else if (!state.sysFilter && state.filter) {
             if (state.mode === 0) {
-                params.filter = `${state.filter}`
+                params.filter += `,${state.filter}`
             }
         }
         if (state.from && !state.reverse) {
             if (state.mode) {
-                state.from += 2000
+                state.from += state.delay
             }
             params.from = Math.floor(state.from / 1000)
         }
         if (state.to) {
             if (state.mode) {
-                state.to += 2000
+                state.to += state.delay
             }
             params.to = Math.floor(state.to / 1000)
         }
@@ -37,19 +39,20 @@ export default function (Vue) {
     }
 
     async function initTime({ state, commit, rootState }) {
-        if (rootState.token && state.active) {
+        if (rootState.token && state.origin) {
             try {
                 let params = {
+                   filter: `event_origin=${state.origin}`,
                    reverse: true,
                    count: 1,
-                   fields: 'time'
+                   fields: 'timestamp'
                 }
-                let resp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}/logs`, {
+                let resp = await Vue.http.get(`${rootState.server}/platform/customer/logs`, {
                     params: {data: JSON.stringify(params)}
                 })
                 let data = await resp.json()
                 if (data.result.length) {
-                    commit('setDate', Math.round(data.result[0].time * 1000))
+                    commit('setDate', Math.round(data.result[0].timestamp * 1000))
                 }
                 else {
                     commit('setDate', Date.now())
@@ -66,9 +69,9 @@ export default function (Vue) {
             commit('clearMessages')
             commit(preactionName, preactionPayload)
         }
-        if (rootState.token && state.active) {
+        if (rootState.token && state.origin) {
             try {
-                let resp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}/logs`, {
+                let resp = await Vue.http.get(`${rootState.server}/platform/customer/logs`, {
                     params: {data: JSON.stringify(getParams(state))}
                 })
                 let data = await resp.json()
@@ -107,11 +110,12 @@ export default function (Vue) {
         }
     }
 
-    function pollingGet ({ state, commit, rootState }, delay) {
+    function pollingGet ({ state, commit, rootState }) {
         if (state.timerId) {
             commit('clearTimer')
         }
-        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, delay)
+        get({ state, commit, rootState })
+        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, state.delay)
     }
 
     return {

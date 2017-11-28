@@ -16,9 +16,9 @@ let plugins = [
 
 export default [
     {
-        input: './src/store/modules/channelsLogs/index.js',
+        input: './src/store/modules/logs/index.js',
         output: [
-            { file: './dist/channelsLogs.js', format: 'cjs' }
+            { file: './dist/logs.js', format: 'cjs' }
         ],
         plugins: plugins
     },

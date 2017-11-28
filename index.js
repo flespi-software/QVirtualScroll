@@ -1,11 +1,11 @@
-import channelsLogsModule from './dist/channelsLogs.js'
+import logsModule from './dist/logs.js'
 import channelsMessagesModule from './dist/channelsMessages.js'
-import devicesMessagesModule from './dist/channelsMessages.js'
+import devicesMessagesModule from './dist/devicesMessages.js'
 import VirtualScrollList from './dist/VirtualScrollList.vue'
 
 export {
     VirtualScrollList,
-    channelsLogsModule,
+    logsModule,
     channelsMessagesModule,
     devicesMessagesModule
 }

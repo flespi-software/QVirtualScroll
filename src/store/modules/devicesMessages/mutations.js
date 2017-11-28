@@ -44,14 +44,12 @@ export default function (Vue) {
                 state.from = timeObj.from
                 state.to = timeObj.to
                 state.messages = []
-                state.limit = 1000
                 break
             }
             case 1: {
-                let now = Date.now()
-                state.from = now - 4000 - 1000
-                state.to = now - 4000
-                state.limit = 1000
+                let now = Date.now() - state.delay - 4000
+                state.from = now - (state.delay - 1000)
+                state.to = now
                 state.messages = []
                 break
             }
@@ -147,6 +145,14 @@ export default function (Vue) {
         Vue.set(state, 'cols', cols)
     }
 
+    function setDelay(state, delay) {
+        Vue.set(state, 'delay', delay)
+        let now = Date.now() - delay - 6000
+        state.from = now - (delay - 1000)
+        state.to = now
+        state.messages = []
+    }
+
     return {
         setMessages,
         clearMessages,
@@ -166,7 +172,8 @@ export default function (Vue) {
         postaction,
         clear,
         setActive,
-        setCols
+        setCols,
+        setDelay
     }
 
 }
