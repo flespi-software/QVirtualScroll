@@ -46,30 +46,50 @@ export default function (Vue) {
         commit('reqStart')
         if (rootState.token && state.active) {
             try {
-                let telemetryResp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}`, {
-                    params: {fields: 'telemetry'}
+                let deviceResp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}`, {
+                    params: {fields: 'telemetry,channel_id'}
                 })
-                let telemetryData = await telemetryResp.json()
-                let colNames = telemetryData.result && telemetryData.result[0] ? Object.keys(telemetryData.result[0].telemetry) : []
-                if (colNames.length) {
-                    let cols = colNames.reduce((acc, col) => {
-                        acc.push({
-                            name: col,
+                let deviceData = await deviceResp.json()
+                let cols = []
+                // if (deviceData.result && deviceData.result[0] && deviceData.result[0].channel_id) {
+                //     let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${deviceData.result[0].channel_id}`, {
+                //         params: {fields: 'protocol_id'}
+                //     })
+                //     let protocolIdData = await protocolIdResp.json()
+                //     if (protocolIdData.result && protocolIdData.result[0].protocol_id) {
+                //         let colsResp = await Vue.http.get(`${rootState.server}/gw/protocols/${protocolIdData.result[0].protocol_id}`, {
+                //             params: {fields: 'message_parameters'}
+                //         })
+                //         let colsData = await colsResp.json()
+                //         colsData.result[0].message_parameters.forEach(col => {
+                //             cols.push({
+                //                 name: col.name,
+                //                 width: 150,
+                //                 display: true,
+                //                 description: col.info
+                //             })
+                //         })
+                //     }
+                // }
+                // else {
+                    let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
+                    if (colNames.length) {
+                        cols = colNames.reduce((acc, col) => {
+                            acc.push({
+                                name: col,
+                                width: 150,
+                                display: true
+                            })
+                            return acc
+                        }, [])
+                        cols.push({ // remove after fix with telemetry and timestamp
+                            name: 'timestamp',
                             width: 150,
                             display: true
                         })
-                        return acc
-                    }, [])
-                    cols.push({ // remove after fix with telemetry and timestamp
-                        name: 'timestamp',
-                        width: 150,
-                        display: true
-                    })
-                    commit('setCols', cols)
-                }
-                else {
-                    commit('setCols', [])
-                }
+                    }
+                // }
+                cols.length ? commit('setCols', cols) :  commit('setCols', [])
             }
             catch (e) { console.log(e) }
         }

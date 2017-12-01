@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.4] - 2017-12-01
+[fix] actions coll init width
+[fix] getCols action in devices
 ### [0.0.3] - 2017-11-28
 [feature] channels logs module rebased into universal logs
 [feature] added show etc field flag to main component

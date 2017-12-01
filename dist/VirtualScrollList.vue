@@ -218,7 +218,7 @@
         },
         actionField: {
           name: 'action',
-          width: 150,
+          width: !this.actions.length ? 150 : this.actions.length >= 2 ? this.actions.length * 28 : 50,
           display: this.actions && !!this.actions.length
         },
         etcField: {
