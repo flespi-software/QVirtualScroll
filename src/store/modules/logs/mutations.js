@@ -67,7 +67,7 @@ export default function (Vue) {
 
     function reqStart () {
         if (DEV) {
-            console.log('Start Request Channels Logs')
+            console.log('Start Request Logs')
         }
     }
 

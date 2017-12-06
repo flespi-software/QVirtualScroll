@@ -1,6 +1,7 @@
 <template>
   <div class="message-viewer" :class="{[`uid${uid}`]: true}">
     <q-toolbar class="viewer__toolbar" :color="currentTheme.bgColor" v-if="needShowToolbar">
+      <span v-if="title && $q.platform.is.desktop" style="margin-right: 10px">{{title}}</span>
       <q-icon :color="currentTheme.color" name="search" @click="showSearch = true" v-if="$q.platform.is.mobile && currentViewConfig.needShowFilter && !showSearch" :style="{fontSize: '24px', marginBottom: currentTheme.controlsInverted ? '' : '8px', paddingLeft: currentTheme.controlsInverted ? '8px' : ''}"></q-icon>
       <q-search
               :class="{'full-width': $q.platform.is.mobile && showSearch, collapsed: $q.platform.is.mobile && !showSearch}"
@@ -47,34 +48,47 @@
             Configure cols
           </div>
         </q-toolbar>
-        <div class="layout-padding">
-          <q-field v-if="actions && actions.length" :label="actionField.name" :labelWidth="3">
+        <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
+          <q-field v-if="actions && actions.length" :label="actionField.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-slider class="col-12 col-sm-8" :min="50" :max="800" :value="actionField.width" @input="(val) => { onResize(val,'actions') }" label :label-value="`${actionField.width}px`"/>
-              <q-toggle class="col-12 col-sm-3" v-model="actionField.display" label="display"/>
+              <q-slider class="col-12 col-sm-10" :min="50" :max="800"
+                        :value="actionField.width"
+                        @input="(val) => { onResize(val,'actions') }" label
+                        :label-value="`${actionField.width}px`"
+                        :inverted="currentTheme.controlsInverted"
+                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+              />
+              <q-checkbox class="col-12 col-sm-1" v-model="actionField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
-          <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3">
+          <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-slider class="col-12 col-sm-8" :min="50" :max="800" v-model="col.width" label :label-value="`${col.width}px`"/>
-              <q-toggle class="col-12 col-sm-3" v-model="col.display" label="display"/>
-              <q-btn flat class="col-12 col-sm-1" v-if="col.custom" @click="customFieldRemove(index)">
+              <q-slider class="col-12 col-sm-10" :min="50" :max="800" v-model="col.width" label :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-checkbox class="col-12 col-sm-1" v-model="col.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-btn flat class="col-12 col-sm-1" v-if="col.custom" @click="customFieldRemove(index)" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
                 <q-icon name="remove"></q-icon>
               </q-btn>
             </div>
           </q-field>
-          <q-field :label="etcField.name" :labelWidth="3">
+          <q-field :label="etcField.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-slider class="col-12 col-sm-8" :min="50" :max="800" :value="etcField.width" @input="(val) => { onResize(val,'etc')}" label :label-value="`${etcField.width}px`"/>
-              <q-toggle class="col-12 col-sm-3" v-model="etcField.display" label="display"/>
+              <q-slider class="col-12 col-sm-10" :min="50" :max="800" :value="etcField.width" @input="(val) => { onResize(val,'etc')}" label
+                        :label-value="`${etcField.width}px`"
+                        :inverted="currentTheme.controlsInverted"
+                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+              />
+              <q-checkbox class="col-12 col-sm-1" v-model="etcField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
-          <q-field label="add custom field" style="border-top: 1px solid #333; padding-top: 10px" :labelWidth="3">
+          <q-field label="add custom field" style="border-top: 1px solid #333; padding-top: 10px" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-input class="col-12 col-sm-4" :placeholder="customField.error ? customField.errMessages : 'name'" type="text" v-model="customField.name" :error="customField.error"></q-input>
-              <q-slider class="col-12 col-sm-4" :min="50" :max="800" v-model="customField.width" label :label-value="`${customField.width}px`"/>
-              <q-toggle class="col-12 col-sm-3" v-model="customField.display" label="display"/>
-              <q-btn flat class="col-12 col-sm-1" @click="customFieldSave"><q-icon name="add"></q-icon></q-btn>
+              <q-input class="col-12 col-sm-4" :placeholder="customField.error ? customField.errMessages : 'name'" type="text" v-model="customField.name" :error="customField.error"
+                       :inverted="currentTheme.controlsInverted"
+                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+              />
+              <q-slider class="col-12 col-sm-6" :min="50" :max="800" v-model="customField.width" label :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-checkbox class="col-12 col-sm-1" v-model="customField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-btn flat class="col-12 col-sm-1" @click="customFieldSave" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"><q-icon name="add"/></q-btn>
             </div>
           </q-field>
         </div>
@@ -98,7 +112,7 @@
             <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
           <div class="header__item" v-for="(prop, index) in activeCols" :key="index" :class="{[`item_${index}`]: true}">
-            <q-tooltip v-if="prop.description || prop.title">{{`${prop.title ? `${prop.name}: ` : ''}${prop.description ? prop.description : ''}`}}</q-tooltip>
+            <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description : ''}`}}</q-tooltip>
             <span class="item__label">{{prop.title || prop.name}}</span>
             <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
           </div>
@@ -178,6 +192,10 @@
         type: Number
       },
       filter: {
+        type: String,
+        default: ''
+      },
+      title: {
         type: String,
         default: ''
       },
