@@ -109,17 +109,17 @@
           <div class="header__item item_actions" v-if="actionField.display">
             <q-tooltip>Actions</q-tooltip>
             <span class="item__label">{{actionField.name}}</span>
-            <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
+            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
           <div class="header__item" v-for="(prop, index) in activeCols" :key="index" :class="{[`item_${index}`]: true}">
             <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description : ''}`}}</q-tooltip>
             <span class="item__label">{{prop.title || prop.name}}</span>
-            <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
+            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
           </div>
           <div v-if="etcField.display" class="header__item item_etc">
             <q-tooltip>Another info by message</q-tooltip>
             <span class="item__label">{{etcField.name}}</span>
-            <vue-draggable-resizable :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'etc')}"/>
+            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'etc')}"/>
           </div>
         </div>
       </div>
@@ -129,7 +129,7 @@
               v-if="items.length"
               ref="scroller"
               :style="{position: 'absolute', top: `${itemHeight}px`, bottom: 0, right: 0, left: 0, height: 'auto'}"
-              :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted}"
+              :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
               :size="itemHeight"
               :remain="itemsCount"
               :start="scrollerStart"
@@ -157,6 +157,7 @@
             :itemHeight="itemHeight"
             :rowWidth="rowWidth"
             @action="clickHandler"
+            @item-click="itemClickHandler"
           />
         </slot>
       </VirtualList>
@@ -256,7 +257,8 @@
           needShowPageScroll: '',
           needShowDate: false,
           needShowEtc: false
-        }
+        },
+        hasItemClickHandler: false
       }
     },
     computed: {
@@ -356,6 +358,9 @@
       clickHandler ({index, type, content}) {
         this.$emit(`action`, {index, type, content})
       },
+      itemClickHandler ({index, content}) {
+        this.$emit(`item-click`, {index, content})
+      },
       resetParams () {
         this.wrapperHeight = this.$refs.wrapper.offsetHeight - 19 - 15 // - header - scroll-bottom
         this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
@@ -441,6 +446,7 @@
       }
     },
     mounted () {
+      this.hasItemClickHandler = !!this._events['item-click']
       this.uid = uid().split('-')[0]
       this.resetParams()
       this.updateDynamicCSS()
@@ -483,6 +489,7 @@
               border none
               border-right 2px solid #616161
               background-color inherit
+              display block!important
     .collapsed
       max-width 40px
     .q-w-list

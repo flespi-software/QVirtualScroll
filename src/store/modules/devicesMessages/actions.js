@@ -26,14 +26,16 @@ export default function (Vue) {
         }
         else if (state.sysFilter && !state.filter) { params.filter = `${state.sysFilter}` }
         else if (!state.sysFilter && state.filter) { params.filter = `${state.filter}` }
-        if (state.from && !state.reverse) {
+        if (state.from && (!state.reverse || state.mode === 1)) {
             if (state.mode) {
                 state.from += state.delay
             }
-            params.from = Math.floor(state.from / 1000)
+            if (!state.reverse) {
+                params.from = Math.floor(state.from / 1000)
+            }
         }
         if (state.to) {
-            if (state.mode) {
+            if (state.mode === 1) {
                 state.to += state.delay
             }
             params.to = Math.floor(state.to / 1000)
@@ -84,7 +86,7 @@ export default function (Vue) {
                         }, [])
                         cols.push({ // remove after fix with telemetry and timestamp
                             name: 'timestamp',
-                            width: 150,
+                            width: 160,
                             display: true
                         })
                     }
@@ -166,11 +168,21 @@ export default function (Vue) {
         }
     }
 
-    function pollingGet ({ state, commit, rootState }) {
+    async function getHistory({ state, commit, rootState }, count) {
+        let limit = state.limit
+        commit('setReverse', true)
+        commit('setLimit', count)
+        await get({ state, commit, rootState })
+        commit('setReverse', false)
+        commit('setLimit', limit)
+    }
+
+    async function pollingGet ({ state, commit, rootState }) {
         if (state.timerId) {
             commit('clearTimer')
         }
-        get({ state, commit, rootState })
+        await getHistory({ state, commit, rootState }, 200)
+        await get({ state, commit, rootState })
         state.timerId = setInterval(() => { get({ state, commit, rootState }) }, state.delay)
     }
 

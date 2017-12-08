@@ -10,6 +10,9 @@ export default function (Vue) {
         if (data && data.length) {
             if (state.reverse) {
                 data.reverse()
+                if (state.mode === 1) {
+                    data[data.length - 1].delimiter = true
+                }
             }
             let messages = [...state.messages, ...data]
             if (state.limit && state.mode === 1 && messages.length >= state.limit) { // rt limiting

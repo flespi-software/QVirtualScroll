@@ -1,7 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.6] - 2017-12-08
+[feature] limited history for real-time added
+[feature] default width of timestamp column changed to 160px
+[feature] handling click by item list added
+[feature] resize marker available all the time
 ### [0.0.5] - 2017-12-06
-[feature] title added
+[feature] title for root component added
 [feature] configurator modal was updated UI and theme
 ### [0.0.4] - 2017-12-01
 [fix] actions coll init width

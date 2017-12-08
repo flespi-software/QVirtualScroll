@@ -24,7 +24,7 @@ export default function (Vue) {
                     colsData.result[0].message_parameters.forEach(col => {
                         cols.push({
                             name: col.name,
-                            width: 150,
+                            width: 160,
                             display: true,
                             description: col.info
                         })
