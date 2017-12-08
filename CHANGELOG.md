@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.7] - 2017-12-08
+[fix] auto scroll with limited history
 ### [0.0.6] - 2017-12-08
 [feature] limited history for real-time added
 [feature] default width of timestamp column changed to 160px
