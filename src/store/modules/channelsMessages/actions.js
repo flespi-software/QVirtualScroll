@@ -11,11 +11,14 @@ export default function (Vue) {
         commit('reqStart')
         if (rootState.token && state.active) {
             try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
                 let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}`, {
                     params: {fields: 'protocol_id'}
                 })
                 let protocolIdData = await protocolIdResp.json()
-                if (protocolIdData.result && protocolIdData.result[0].protocol_id) {
+                if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
                     let colsResp = await Vue.http.get(`${rootState.server}/gw/protocols/${protocolIdData.result[0].protocol_id}`, {
                         params: {fields: 'message_parameters'}
                     })
@@ -31,8 +34,16 @@ export default function (Vue) {
                     })
                     commit('setCols', cols)
                 }
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 
@@ -52,19 +63,28 @@ export default function (Vue) {
 
     async function get ({ state, commit, rootState }) {
         commit('reqStart')
+        if (typeof rootState.isLoading !== 'undefined') {
+            rootState.isLoading = true
+        }
         let data = await getData({ state, commit, rootState })
         if (data.result) {
             commit('setMessages', data.result)
             if (data.result.length) { commit('setFrom', data.next_key) }
             else { commit('setFrom', data.last_key) }
         }
+        if (typeof rootState.isLoading !== 'undefined') {
+            rootState.isLoading = false
+        }
     }
 
     async function pollingGet ({ state, commit, rootState }) {
         commit('reqStart')
         let data = await getData({ state, commit, rootState })
-        if (data.errors) {
-            setTimeout(() => { pollingGet({ state, commit, rootState }) }, 4000)
+        if (data.errors && data.errors.length) {
+            setTimeout(() => {
+                pollingGet({ state, commit, rootState })
+            }, 4000)
+            return false
         }
         if (data.result) {
             commit('setMessages', data.result)

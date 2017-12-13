@@ -132,7 +132,7 @@
               :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
               :size="itemHeight"
               :remain="itemsCount"
-              :start="scrollerStart"
+              :offset="scrollerStart"
               :tobottom="enableAutoscroll"
               wclass="q-w-list">
         <slot name="items"
@@ -266,7 +266,7 @@
         return this.currentViewConfig.needShowMode || this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDate || this.currentViewConfig.needShowPageScroll
       },
       scrollerStart () {
-        return this.needAutoScroll ? this.items.length : this.start
+        return this.needAutoScroll ? (this.items.length - this.itemsCount) * this.itemHeight : this.start
       },
       activeCols () {
         return this.cols.filter(col => col.display)

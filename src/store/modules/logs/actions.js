@@ -43,6 +43,9 @@ export default function (Vue) {
     async function initTime({ state, commit, rootState }) {
         if (rootState.token && state.origin) {
             try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
                 let params = {
                    filter: `event_origin=${state.origin}`,
                    reverse: true,
@@ -59,8 +62,16 @@ export default function (Vue) {
                 else {
                     commit('setDate', Date.now())
                 }
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 
@@ -73,6 +84,9 @@ export default function (Vue) {
         }
         if (rootState.token && state.origin) {
             try {
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = true
+                }
                 let resp = await Vue.http.get(`${rootState.server}/platform/customer/logs`, {
                     params: {data: JSON.stringify(getParams(state))}
                 })
@@ -107,8 +121,16 @@ export default function (Vue) {
                 else {
                     commit('setMessages', data.result)
                 }
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 

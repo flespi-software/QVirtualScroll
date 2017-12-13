@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.8] - 2017-12-13
+[feature] setting flag isLoaded added to root state
+[fix] pooling channels messages
 ### [0.0.7] - 2017-12-08
 [fix] auto scroll with limited history
 ### [0.0.6] - 2017-12-08

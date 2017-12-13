@@ -48,6 +48,9 @@ export default function (Vue) {
         commit('reqStart')
         if (rootState.token && state.active) {
             try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
                 let deviceResp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}`, {
                     params: {fields: 'telemetry,channel_id'}
                 })
@@ -92,14 +95,25 @@ export default function (Vue) {
                     }
                 // }
                 cols.length ? commit('setCols', cols) :  commit('setCols', [])
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 
     async function initTime({ state, commit, rootState }) {
         if (rootState.token && state.active) {
             try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
                 let params = {
                     reverse: true,
                     count: 1,
@@ -115,8 +129,16 @@ export default function (Vue) {
                 else {
                     commit('setDate', Date.now())
                 }
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 
@@ -129,6 +151,9 @@ export default function (Vue) {
         }
         if (rootState.token && state.active) {
             try {
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = true
+                }
                 let resp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}/messages`, {
                     params: {data: JSON.stringify(getParams(state))}
                 })
@@ -163,8 +188,16 @@ export default function (Vue) {
                 else {
                     commit('setMessages', data.result)
                 }
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = false
+                }
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                    rootState.isLoading = false
+                }
+            }
         }
     }
 
