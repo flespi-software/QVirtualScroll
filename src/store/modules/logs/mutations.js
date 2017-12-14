@@ -14,11 +14,19 @@ export default function (Vue) {
                     data[data.length - 1].delimiter = true
                 }
             }
+            if (state.mode === 1) {
+                Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
+            }
             let messages = [...state.messages, ...data]
             if (state.limit && state.mode === 1 && messages.length >= state.limit) { // rt limiting
                 messages = messages.slice((messages.length -1) - (state.limit - 1))
             }
             Vue.set(state, 'messages', messages)
+        }
+        else {
+            if (state.mode === 1) {
+                Vue.set(state, 'from', state.to)
+            }
         }
     }
 

@@ -19,16 +19,13 @@ export default function (Vue) {
             }
         }
         if (state.from && (!state.reverse || state.mode === 1)) {
-            if (state.mode === 1) {
-                state.from += state.delay
-            }
             if (!state.reverse) {
                 params.from = Math.floor(state.from / 1000)
             }
         }
         if (state.to) {
             if (state.mode === 1) {
-                state.to += state.delay
+                state.to = Date.now() - 4000
             }
             params.to = Math.floor(state.to / 1000)
         }

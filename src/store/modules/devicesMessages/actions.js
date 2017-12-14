@@ -27,16 +27,13 @@ export default function (Vue) {
         else if (state.sysFilter && !state.filter) { params.filter = `${state.sysFilter}` }
         else if (!state.sysFilter && state.filter) { params.filter = `${state.filter}` }
         if (state.from && (!state.reverse || state.mode === 1)) {
-            if (state.mode) {
-                state.from += state.delay
-            }
             if (!state.reverse) {
                 params.from = Math.floor(state.from / 1000)
             }
         }
         if (state.to) {
             if (state.mode === 1) {
-                state.to += state.delay
+                state.to = Date.now() - 4000
             }
             params.to = Math.floor(state.to / 1000)
         }
