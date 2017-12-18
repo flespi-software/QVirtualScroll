@@ -63,6 +63,7 @@ export default function (Vue) {
         state.mode = null
         state.from = 0
         state.limit = 1000
+        state.currentRequest.abort()
     }
 
     function setCols (state, cols) {

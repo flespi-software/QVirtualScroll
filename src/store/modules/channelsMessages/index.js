@@ -12,7 +12,8 @@ export default function (Store, Vue) {
         mode: null,
         from: 0,
         limit: 1000,
-        cols: []
+        cols: [],
+        currentRequest: null
     }
 
     return {

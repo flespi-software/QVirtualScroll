@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.10] - 2017-12-18
+[fix] timestamp additional removed
+[fix] pooling channels messages errors
 ### [0.0.9] - 2017-12-14
 [fix] init "from" parameter
 ### [0.0.8] - 2017-12-13

@@ -84,11 +84,6 @@ export default function (Vue) {
                             })
                             return acc
                         }, [])
-                        cols.push({ // remove after fix with telemetry and timestamp
-                            name: 'timestamp',
-                            width: 160,
-                            display: true
-                        })
                     }
                 // }
                 cols.length ? commit('setCols', cols) :  commit('setCols', [])

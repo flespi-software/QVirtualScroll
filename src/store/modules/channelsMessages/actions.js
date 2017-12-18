@@ -52,11 +52,19 @@ export default function (Vue) {
         if (rootState.token && state.active) {
             try {
                 let resp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}/messages`, {
+                    before (request) {
+                        state.currentRequest = request
+                    },
                     params: {data: JSON.stringify(getParams(state))}
                 })
                 data = await resp.json()
             }
-            catch (e) { console.log(e) }
+            catch (e) {
+                console.log(e)
+                data = {
+                    errors: [e]
+                }
+            }
         }
         return data
     }
