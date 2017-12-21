@@ -25,7 +25,7 @@ export default function (Vue) {
         }
         if (state.to) {
             if (state.mode === 1) {
-                state.to = Date.now() - 4000
+                state.to = Date.now() - 6000
             }
             params.to = Math.floor(state.to / 1000)
         }

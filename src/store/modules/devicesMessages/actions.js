@@ -16,16 +16,15 @@ export default function (Vue) {
                 params.filter = `${state.filter}`
             }
         }
-        if (state.cols.length) {
-            params.fields = state.cols.filter(col => {
-                if (col.name === 'timestamp') { return true }
-                return col.display
-            }).reduce((acc, col, index, arr) => {
-                return `${acc}${col.name}${index !== arr.length - 1 ? ',' : ''}`
-            }, '')
-        }
-        else if (state.sysFilter && !state.filter) { params.filter = `${state.sysFilter}` }
-        else if (!state.sysFilter && state.filter) { params.filter = `${state.filter}` }
+        //uncomment after release get cols by protocol
+        // if (state.cols.length) {
+        //     params.fields = state.cols.filter(col => {
+        //         if (col.name === 'timestamp') { return true }
+        //         return col.display
+        //     }).reduce((acc, col, index, arr) => {
+        //         return `${acc}${col.name}${index !== arr.length - 1 ? ',' : ''}`
+        //     }, '')
+        // }
         if (state.from && (!state.reverse || state.mode === 1)) {
             if (!state.reverse) {
                 params.from = Math.floor(state.from / 1000)
@@ -77,6 +76,14 @@ export default function (Vue) {
                     let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
                     if (colNames.length) {
                         cols = colNames.reduce((acc, col) => {
+                            if (col === 'timestamp') { // todo remove after get configure for cols
+                                acc.unshift({
+                                    name: col,
+                                    width: 190,
+                                    display: true
+                                })
+                                return acc
+                            }
                             acc.push({
                                 name: col,
                                 width: 150,

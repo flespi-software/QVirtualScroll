@@ -25,7 +25,7 @@ export default function (Vue) {
         }
         else {
             if (state.mode === 1) {
-                Vue.set(state, 'from', state.to)
+                Vue.set(state, 'from', state.to + 1000)
             }
         }
     }

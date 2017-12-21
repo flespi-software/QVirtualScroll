@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.11] - 2017-12-21
+[fix] autoscroll
+[fix] init "from"
 ### [0.0.10] - 2017-12-18
 [fix] timestamp additional removed
 [fix] pooling channels messages errors

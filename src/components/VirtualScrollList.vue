@@ -109,22 +109,23 @@
           <div class="header__item item_actions" v-if="actionField.display">
             <q-tooltip>Actions</q-tooltip>
             <span class="item__label">{{actionField.name}}</span>
-            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
+            <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
           <div class="header__item" v-for="(prop, index) in activeCols" :key="index" :class="{[`item_${index}`]: true}">
             <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description : ''}`}}</q-tooltip>
             <span class="item__label">{{prop.title || prop.name}}</span>
-            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
+            <vue-draggable-resizable :ref="`drag${index}`" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
           </div>
           <div v-if="etcField.display" class="header__item item_etc">
             <q-tooltip>Another info by message</q-tooltip>
             <span class="item__label">{{etcField.name}}</span>
-            <vue-draggable-resizable :active="true" :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'etc')}"/>
+            <vue-draggable-resizable ref="dragEtc" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'etc')}"/>
           </div>
         </div>
       </div>
       <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}" style="font-size: 3rem; padding-top: 40px; " v-if="!items.length">{{i18n['Messages not found'] || 'Messages not found'}}</div>
       <VirtualList
+              v-auto-bottom="needAutoScroll"
               :onscroll="listScroll"
               v-if="items.length"
               ref="scroller"
@@ -132,8 +133,8 @@
               :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
               :size="itemHeight"
               :remain="itemsCount"
-              :offset="scrollerStart"
               :tobottom="enableAutoscroll"
+              :debounce="10"
               wclass="q-w-list">
         <slot name="items"
           v-for="(item, index) in items"
@@ -167,7 +168,7 @@
 
 <script>
   import VirtualList from 'vue-virtual-scroll-list'
-  import { QWindowResizeObservable, QInput, QToggle, QToolbar, QToolbarTitle, QDatetime, QBtn, QIcon, QSearch, QTooltip, QModal, QModalLayout, QSlider, QField, QCheckbox, uid, date } from 'quasar-framework'
+  import { QWindowResizeObservable, QInput, QToggle, QToolbar, QToolbarTitle, QDatetime, QBtn, QIcon, QSearch, QTooltip, QModal, QModalLayout, QSlider, QField, QCheckbox, uid, date, debounce } from 'quasar-framework'
   import VueDraggableResizable from 'vue-draggable-resizable'
   import ListItem from './ListItem.vue'
 
@@ -225,7 +226,6 @@
         dynamicCSS: document.createElement('style'),
         showSearch: false,
         needAutoScroll: !!this.mode,
-        start: 0,
         currentCols: [],
         customField: {
           name: '',
@@ -258,15 +258,13 @@
           needShowDate: false,
           needShowEtc: false
         },
-        hasItemClickHandler: false
+        hasItemClickHandler: false,
+        currentScrollTop: 0
       }
     },
     computed: {
       needShowToolbar () {
         return this.currentViewConfig.needShowMode || this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDate || this.currentViewConfig.needShowPageScroll
-      },
-      scrollerStart () {
-        return this.needAutoScroll ? (this.items.length - this.itemsCount) * this.itemHeight : this.start
       },
       activeCols () {
         return this.cols.filter(col => col.display)
@@ -362,7 +360,8 @@
         this.$emit(`item-click`, {index, content})
       },
       resetParams () {
-        this.wrapperHeight = this.$refs.wrapper.offsetHeight - 19 - 15 // - header - scroll-bottom
+        let isFieldWidtherThanWrapper = this.rowWidth - this.$refs.wrapper.offsetWidth > 0
+        this.wrapperHeight = this.$refs.wrapper.offsetHeight - 19 - (isFieldWidtherThanWrapper ? 19 : 0) // - header - scroll-bottom
         this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       },
       wrapperResizeHandler () {
@@ -387,13 +386,19 @@
       },
       listScroll: function (e, data) {
         if (this.items.length) {
-          if (data.end < this.items.length - 1 && this.needAutoScroll) {
-            this.needAutoScroll = false
-            this.start = data.start - 1 >= 0 ? data.start - 1 : 0
+          if (data.offset !== this.currentScrollTop) {
+             this.scrollMethod(this, e, data)
           }
           this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
         }
       },
+      scrollMethod: debounce((ctx, e, data) => {
+        let currentScrollTop = data.offset
+        if (currentScrollTop < ctx.currentScrollTop && ctx.needAutoScroll) {
+          ctx.needAutoScroll = false
+        }
+        ctx.currentScrollTop = currentScrollTop
+      }, 10),
       getDynamicCSS () {
         let result = ''
         if (this.actionField.display) {
@@ -417,8 +422,21 @@
         else {
           this.dynamicCSS.innerText = this.getDynamicCSS()
         }
-
+        this.updateDrags()
         head.appendChild(this.dynamicCSS)
+      },
+      updateDrags () {
+        if (this.$refs.dragActions && this.$refs.dragActions.width !== this.actionField.width) {
+          this.$refs.dragActions.width = this.actionField.width
+        }
+        if (this.$refs.dragEtc && this.$refs.dragEtc.width !== this.etcField.width) {
+          this.$refs.dragEtc.width = this.etcField.width
+        }
+        this.cols.forEach((item, index) => {
+          if (this.$refs[`drag${index}`] && this.$refs[`drag${index}`][0] && this.$refs[`drag${index}`][0].width !== item.width) {
+            this.$refs[`drag${index}`][0].width = item.width
+          }
+        })
       }
     },
     watch: {
@@ -428,7 +446,6 @@
       mode (val) {
         this.currentMode = !!val
         this.needAutoScroll = !!val
-        this.start = 0
       },
       filter (val) {
         if (this.currentFilter !== val) {
@@ -454,6 +471,15 @@
     destroyed () {
         let head = document.head || document.getElementsByTagName('head')[0]
         head.removeChild(this.dynamicCSS)
+    },
+    directives: {
+      'auto-bottom': {
+        update: function(el, { value }) {
+          if (value) {
+             el.scrollTop = el.scrollHeight;
+         }
+        }
+      }
     }
   }
 </script>
