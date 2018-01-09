@@ -1,4 +1,4 @@
-export default function (Vue) {
+export default function (Vue, LocalStorage) {
     function getFromTo (val) {
         let now = val || Date.now(),
             from = now - (now % 86400000),
@@ -176,7 +176,30 @@ export default function (Vue) {
 
     function setCols (state, cols) {
         if (cols) {
-            Vue.set(state, 'cols', cols)
+            let colsFromStorage = LocalStorage.get.item(state.name)
+            if (colsFromStorage) {
+                if (colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
+                    let newCols = cols.reduce((result, col, index) => {
+                        let newCol = colsFromStorage[state.origin].find(colFromStorage => {
+                            return colFromStorage.name === col.name
+                        })
+                        if (!newCol) {
+                            return result.push(col)
+                        }
+                        return result
+                    }, [])
+                    colsFromStorage[state.origin] = [...colsFromStorage[state.origin], ...newCols]
+                }
+                else {
+                    colsFromStorage[state.origin] = cols
+                }
+                LocalStorage.set(state.name, colsFromStorage)
+                Vue.set(state, 'cols', colsFromStorage[state.origin])
+            }
+            else {
+                LocalStorage.set(state.name, {[state.origin]: cols})
+                Vue.set(state, 'cols', cols)
+            }
         }
         else {
             let defaultCols = [
@@ -246,6 +269,15 @@ export default function (Vue) {
         }
     }
 
+    function updateCols (state, cols) {
+        let colsFromStorage = LocalStorage.get.item(state.name)
+        if (colsFromStorage) {
+            colsFromStorage[state.origin] = cols
+            LocalStorage.set(state.name, colsFromStorage)
+        }
+        Vue.set(state, 'cols', cols)
+    }
+
     function setDelay(state, delay) {
         Vue.set(state, 'delay', delay)
         let now = Date.now() - delay - 6000
@@ -275,6 +307,7 @@ export default function (Vue) {
         setOrigin,
         setSysFilter,
         setCols,
+        updateCols,
         setDelay
     }
 }

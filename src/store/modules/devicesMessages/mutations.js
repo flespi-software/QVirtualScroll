@@ -1,4 +1,4 @@
-export default function (Vue) {
+export default function (Vue, LocalStorage) {
     function getFromTo (val) {
         let now = val || Date.now(),
             from = now - (now % 86400000),
@@ -153,6 +153,38 @@ export default function (Vue) {
     }
 
     function setCols (state, cols) {
+        let colsFromStorage = LocalStorage.get.item(state.name)
+        if (colsFromStorage) {
+            if (colsFromStorage[state.active] && colsFromStorage[state.active].length) {
+                let newCols = cols.reduce((result, col, index) => {
+                    let newCol = colsFromStorage[state.active].find(colFromStorage => {
+                        return colFromStorage.name === col.name
+                    })
+                    if (!newCol) {
+                        return result.push(col)
+                    }
+                    return result
+                }, [])
+                colsFromStorage[state.active] = [...colsFromStorage[state.active], ...newCols]
+            }
+            else {
+                colsFromStorage[state.active] = cols
+            }
+            LocalStorage.set(state.name, colsFromStorage)
+            Vue.set(state, 'cols', colsFromStorage[state.active])
+        }
+        else {
+            LocalStorage.set(state.name, {[state.active]: cols})
+            Vue.set(state, 'cols', cols)
+        }
+    }
+
+    function updateCols (state, cols) {
+        let colsFromStorage = LocalStorage.get.item(state.name)
+        if (colsFromStorage) {
+            colsFromStorage[state.active] = cols
+            LocalStorage.set(state.name, colsFromStorage)
+        }
         Vue.set(state, 'cols', cols)
     }
 
@@ -184,6 +216,7 @@ export default function (Vue) {
         clear,
         setActive,
         setCols,
+        updateCols,
         setDelay
     }
 

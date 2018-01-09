@@ -1,11 +1,12 @@
 import getActions from './actions'
 import getMutations from './mutations'
 
-export default function (Store, Vue) {
+export default function (Store, Vue, LocalStorage, name) {
     let actions = getActions(Vue),
-        mutations = getMutations(Vue)
+        mutations = getMutations(Vue, LocalStorage)
 
     const state = {
+        name: name,
         timerId: 0,
         origin: '',
         messages: [],

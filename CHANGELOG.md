@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.12] - 2018-01-09
+[feature] added ability to drag cols in cols configurator and in table
+[feature] new props itemHeight and headerShow(in theme)
 ### [0.0.11] - 2017-12-21
 [fix] autoscroll
 [fix] init "from"

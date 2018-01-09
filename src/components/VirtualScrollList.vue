@@ -51,44 +51,47 @@
         <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
           <q-field v-if="actions && actions.length" :label="actionField.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-slider class="col-12 col-sm-10" :min="50" :max="800"
+              <q-slider class="col-12 col-xs-8" :min="50" :max="800"
                         :value="actionField.width"
                         @input="(val) => { onResize(val,'actions') }" label
                         :label-value="`${actionField.width}px`"
                         :inverted="currentTheme.controlsInverted"
                         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
               />
-              <q-checkbox class="col-12 col-sm-1" v-model="actionField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-icon size="1.5rem" class="col-12 col-xs-1 cursor-pointer" :name="actionField.display ? 'mdi-eye' : 'mdi-eye-off'" @click="actionField.display = !actionField.display" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
-          <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
-            <div class="row">
-              <q-slider class="col-12 col-sm-10" :min="50" :max="800" v-model="col.width" label :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
-              <q-checkbox class="col-12 col-sm-1" v-model="col.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
-              <q-btn flat class="col-12 col-sm-1" v-if="col.custom" @click="customFieldRemove(index)" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
-                <q-icon name="remove"></q-icon>
-              </q-btn>
-            </div>
-          </q-field>
+          <draggable :list="currentCols">
+            <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'" style="cursor: move">
+              <div class="row">
+                <q-slider class="col-12 col-xs-8" :min="50" :max="800" v-model="col.width" label :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                <q-icon size="1.5rem" class="col-12 col-xs-1 cursor-pointer" :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click="col.display = !col.display" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                <q-btn flat class="col-12 col-xs-1" v-if="col.custom" @click="customFieldRemove(index)" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
+                  <q-icon name="remove"></q-icon>
+                </q-btn>
+                <q-icon size="1.5rem" class="col-12 col-xs-1" name="mdi-drag" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              </div>
+            </q-field>
+          </draggable>
           <q-field :label="etcField.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-slider class="col-12 col-sm-10" :min="50" :max="800" :value="etcField.width" @input="(val) => { onResize(val,'etc')}" label
+              <q-slider class="col-12 col-xs-8" :min="50" :max="800" :value="etcField.width" @input="(val) => { onResize(val,'etc')}" label
                         :label-value="`${etcField.width}px`"
                         :inverted="currentTheme.controlsInverted"
                         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
               />
-              <q-checkbox class="col-12 col-sm-1" v-model="etcField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-icon size="1.5rem" class="col-12 col-xs-1 cursor-pointer" :name="etcField.display ? 'mdi-eye' : 'mdi-eye-off'" @click="etcField.display = !etcField.display" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
           <q-field label="add custom field" style="border-top: 1px solid #333; padding-top: 10px" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'">
             <div class="row">
-              <q-input class="col-12 col-sm-4" :placeholder="customField.error ? customField.errMessages : 'name'" type="text" v-model="customField.name" :error="customField.error"
+              <q-input class="col-12 col-xs-4" :placeholder="customField.error ? customField.errMessages : 'name'" type="text" v-model="customField.name" :error="customField.error"
                        :inverted="currentTheme.controlsInverted"
                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
               />
-              <q-slider class="col-12 col-sm-6" :min="50" :max="800" v-model="customField.width" label :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
-              <q-checkbox class="col-12 col-sm-1" v-model="customField.display" checked-icon="mdi-eye" unchecked-icon="mdi-eye-off" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
-              <q-btn flat class="col-12 col-sm-1" @click="customFieldSave" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"><q-icon name="add"/></q-btn>
+              <q-slider class="col-12 col-xs-4" :min="50" :max="800" v-model="customField.width" label :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-icon size="1.5rem" class="col-12 col-xs-1 cursor-pointer" :name="customField.display ? 'mdi-eye' : 'mdi-eye-off'" @click="customField.display = !customField.display" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+              <q-btn flat class="col-12 col-xs-1" @click="customFieldSave" :inverted="currentTheme.controlsInverted" :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"><q-icon name="add"/></q-btn>
             </div>
           </q-field>
         </div>
@@ -104,18 +107,20 @@
     </q-modal>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-dark': currentTheme.contentInverted}" :style="{top: needShowToolbar ? '50px' : '0',  bottom: 0, right: 0, left: 0}">
       <q-window-resize-observable @resize="wrapperResizeHandler" />
-      <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]" v-if="items.length" :style="{height: `${itemHeight}px`}" ref="header" @dblclick="colsConfigurator === 'header' ? $refs.colsModal.open() : ''">
+      <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]" v-if="items.length && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header" @dblclick="colsConfigurator === 'header' ? $refs.colsModal.open() : ''">
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
           <div class="header__item item_actions" v-if="actionField.display">
             <q-tooltip>Actions</q-tooltip>
             <span class="item__label">{{actionField.name}}</span>
             <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
-          <div class="header__item" v-for="(prop, index) in activeCols" :key="index" :class="{[`item_${index}`]: true}">
-            <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description : ''}`}}</q-tooltip>
-            <span class="item__label">{{prop.title || prop.name}}</span>
-            <vue-draggable-resizable :ref="`drag${index}`" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
-          </div>
+          <draggable :list="cols" element="span" @end="$emit('update:cols', cols)">
+            <div v-if="prop.display" class="header__item" v-for="(prop, index) in cols" :key="index" :class="{[`item_${index}`]: true}" style="cursor: move">
+              <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description : ''}`}}</q-tooltip>
+              <span class="item__label">{{prop.title || prop.name}}</span>
+              <vue-draggable-resizable :ref="`drag${index}`" v-if="$q.platform.is.desktop" :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :h="itemHeight * (itemsCount + 1)" :minw="50" @resizestop="(left, top, width) => {onResize(width, index)}"/>
+            </div>
+          </draggable>
           <div v-if="etcField.display" class="header__item item_etc">
             <q-tooltip>Another info by message</q-tooltip>
             <span class="item__label">{{etcField.name}}</span>
@@ -171,6 +176,7 @@
   import { QWindowResizeObservable, QInput, QToggle, QToolbar, QToolbarTitle, QDatetime, QBtn, QIcon, QSearch, QTooltip, QModal, QModalLayout, QSlider, QField, QCheckbox, uid, date, debounce } from 'quasar-framework'
   import VueDraggableResizable from 'vue-draggable-resizable'
   import ListItem from './ListItem.vue'
+  import draggable from 'vuedraggable'
 
   export default {
     name: 'VirtualScrollList',
@@ -209,10 +215,14 @@
         type: String,
         default: 'none'
       },
+      itemHeight: {
+        type: Number,
+        default: 19
+      },
       theme: Object,
       viewConfig: Object
     },
-    components: { VirtualList, QWindowResizeObservable, VueDraggableResizable, QInput, QToggle, QToolbar, QField, QToolbarTitle, QCheckbox, QDatetime, QSlider, QBtn, QIcon, QSearch, ListItem, QTooltip, QModal, QModalLayout },
+    components: { draggable, VirtualList, QWindowResizeObservable, VueDraggableResizable, QInput, QToggle, QToolbar, QField, QToolbarTitle, QCheckbox, QDatetime, QSlider, QBtn, QIcon, QSearch, ListItem, QTooltip, QModal, QModalLayout },
     data () {
       return {
         uid: 0,
@@ -220,7 +230,6 @@
         currentMode: !!this.mode,
         currentDate: this.date,
         wrapperHeight: 0,
-        itemHeight: 19,
         itemsCount: 0,
         defaultItemWidth: 150,
         dynamicCSS: document.createElement('style'),
@@ -249,7 +258,8 @@
           color: 'dark',
           bgColor: 'white',
           controlsInverted: false,
-          contentInverted: false
+          contentInverted: false,
+          headerShow: true
         },
         defaultConfig: {
           needShowFilter: false,
@@ -361,7 +371,7 @@
       },
       resetParams () {
         let isFieldWidtherThanWrapper = this.rowWidth - this.$refs.wrapper.offsetWidth > 0
-        this.wrapperHeight = this.$refs.wrapper.offsetHeight - 19 - (isFieldWidtherThanWrapper ? 19 : 0) // - header - scroll-bottom
+        this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight - (isFieldWidtherThanWrapper ? this.itemHeight : 0) // - header - scroll-bottom
         this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       },
       wrapperResizeHandler () {
@@ -530,4 +540,6 @@
         text-overflow ellipsis
         width 100%
         overflow hidden
+  .q-field[draggable="true"]
+      background-color #9e9e9e
 </style>

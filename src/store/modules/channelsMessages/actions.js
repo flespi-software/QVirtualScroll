@@ -96,8 +96,7 @@ export default function (Vue) {
         }
         if (data.result) {
             commit('setMessages', data.result)
-            if (data.result.length) { commit('setFrom', data.next_key) }
-            else { commit('setFrom', data.last_key) }
+            commit('setFrom', data.next_key)
         }
         if (state.mode === 1) { pollingGet({ state, commit, rootState }) }
     }
