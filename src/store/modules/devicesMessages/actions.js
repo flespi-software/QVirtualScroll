@@ -32,7 +32,7 @@ export default function (Vue) {
         }
         if (state.to) {
             if (state.mode === 1) {
-                state.to = Date.now() - 4000
+                state.to = Date.now()
             }
             params.to = Math.floor(state.to / 1000)
         }
@@ -47,13 +47,11 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let deviceResp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}`, {
-                    params: {fields: 'telemetry,channel_id'}
-                })
-                let deviceData = await deviceResp.json()
+                let deviceResp = await Vue.connector.getDevices(state.active, {fields: 'telemetry,device_type_id'})
+                let deviceData = deviceResp.data
                 let cols = []
-                // if (deviceData.result && deviceData.result[0] && deviceData.result[0].channel_id) {
-                //     let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${deviceData.result[0].channel_id}`, {
+                // if (deviceData.result && deviceData.result[0] && deviceData.result[0].device_type_id) {
+                //     let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${deviceData.result[0].device_type_id}`, {/*rewrite this request to new api*/
                 //         params: {fields: 'protocol_id'}
                 //     })
                 //     let protocolIdData = await protocolIdResp.json()
@@ -118,10 +116,8 @@ export default function (Vue) {
                     count: 1,
                     fields: 'timestamp'
                 }
-                let resp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}/messages`, {
-                    params: {data: JSON.stringify(params)}
-                })
-                let data = await resp.json()
+                let resp = await Vue.connector.getDevicesMessages(state.active, {data: JSON.stringify(params)})
+                let data = resp.data
                 if (data.result.length) {
                     commit('setDate', Math.round(data.result[0].timestamp * 1000))
                 }
@@ -153,10 +149,8 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
                     rootState.isLoading = true
                 }
-                let resp = await Vue.http.get(`${rootState.server}/registry/devices/${state.active}/messages`, {
-                    params: {data: JSON.stringify(getParams(state))}
-                })
-                let data = await resp.json()
+                let resp = await Vue.connector.getDevicesMessages(state.active, {data: JSON.stringify(getParams(state))})
+                let data = resp.data
                 if (preaction) {
                     if (data.result.length) {
                         commit('setMessages', data.result)
@@ -210,19 +204,21 @@ export default function (Vue) {
     }
 
     async function pollingGet ({ state, commit, rootState }) {
-        if (state.timerId) {
-            commit('clearTimer')
-        }
+        await Vue.connector.subscribeMessagesDevices(state.active, (message) => { commit('setMessages', [JSON.parse(message)]) })
         await getHistory({ state, commit, rootState }, 200)
-        await get({ state, commit, rootState })
-        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, state.delay)
+    }
+
+    /* unsubscribe from current active topic */
+    async function unsubscribePooling ({ state }) {
+        if (state.mode === 1) { await Vue.connector.unsubscribeMessagesDevices(state.active) }
     }
 
     return {
         get,
         pollingGet,
         getCols,
-        initTime
+        initTime,
+        unsubscribePooling
     }
 
 }

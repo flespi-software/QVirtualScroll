@@ -3,7 +3,6 @@ export default function (Vue) {
         let params = {}
         if (state.limit) { params.limit_count = state.limit }
         if (state.from) { params.curr_key = state.from }
-        if (state.mode === 1) { params.timeout = 20 }
         return params
     }
 
@@ -14,15 +13,11 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}`, {
-                    params: {fields: 'protocol_id'}
-                })
-                let protocolIdData = await protocolIdResp.json()
+                let protocolIdResp = await Vue.connector.getChannels(state.active, {fields: 'protocol_id'})
+                let protocolIdData = protocolIdResp.data
                 if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-                    let colsResp = await Vue.http.get(`${rootState.server}/gw/protocols/${protocolIdData.result[0].protocol_id}`, {
-                        params: {fields: 'message_parameters'}
-                    })
-                    let colsData = await colsResp.json()
+                    let colsResp = await Vue.connector.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
+                    let colsData = colsResp.data
                     let cols = []
                     colsData.result[0].message_parameters.forEach(col => {
                         cols.push({
@@ -51,13 +46,8 @@ export default function (Vue) {
         let data = {}
         if (rootState.token && state.active) {
             try {
-                let resp = await Vue.http.get(`${rootState.server}/gw/channels/${state.active}/messages`, {
-                    before (request) {
-                        state.currentRequest = request
-                    },
-                    params: {data: JSON.stringify(getParams(state))}
-                })
-                data = await resp.json()
+                let resp = await Vue.connector.getChannelsMessages(state.active, {data: JSON.stringify(getParams(state))})
+                data = resp.data
             }
             catch (e) {
                 console.log(e)
@@ -77,8 +67,7 @@ export default function (Vue) {
         let data = await getData({ state, commit, rootState })
         if (data.result) {
             commit('setMessages', data.result)
-            if (data.result.length) { commit('setFrom', data.next_key) }
-            else { commit('setFrom', data.last_key) }
+            commit('setFrom', data.next_key)
         }
         if (typeof rootState.isLoading !== 'undefined') {
             rootState.isLoading = false
@@ -88,23 +77,23 @@ export default function (Vue) {
     async function pollingGet ({ state, commit, rootState }) {
         commit('reqStart')
         let data = await getData({ state, commit, rootState })
-        if (data.errors && data.errors.length) {
-            setTimeout(() => {
-                pollingGet({ state, commit, rootState })
-            }, 4000)
-            return false
-        }
         if (data.result) {
             commit('setMessages', data.result)
             commit('setFrom', data.next_key)
         }
-        if (state.mode === 1) { pollingGet({ state, commit, rootState }) }
+        if (state.mode === 1) { await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => { commit('setMessages', [JSON.parse(message)]) }) }
+    }
+
+    /* unsubscribe from current active topic */
+    async function unsubscribePooling ({ state }) {
+        if (state.mode === 1) { await Vue.connector.unsubscribeMessagesChannels(state.active, '+') }
     }
 
     return {
         get,
         pollingGet,
-        getCols
+        getCols,
+        unsubscribePooling
     }
 
 }

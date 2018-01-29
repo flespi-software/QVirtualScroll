@@ -47,9 +47,9 @@ export default function (Vue, LocalStorage) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
-                if (state.timerId) {
-                    clearInterval(state.timerId)
-                    state.timerId = 0
+                if (state.mode === 1) {
+                    Vue.connector.unsubscribeMessagesDevices(state.active)
+                        .then(() => { Vue.connector.mqtt.close(true) })
                 }
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from
@@ -58,8 +58,8 @@ export default function (Vue, LocalStorage) {
                 break
             }
             case 1: {
-                let now = Date.now() - state.delay - 4000
-                state.from = now - (state.delay - 1000)
+                let now = Date.now() - 4000
+                state.from = now - 1000
                 state.to = now
                 state.messages = []
                 break
@@ -84,11 +84,6 @@ export default function (Vue, LocalStorage) {
 
     function setActive (state, id) {
         Vue.set(state, 'active', id)
-    }
-
-    function clearTimer (state) {
-        clearInterval(state.timerId)
-        state.timerId = 0
     }
 
     function setReverse (state, val) {
@@ -138,10 +133,9 @@ export default function (Vue, LocalStorage) {
         state.sysFilter = ''
     }
 
-    function clear (state) {
-        if (state.timerId) {
-            clearInterval(state.timerId)
-            state.timerId = 0
+    async function clear (state) {
+        if (state.mode === 1) {
+            await Vue.connector.unsubscribeMessagesDevices(state.active)
         }
         clearMessages(state)
         state.filter = ''
@@ -188,14 +182,6 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'cols', cols)
     }
 
-    function setDelay(state, delay) {
-        Vue.set(state, 'delay', delay)
-        let now = Date.now() - delay - 6000
-        state.from = now - (delay - 1000)
-        state.to = now
-        state.messages = []
-    }
-
     return {
         setMessages,
         clearMessages,
@@ -205,7 +191,6 @@ export default function (Vue, LocalStorage) {
         setFrom,
         setTo,
         reqStart,
-        clearTimer,
         setReverse,
         dateNext,
         datePrev,
@@ -216,8 +201,7 @@ export default function (Vue, LocalStorage) {
         clear,
         setActive,
         setCols,
-        updateCols,
-        setDelay
+        updateCols
     }
 
 }

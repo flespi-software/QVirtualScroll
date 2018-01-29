@@ -29,6 +29,8 @@ export default function (Vue, LocalStorage) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
+                Vue.connector.unsubscribeMessagesChannels(state.active, '+')
+                    .then(() => { Vue.connector.mqtt.close(true) })
                 state.from = 0
                 state.messages = []
                 break
@@ -57,13 +59,15 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'active', id)
     }
 
-    function clear (state) {
+    async function clear (state) {
+        if (state.mode === 1) {
+            await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
+        }
         clearMessages(state)
         state.filter = ''
         state.mode = null
         state.from = 0
         state.limit = 1000
-        state.currentRequest.abort()
     }
 
     function setCols (state, cols) {

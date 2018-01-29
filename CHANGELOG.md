@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.13] - 2018-01-29
+[feature] migrate to flespi-io-js
+[fix] init in empty device
 ### [0.0.12] - 2018-01-09
 [feature] added ability to drag cols in cols configurator and in table
 [feature] new props itemHeight and headerShow(in theme)

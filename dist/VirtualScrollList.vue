@@ -484,11 +484,16 @@
     },
     directives: {
       'auto-bottom': {
-        update: function(el, { value }) {
-          if (value) {
-             el.scrollTop = el.scrollHeight;
-         }
-        }
+        inserted: debounce((el, { value }) => {
+            if (value) {
+                el.scrollTop = el.scrollHeight
+            }
+        }, 100),
+        update: debounce((el, { value }) => {
+            if (value) {
+                el.scrollTop = el.scrollHeight
+            }
+        }, 100)
       }
     }
   }

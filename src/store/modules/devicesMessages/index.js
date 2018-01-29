@@ -7,12 +7,10 @@ export default function (Store, Vue, LocalStorage, name) {
 
     const state = {
         name: name,
-        timerId: 0,
         active: 0,
         messages: [],
         filter: '',
         sysFilter: '',
-        delay: 2000,
         mode: null,
         from: 0,
         to: 0,

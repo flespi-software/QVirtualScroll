@@ -25,7 +25,7 @@ export default function (Vue) {
         }
         if (state.to) {
             if (state.mode === 1) {
-                state.to = Date.now() - 6000
+                state.to = Date.now()
             }
             params.to = Math.floor(state.to / 1000)
         }
@@ -49,10 +49,8 @@ export default function (Vue) {
                    count: 1,
                    fields: 'timestamp'
                 }
-                let resp = await Vue.http.get(`${rootState.server}/platform/customer/logs`, {
-                    params: {data: JSON.stringify(params)}
-                })
-                let data = await resp.json()
+                let resp = await Vue.connector.getCustomerLogs({data: JSON.stringify(params)})
+                let data = resp.data
                 if (data.result.length) {
                     commit('setDate', Math.round(data.result[0].timestamp * 1000))
                 }
@@ -81,13 +79,11 @@ export default function (Vue) {
         }
         if (rootState.token && state.origin) {
             try {
-                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let resp = await Vue.http.get(`${rootState.server}/platform/customer/logs`, {
-                    params: {data: JSON.stringify(getParams(state))}
-                })
-                let data = await resp.json()
+                let resp = await Vue.connector.getCustomerLogs({data: JSON.stringify(getParams(state))})
+                let data = resp.data
                 if (preaction) {
                     if (data.result.length) {
                         commit('setMessages', data.result)
@@ -118,13 +114,13 @@ export default function (Vue) {
                 else {
                     commit('setMessages', data.result)
                 }
-                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = false
                 }
             }
             catch (e) {
                 console.log(e)
-                if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
+                if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = false
                 }
             }
@@ -141,18 +137,25 @@ export default function (Vue) {
     }
 
     async function pollingGet ({ state, commit, rootState }) {
-        if (state.timerId) {
-            commit('clearTimer')
-        }
+        let api = state.origin.split('/')[0],
+            origin = state.origin.replace(`${api}/`, '')
+
+        await Vue.connector.subscribeLogs(api, origin, '#', (message) => { commit('setMessages', [JSON.parse(message)]) })
         await getHistory({ state, commit, rootState }, 200)
-        await get({ state, commit, rootState })
-        state.timerId = setInterval(() => { get({ state, commit, rootState }) }, state.delay)
+    }
+
+    /* unsubscribe from current active topic */
+    async function unsubscribePooling ({ state }) {
+        let api = state.origin.split('/')[0],
+            origin = state.origin.replace(`${api}/`, '')
+        if (state.mode === 1) {  await Vue.connector.unsubscribeLogs(api, origin, '#')}
     }
 
     return {
         get,
         pollingGet,
         initTime,
-        getCols
+        getCols,
+        unsubscribePooling
     }
 }
