@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.14] - 2018-01-30
+[feature] packages updated
+[fix] auto-scroll directive
 ### [0.0.13] - 2018-01-29
 [feature] migrate to flespi-io-js
 [fix] init in empty device

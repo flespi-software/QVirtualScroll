@@ -138,7 +138,7 @@ export default function (Vue) {
 
     async function pollingGet ({ state, commit, rootState }) {
         let api = state.origin.split('/')[0],
-            origin = state.origin.replace(`${api}/`, '')
+            origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
         await Vue.connector.subscribeLogs(api, origin, '#', (message) => { commit('setMessages', [JSON.parse(message)]) })
         await getHistory({ state, commit, rootState }, 200)

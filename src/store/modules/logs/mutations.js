@@ -177,16 +177,31 @@ export default function (Vue, LocalStorage) {
             let colsFromStorage = LocalStorage.get.item(state.name)
             if (colsFromStorage) {
                 if (colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
-                    let newCols = cols.reduce((result, col, index) => {
-                        let newCol = colsFromStorage[state.origin].find(colFromStorage => {
-                            return colFromStorage.name === col.name
-                        })
-                        if (!newCol) {
-                            return result.push(col)
-                        }
-                        return result
-                    }, [])
-                    colsFromStorage[state.origin] = [...colsFromStorage[state.origin], ...newCols]
+                    /* if cols has been added or modified */
+                    if (cols.length >= colsFromStorage[state.origin].length) {
+                        let newCols = cols.reduce((result, col, index) => {
+                            let newCol = colsFromStorage[state.origin].find(colFromStorage => {
+                                return colFromStorage.name === col.name
+                            })
+                            if (!newCol) {
+                                result.push(col)
+                            }
+                            return result
+                        }, [])
+                        colsFromStorage[state.origin] = [...colsFromStorage[state.origin], ...newCols]
+                    }
+                    /* if cols has been removed */
+                    else {
+                        colsFromStorage[state.origin] = cols.reduce((result, col) => {
+                            let newCol = colsFromStorage[state.origin].find(colFromStorage => {
+                                return colFromStorage.name === col.name
+                            })
+                            if (newCol) { result.push(newCol) }
+                            else { result.push(col) }
+
+                            return result
+                        }, [])
+                    }
                 }
                 else {
                     colsFromStorage[state.origin] = cols

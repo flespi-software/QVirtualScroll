@@ -150,16 +150,31 @@ export default function (Vue, LocalStorage) {
         let colsFromStorage = LocalStorage.get.item(state.name)
         if (colsFromStorage) {
             if (colsFromStorage[state.active] && colsFromStorage[state.active].length) {
-                let newCols = cols.reduce((result, col, index) => {
-                    let newCol = colsFromStorage[state.active].find(colFromStorage => {
-                        return colFromStorage.name === col.name
-                    })
-                    if (!newCol) {
-                        return result.push(col)
-                    }
-                    return result
-                }, [])
-                colsFromStorage[state.active] = [...colsFromStorage[state.active], ...newCols]
+                /* if cols has been added or modified */
+                if (cols.length >= colsFromStorage[state.active].length) {
+                    let newCols = cols.reduce((result, col, index) => {
+                        let newCol = colsFromStorage[state.active].find(colFromStorage => {
+                            return colFromStorage.name === col.name
+                        })
+                        if (!newCol) {
+                            result.push(col)
+                        }
+                        return result
+                    }, [])
+                    colsFromStorage[state.active] = [...colsFromStorage[state.active], ...newCols]
+                }
+                /* if cols has been removed */
+                else {
+                    colsFromStorage[state.active] = cols.reduce((result, col) => {
+                        let newCol = colsFromStorage[state.active].find(colFromStorage => {
+                            return colFromStorage.name === col.name
+                        })
+                        if (newCol) { result.push(newCol) }
+                        else { result.push(col) }
+
+                        return result
+                    }, [])
+                }
             }
             else {
                 colsFromStorage[state.active] = cols

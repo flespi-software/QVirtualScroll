@@ -489,11 +489,11 @@
                 el.scrollTop = el.scrollHeight
             }
         }, 100),
-        update: debounce((el, { value }) => {
+        update: function (el, { value }) {
             if (value) {
-                el.scrollTop = el.scrollHeight
+                setTimeout(() => { el.scrollTop = el.scrollHeight }, 100)
             }
-        }, 100)
+        }
       }
     }
   }
