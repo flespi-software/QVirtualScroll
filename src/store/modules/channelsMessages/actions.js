@@ -13,10 +13,10 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let protocolIdResp = await Vue.connector.getChannels(state.active, {fields: 'protocol_id'})
+                let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
                 let protocolIdData = protocolIdResp.data
                 if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-                    let colsResp = await Vue.connector.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
+                    let colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
                     let colsData = colsResp.data
                     let cols = []
                     colsData.result[0].message_parameters.forEach(col => {
@@ -46,7 +46,7 @@ export default function (Vue) {
         let data = {}
         if (rootState.token && state.active) {
             try {
-                let resp = await Vue.connector.getChannelsMessages(state.active, {data: JSON.stringify(getParams(state))})
+                let resp = await Vue.connector.gw.getChannelsMessages(state.active, {data: JSON.stringify(getParams(state))})
                 data = resp.data
             }
             catch (e) {

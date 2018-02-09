@@ -30,7 +30,7 @@ export default function (Vue, LocalStorage) {
         switch (mode) {
             case 0: {
                 Vue.connector.unsubscribeMessagesChannels(state.active, '+')
-                    .then(() => { Vue.connector.mqtt.close(true) })
+                    .then(() => { Vue.connector.socket.close(true) })
                 state.from = 0
                 state.messages = []
                 break

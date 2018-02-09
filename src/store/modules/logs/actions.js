@@ -49,7 +49,7 @@ export default function (Vue) {
                    count: 1,
                    fields: 'timestamp'
                 }
-                let resp = await Vue.connector.getCustomerLogs({data: JSON.stringify(params)})
+                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(params)})
                 let data = resp.data
                 if (data.result.length) {
                     commit('setDate', Math.round(data.result[0].timestamp * 1000))
@@ -82,7 +82,7 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let resp = await Vue.connector.getCustomerLogs({data: JSON.stringify(getParams(state))})
+                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(getParams(state))})
                 let data = resp.data
                 if (preaction) {
                     if (data.result.length) {

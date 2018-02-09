@@ -51,7 +51,7 @@ export default function (Vue, LocalStorage) {
                     let api = state.origin.split('/')[0],
                         origin = state.origin.replace(`${api}/`, '')
                     Vue.connector.unsubscribeLogs(api, origin, '#', (message) => { commit('setMessages', [JSON.parse(message)]) })
-                        .then(() => { Vue.connector.mqtt.close(true) })
+                        .then(() => { Vue.connector.socket.close(true) })
                 }
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from

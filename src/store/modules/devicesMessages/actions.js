@@ -47,7 +47,7 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let deviceResp = await Vue.connector.getDevices(state.active, {fields: 'telemetry,device_type_id'})
+                let deviceResp = await Vue.connector.registry.getDevices(state.active, {fields: 'telemetry,device_type_id'})
                 let deviceData = deviceResp.data
                 let cols = []
                 // if (deviceData.result && deviceData.result[0] && deviceData.result[0].device_type_id) {
@@ -116,7 +116,7 @@ export default function (Vue) {
                     count: 1,
                     fields: 'timestamp'
                 }
-                let resp = await Vue.connector.getDevicesMessages(state.active, {data: JSON.stringify(params)})
+                let resp = await Vue.connector.registry.getDevicesMessages(state.active, {data: JSON.stringify(params)})
                 let data = resp.data
                 if (data.result.length) {
                     commit('setDate', Math.round(data.result[0].timestamp * 1000))
@@ -149,7 +149,7 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
                     rootState.isLoading = true
                 }
-                let resp = await Vue.connector.getDevicesMessages(state.active, {data: JSON.stringify(getParams(state))})
+                let resp = await Vue.connector.registry.getDevicesMessages(state.active, {data: JSON.stringify(getParams(state))})
                 let data = resp.data
                 if (preaction) {
                     if (data.result.length) {

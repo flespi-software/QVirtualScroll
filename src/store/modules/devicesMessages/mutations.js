@@ -49,7 +49,7 @@ export default function (Vue, LocalStorage) {
             case 0: {
                 if (state.mode === 1) {
                     Vue.connector.unsubscribeMessagesDevices(state.active)
-                        .then(() => { Vue.connector.mqtt.close(true) })
+                        .then(() => { Vue.connector.socket.close(true) })
                 }
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from
