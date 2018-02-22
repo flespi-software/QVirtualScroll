@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.16] - 2018-02-22
+[feature] migrate from registry to gw
 ### [0.0.15] - 2018-02-09
 [feature] migrate to new version of flespi-io-js
 ### [0.0.14] - 2018-01-30
