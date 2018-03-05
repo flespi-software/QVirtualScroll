@@ -149,11 +149,8 @@ export default function (Vue, LocalStorage) {
     }
 
     async function clear (state) {
-        if (state.mode === 1) {
-            let api = state.origin.split('/')[0],
-                origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
-            await Vue.connector.unsubscribeLogs(api, origin, '#')
-        }
+        let api = state.origin.split('/')[0],
+            origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
         clearMessages(state)
         state.filter = ''
         state.mode = null
@@ -161,6 +158,7 @@ export default function (Vue, LocalStorage) {
         state.to = 0
         state.limit = 1000
         state.reverse = false
+        await Vue.connector.unsubscribeLogs(api, origin, '#')
     }
 
     function setOrigin (state, origin) {

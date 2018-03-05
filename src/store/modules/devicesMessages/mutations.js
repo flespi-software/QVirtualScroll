@@ -131,9 +131,6 @@ export default function (Vue, LocalStorage) {
     }
 
     async function clear (state) {
-        if (state.mode === 1) {
-            await Vue.connector.unsubscribeMessagesDevices(state.active)
-        }
         clearMessages(state)
         state.filter = ''
         state.mode = null
@@ -141,6 +138,7 @@ export default function (Vue, LocalStorage) {
         state.to = 0
         state.limit = 1000
         state.reverse = false
+        await Vue.connector.unsubscribeMessagesDevices(state.active)
     }
 
     function setCols (state, cols) {

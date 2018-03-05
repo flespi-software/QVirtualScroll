@@ -59,14 +59,12 @@ export default function (Vue, LocalStorage) {
     }
 
     async function clear (state) {
-        if (state.mode === 1) {
-            await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
-        }
         clearMessages(state)
         state.filter = ''
         state.mode = null
         state.from = 0
         state.limit = 1000
+        await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
     }
 
     function setCols (state, cols) {

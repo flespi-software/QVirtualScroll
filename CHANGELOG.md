@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.18] - 2018-03-05
+[fix] clear mutation
 ### [0.0.17] - 2018-03-05
 [feature] new field in storage: newMessagesCount
 ### [0.0.16] - 2018-02-22
