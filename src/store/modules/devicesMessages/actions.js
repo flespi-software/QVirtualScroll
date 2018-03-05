@@ -204,19 +204,23 @@ export default function (Vue) {
     }
 
     async function pollingGet ({ state, commit, rootState }) {
-        await Vue.connector.subscribeMessagesDevices(state.active, (message) => { commit('setMessages', [JSON.parse(message)]) })
+        await Vue.connector.subscribeMessagesDevices(state.active, (message) => {
+            if (state.mode === 1) { commit('setMessages', [JSON.parse(message)]) }
+            else { commit('setNewMessagesCount', state.newMessagesCount + 1) }
+        })
         await getHistory({ state, commit, rootState }, 200)
     }
 
     /* unsubscribe from current active topic */
     async function unsubscribePooling ({ state }) {
-        if (state.mode === 1) { await Vue.connector.unsubscribeMessagesDevices(state.active) }
+        await Vue.connector.unsubscribeMessagesDevices(state.active)
     }
 
     return {
         get,
         pollingGet,
         getCols,
+        getHistory,
         initTime,
         unsubscribePooling
     }

@@ -13,7 +13,8 @@ export default function (Store, Vue, LocalStorage, name) {
         mode: null,
         from: 0,
         limit: 1000,
-        cols: []
+        cols: [],
+        newMessagesCount: 0
     }
 
     return {

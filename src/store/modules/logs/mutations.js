@@ -47,12 +47,6 @@ export default function (Vue, LocalStorage) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
-                if (state.mode === 1) {
-                    let api = state.origin.split('/')[0],
-                        origin = state.origin.replace(`${api}/`, '')
-                    Vue.connector.unsubscribeLogs(api, origin, '#', (message) => { commit('setMessages', [JSON.parse(message)]) })
-                        .then(() => { Vue.connector.socket.close(true) })
-                }
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from
                 state.to = timeObj.to
@@ -64,6 +58,7 @@ export default function (Vue, LocalStorage) {
                 state.from = now - 1000
                 state.to = now
                 state.messages = []
+                state.newMessagesCount = 0
                 break
             }
         }
@@ -156,7 +151,7 @@ export default function (Vue, LocalStorage) {
     async function clear (state) {
         if (state.mode === 1) {
             let api = state.origin.split('/')[0],
-                origin = state.origin.replace(`${api}/`, '')
+                origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
             await Vue.connector.unsubscribeLogs(api, origin, '#')
         }
         clearMessages(state)
@@ -291,6 +286,10 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'cols', cols)
     }
 
+    function setNewMessagesCount(state, count) {
+        Vue.set(state, 'newMessagesCount', count)
+    }
+
     return {
         setMessages,
         clearMessages,
@@ -311,6 +310,7 @@ export default function (Vue, LocalStorage) {
         setOrigin,
         setSysFilter,
         setCols,
-        updateCols
+        updateCols,
+        setNewMessagesCount
     }
 }

@@ -140,20 +140,24 @@ export default function (Vue) {
         let api = state.origin.split('/')[0],
             origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
-        await Vue.connector.subscribeLogs(api, origin, '#', (message) => { commit('setMessages', [JSON.parse(message)]) })
+        await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
+            if (state.mode === 1) { commit('setMessages', [JSON.parse(message)]) }
+            else { commit('setNewMessagesCount', state.newMessagesCount + 1) }
+        })
         await getHistory({ state, commit, rootState }, 200)
     }
 
     /* unsubscribe from current active topic */
     async function unsubscribePooling ({ state }) {
         let api = state.origin.split('/')[0],
-            origin = state.origin.replace(`${api}/`, '')
-        if (state.mode === 1) {  await Vue.connector.unsubscribeLogs(api, origin, '#')}
+            origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
+        await Vue.connector.unsubscribeLogs(api, origin, '#')
     }
 
     return {
         get,
         pollingGet,
+        getHistory,
         initTime,
         getCols,
         unsubscribePooling

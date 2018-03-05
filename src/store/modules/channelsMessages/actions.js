@@ -81,12 +81,15 @@ export default function (Vue) {
             commit('setMessages', data.result)
             commit('setFrom', data.next_key)
         }
-        if (state.mode === 1) { await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => { commit('setMessages', [JSON.parse(message)]) }) }
+        await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => {
+            if (state.mode === 1) { commit('setMessages', [JSON.parse(message)]) }
+            else { commit('setNewMessagesCount', state.newMessagesCount + 1) }
+        })
     }
 
     /* unsubscribe from current active topic */
     async function unsubscribePooling ({ state }) {
-        if (state.mode === 1) { await Vue.connector.unsubscribeMessagesChannels(state.active, '+') }
+        await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
     }
 
     return {

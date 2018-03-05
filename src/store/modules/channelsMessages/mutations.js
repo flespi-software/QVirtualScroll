@@ -29,8 +29,6 @@ export default function (Vue, LocalStorage) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
-                Vue.connector.unsubscribeMessagesChannels(state.active, '+')
-                    .then(() => { Vue.connector.socket.close(true) })
                 state.from = 0
                 state.messages = []
                 break
@@ -39,6 +37,7 @@ export default function (Vue, LocalStorage) {
                 let now = Date.now()
                 state.from = Math.ceil((now - 4000 - 1000) / 1000)
                 state.messages = []
+                state.newMessagesCount = 0
                 break
             }
         }
@@ -121,6 +120,10 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'cols', cols)
     }
 
+    function setNewMessagesCount(state, count) {
+        Vue.set(state, 'newMessagesCount', count)
+    }
+
     return {
         setMessages,
         clearMessages,
@@ -132,6 +135,7 @@ export default function (Vue, LocalStorage) {
         clear,
         setActive,
         setCols,
-        updateCols
+        updateCols,
+        setNewMessagesCount
     }
 }

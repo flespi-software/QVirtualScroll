@@ -47,10 +47,6 @@ export default function (Vue, LocalStorage) {
     function setMode (state, mode) {
         switch (mode) {
             case 0: {
-                if (state.mode === 1) {
-                    Vue.connector.unsubscribeMessagesDevices(state.active)
-                        .then(() => { Vue.connector.socket.close(true) })
-                }
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from
                 state.to = timeObj.to
@@ -62,6 +58,7 @@ export default function (Vue, LocalStorage) {
                 state.from = now - 1000
                 state.to = now
                 state.messages = []
+                state.newMessagesCount = 0
                 break
             }
         }
@@ -197,6 +194,10 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'cols', cols)
     }
 
+    function setNewMessagesCount(state, count) {
+        Vue.set(state, 'newMessagesCount', count)
+    }
+
     return {
         setMessages,
         clearMessages,
@@ -216,7 +217,8 @@ export default function (Vue, LocalStorage) {
         clear,
         setActive,
         setCols,
-        updateCols
+        updateCols,
+        setNewMessagesCount
     }
 
 }
