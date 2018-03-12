@@ -288,7 +288,28 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'newMessagesCount', count)
     }
 
+    function setOffline (state, needPostOfflineMessage) {
+        if (needPostOfflineMessage) {
+            setMessages(state, [{__connectionStatus: 'offline', timestamp: Date.now()}])
+        }
+        state.offline = true
+    }
+
+    function setReconnected (state, needPostOfflineMessage) {
+        if (needPostOfflineMessage) {
+            setMessages(state, [{__connectionStatus: 'reconnected', timestamp: Date.now()}])
+        }
+        state.offline = false
+    }
+
+    function setMissingMessages (state, { data, index }) {
+        data.forEach((val) => { val.__status = 'missed' })
+        state.messages.splice(index + 1, 0, ...data)
+    }
+
     return {
+        setOffline,
+        setReconnected,
         setMessages,
         clearMessages,
         setLimit,
@@ -309,6 +330,7 @@ export default function (Vue, LocalStorage) {
         setSysFilter,
         setCols,
         updateCols,
-        setNewMessagesCount
+        setNewMessagesCount,
+        setMissingMessages
     }
 }

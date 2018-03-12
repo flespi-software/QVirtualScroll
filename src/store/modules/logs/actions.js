@@ -147,6 +147,39 @@ export default function (Vue) {
         await getHistory({ state, commit, rootState }, 200)
     }
 
+    /* getting missed messages after offline */
+    async function getMissedMessages ({ state, commit, rootState }) {
+        if (rootState.token && state.origin) {
+            try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
+                let lastIndexOffline = state.messages.reduceRight((result, value, index) => {
+                    if (result) { return result }
+                    if (value.__connectionStatus === 'offline') { result = index }
+                    return result
+                },0)
+                let params = {
+                    filter: `event_origin=${state.origin}`,
+                    from: Math.floor(state.messages[lastIndexOffline].timestamp / 1000),
+                    to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
+                }
+                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(params)})
+                let data = resp.data
+                commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
+        }
+    }
+
     /* unsubscribe from current active topic */
     async function unsubscribePooling ({ state }) {
         let api = state.origin.split('/')[0],
@@ -160,6 +193,7 @@ export default function (Vue) {
         getHistory,
         initTime,
         getCols,
-        unsubscribePooling
+        unsubscribePooling,
+        getMissedMessages
     }
 }

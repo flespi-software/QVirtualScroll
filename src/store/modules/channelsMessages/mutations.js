@@ -122,7 +122,23 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'newMessagesCount', count)
     }
 
+    function setOffline (state, needPostOfflineMessage) {
+        if (needPostOfflineMessage) {
+            setMessages(state, [{__connectionStatus: 'offline', timestamp: Date.now()}])
+        }
+        state.offline = true
+    }
+
+    function setReconnected (state, needPostOfflineMessage) {
+        if (needPostOfflineMessage) {
+            setMessages(state, [{__connectionStatus: 'reconnected', timestamp: Date.now()}])
+        }
+        state.offline = false
+    }
+
     return {
+        setOffline,
+        setReconnected,
         setMessages,
         clearMessages,
         setLimit,

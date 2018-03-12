@@ -216,13 +216,46 @@ export default function (Vue) {
         await Vue.connector.unsubscribeMessagesDevices(state.active)
     }
 
+    /* getting missed messages after offline */
+    async function getMissedMessages ({ state, commit, rootState }) {
+        if (rootState.token && state.active) {
+            try {
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = true
+                }
+                let lastIndexOffline = state.messages.reduceRight((result, value, index) => {
+                    if (result) { return result }
+                    if (value.__connectionStatus === 'offline') { result = index }
+                    return result
+                },0)
+                let params = {
+                    from: Math.floor(state.messages[lastIndexOffline].timestamp / 1000),
+                    to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
+                }
+                let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(params)})
+                let data = resp.data
+                commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
+            catch (e) {
+                console.log(e)
+                if (typeof rootState.isLoading !== 'undefined') {
+                    rootState.isLoading = false
+                }
+            }
+        }
+    }
+
     return {
         get,
         pollingGet,
         getCols,
         getHistory,
         initTime,
-        unsubscribePooling
+        unsubscribePooling,
+        getMissedMessages
     }
 
 }

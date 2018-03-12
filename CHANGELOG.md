@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.0.19] - 2018-03-06
+[feature] offline processing
 ### [0.0.18] - 2018-03-05
 [fix] clear mutation
 ### [0.0.17] - 2018-03-05
