@@ -208,7 +208,6 @@ export default function (Vue) {
             if (state.mode === 1) { commit('setMessages', [JSON.parse(message)]) }
             else { commit('setNewMessagesCount', state.newMessagesCount + 1) }
         })
-        await getHistory({ state, commit, rootState }, 200)
     }
 
     /* unsubscribe from current active topic */

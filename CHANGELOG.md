@@ -1,5 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.2] - 2018-03-13
+[fix] pooling
+### [0.1.1] - 2018-03-13
+[fix] getting missed messages
 ### [0.1.0] - 2018-03-13
 [feature] rebase getting missed messages
 [update] packages

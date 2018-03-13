@@ -80,6 +80,7 @@ export default function (Vue, LocalStorage) {
     }
 
     function setActive (state, id) {
+        state.newMessagesCount = 0
         Vue.set(state, 'active', id)
     }
 

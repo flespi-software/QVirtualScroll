@@ -162,6 +162,7 @@ export default function (Vue, LocalStorage) {
     }
 
     function setOrigin (state, origin) {
+        state.newMessagesCount = 0
         Vue.set(state, 'origin', origin)
     }
 
