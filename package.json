@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.0.19",
+  "version": "0.1.0",
   "description": "Component for show messages",
   "main": "index.js",
   "author": "SeBu",

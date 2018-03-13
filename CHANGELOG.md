@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.0] - 2018-03-13
+[feature] rebase getting missed messages
+[update] packages
 ### [0.0.19] - 2018-03-06
 [feature] offline processing
 ### [0.0.18] - 2018-03-05

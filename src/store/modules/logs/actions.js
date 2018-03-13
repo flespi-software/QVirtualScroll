@@ -161,7 +161,7 @@ export default function (Vue) {
                 },0)
                 let params = {
                     filter: `event_origin=${state.origin}`,
-                    from: Math.floor(state.messages[lastIndexOffline].timestamp / 1000),
+                    from: Math.floor((state.messages[lastIndexOffline - 1].timestamp / 1000) + 1),
                     to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
                 }
                 let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(params)})
