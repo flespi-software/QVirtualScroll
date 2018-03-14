@@ -224,6 +224,13 @@
     },
     components: { draggable, VirtualList, QWindowResizeObservable, VueDraggableResizable, QInput, QToggle, QToolbar, QField, QToolbarTitle, QCheckbox, QDatetime, QSlider, QBtn, QIcon, QSearch, ListItem, QTooltip, QModal, QModalLayout },
     data () {
+      let defaultConfig = {
+        needShowFilter: false,
+        needShowMode: false,
+        needShowPageScroll: '',
+        needShowDate: false,
+        needShowEtc: false
+      }
       return {
         uid: 0,
         currentFilter: this.filter,
@@ -261,15 +268,10 @@
           contentInverted: false,
           headerShow: true
         },
-        defaultConfig: {
-          needShowFilter: false,
-          needShowMode: false,
-          needShowPageScroll: '',
-          needShowDate: false,
-          needShowEtc: false
-        },
+        defaultConfig: defaultConfig,
         hasItemClickHandler: false,
-        currentScrollTop: 0
+        currentScrollTop: 0,
+        currentViewConfig: Object.assign(defaultConfig, this.viewConfig)
       }
     },
     computed: {
@@ -284,9 +286,6 @@
       },
       currentTheme () {
         return Object.assign(this.defaultTheme, this.theme)
-      },
-      currentViewConfig () {
-        return Object.assign(this.defaultConfig, this.viewConfig)
       },
       rowWidth () {
         let res = 0
@@ -469,6 +468,13 @@
             this.etcField.display = true
           }
           this.updateDynamicCSS()
+        }
+      },
+      viewConfig: {
+        deep: true,
+        handler (config) {
+          this.etcField.display = config.needShowEtc
+          this.currentViewConfig = Object.assign(this.defaultConfig, config)
         }
       }
     },
