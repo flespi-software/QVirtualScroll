@@ -1,7 +1,7 @@
 <template>
   <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" @click="itemClickHandler">
     <span class="list__item item_actions" v-if="actionsVisible">
-      <q-icon v-for="(action, i) in actions" :key="i" @click.stop="clickHandler(index, action.type, item)" :class="action.classes" class="cursor-pointer on-left" :name="action.icon">
+      <q-icon v-for="(action, i) in actions" :key="i" @click.stop.native="clickHandler(index, action.type, item)" :class="action.classes" class="cursor-pointer on-left" :name="action.icon">
         <q-tooltip>{{action.label}}</q-tooltip>
       </q-icon>
     </span>
@@ -11,8 +11,6 @@
 </template>
 
 <script>
-  import { QIcon, QTooltip } from 'quasar-framework'
-
   export default {
     props: [
       'item',
@@ -43,8 +41,7 @@
       itemClickHandler (index, content) {
         this.$emit(`item-click`, {index, content})
       }
-    },
-    components: {QIcon, QTooltip}
+    }
   }
 </script>
 

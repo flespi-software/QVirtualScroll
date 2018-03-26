@@ -23,7 +23,7 @@ Module for processing and storing messages from the device
 
 ## Requirements:
 
-- [Node.js](https://nodejs.org/en/) (>=6.x)
+- [Node.js](https://nodejs.org/en/) (>=9.x)
 - npm version 3+ and [Git](https://git-scm.com/).
 
 ## [Usage example](https://github.com/flespi-software/QVirtualScroll/wiki/Example)

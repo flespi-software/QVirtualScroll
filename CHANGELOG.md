@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.4] - 2018-03-26
+[feature] rebase for new version of quasar
 ### [0.1.3] - 2018-03-14
 [feature] etc is dynamic field modify
 ### [0.1.2] - 2018-03-13
