@@ -137,7 +137,6 @@
               :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
               :size="itemHeight"
               :remain="itemsCount"
-              :tobottom="enableAutoscroll"
               :debounce="10"
               wclass="q-w-list">
         <slot name="items"
@@ -271,7 +270,8 @@
         hasItemClickHandler: false,
         currentScrollTop: 0,
         currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
-        isNeedResizer: true
+        isNeedResizer: true,
+        allScrollTop: 0
       }
     },
     computed: {
@@ -391,26 +391,19 @@
         }
         this.updateDynamicCSS()
       },
-      enableAutoscroll () {
-        if (!this.needAutoScroll && this.mode) {
-          this.needAutoScroll = true
-        }
-      },
       listScroll: function (e, data) {
+        if (!this.currentScrollTop) { this.currentScrollTop = data.offset }
+        this.allScrollTop = this.$refs.scroller.$el.scrollHeight - this.$refs.scroller.$el.clientHeight
         if (this.items.length) {
-          if (data.offset !== this.currentScrollTop) {
-             this.scrollMethod(this, e, data)
+          if (data.offset < this.currentScrollTop && this.needAutoScroll) {
+             this.needAutoScroll = false
+          } else if (!this.needAutoScroll && this.mode === 1 && data.offset >= this.allScrollTop) {
+              this.needAutoScroll = true
           }
+          this.currentScrollTop = data.offset
           this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
         }
       },
-      scrollMethod: debounce((ctx, e, data) => {
-        let currentScrollTop = data.offset
-        if (currentScrollTop < ctx.currentScrollTop && ctx.needAutoScroll) {
-          ctx.needAutoScroll = false
-        }
-        ctx.currentScrollTop = currentScrollTop
-      }, 10),
       getDynamicCSS () {
         let result = ''
         if (this.actionField.display) {
@@ -503,7 +496,7 @@
         }, 100),
         update: function (el, { value }) {
             if (value) {
-                setTimeout(() => { el.scrollTop = el.scrollHeight }, 100)
+                el.scrollTop = el.scrollHeight
             }
         }
       }
