@@ -19,7 +19,8 @@ export default function (Store, Vue, LocalStorage, name) {
         cols: [],
         newMessagesCount: 0,
         offline: false,
-        selected: null
+        selected: null,
+        sortBy: null
     }
 
     return {

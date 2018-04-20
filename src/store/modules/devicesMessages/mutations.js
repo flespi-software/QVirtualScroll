@@ -17,7 +17,37 @@ export default function (Vue, LocalStorage) {
             if (state.mode === 1) {
                 Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
             }
-            let messages = state.messages.concat(data)
+            let messages = state.messages
+            if (state.sortBy && state.mode === 1) {
+                if (data.length > 1) {
+                    /* write history for rt mode */
+                    messages = messages.concat(data)
+                } else {
+                    /* write by sorted field */
+                    let message = data[0],
+                        fieldName = state.sortBy,
+                        length = state.messages.length - 1,
+                        index = null,
+                        escapeFlag = true
+                    for (let i = length; i !== 0 || escapeFlag; i--) {
+                        if (messages[i][fieldName] > message[fieldName]) {
+                            index = i
+                            if (i === 0) {
+                                escapeFlag = false
+                            }
+                        } else {
+                            escapeFlag = false
+                        }
+                    }
+                    if (index) {
+                        messages.splice(index, 0, message)
+                    } else {
+                        messages.push(message)
+                    }
+                }
+            } else {
+                messages = messages.concat(data)
+            }
             if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
                 let count = (messages.length -1) - (state.limit - 1)
                 messages = messages.slice(count)
@@ -227,6 +257,14 @@ export default function (Vue, LocalStorage) {
         Vue.set(state, 'selected', null)
     }
 
+    function setSortBy (state, field) {
+        Vue.set(state, 'sortBy', field)
+    }
+
+    function clearSortBy (state) {
+        Vue.set(state, 'sortBy', null)
+    }
+
     return {
         setOffline,
         setReconnected,
@@ -252,7 +290,9 @@ export default function (Vue, LocalStorage) {
         updateCols,
         setNewMessagesCount,
         setSelected,
-        clearSelected
+        clearSelected,
+        setSortBy,
+        clearSortBy
     }
 
 }
