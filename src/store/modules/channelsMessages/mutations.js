@@ -4,9 +4,11 @@ export default function (Vue, LocalStorage) {
             if (state.reverse) {
                 data.reverse()
             }
-            let messages = [...state.messages, ...data]
-            if (state.limit && state.mode === 1 && messages.length >= state.limit) { // rt limiting
-                messages = messages.slice((messages.length -1) - (state.limit - 1))
+            let messages = state.messages.concat(data)
+            if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
+                let count = (messages.length -1) - (state.limit - 1)
+                messages = messages.slice(count)
+                Vue.set(state, 'selected', state.selected - count)
             }
             Vue.set(state, 'messages', messages)
         }
@@ -14,6 +16,7 @@ export default function (Vue, LocalStorage) {
 
     function clearMessages (state) {
         Vue.set(state, 'messages', [])
+        clearSelected(state)
     }
 
     function setLimit (state, count) {
@@ -30,13 +33,13 @@ export default function (Vue, LocalStorage) {
         switch (mode) {
             case 0: {
                 state.from = 0
-                state.messages = []
+                clearMessages(state)
                 break
             }
             case 1: {
                 let now = Date.now()
                 state.from = Math.ceil((now - 4000 - 1000) / 1000)
-                state.messages = []
+                clearMessages(state)
                 state.newMessagesCount = 0
                 break
             }
@@ -137,6 +140,14 @@ export default function (Vue, LocalStorage) {
         state.offline = false
     }
 
+    function setSelected (state, index) {
+        Vue.set(state, 'selected', index)
+    }
+
+    function clearSelected (state) {
+        Vue.set(state, 'selected', null)
+    }
+
     return {
         setOffline,
         setReconnected,
@@ -151,6 +162,8 @@ export default function (Vue, LocalStorage) {
         setActive,
         setCols,
         updateCols,
-        setNewMessagesCount
+        setNewMessagesCount,
+        setSelected,
+        clearSelected
     }
 }

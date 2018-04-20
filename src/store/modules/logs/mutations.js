@@ -17,9 +17,11 @@ export default function (Vue, LocalStorage) {
             if (state.mode === 1) {
                 Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
             }
-            let messages = [...state.messages, ...data]
-            if (state.limit && state.mode === 1 && messages.length >= state.limit) { // rt limiting
-                messages = messages.slice((messages.length -1) - (state.limit - 1))
+            let messages = state.messages.concat(data)
+            if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
+                let count = (messages.length -1) - (state.limit - 1)
+                messages = messages.slice(count)
+                Vue.set(state, 'selected', state.selected - count)
             }
             Vue.set(state, 'messages', messages)
         }
@@ -32,6 +34,7 @@ export default function (Vue, LocalStorage) {
 
     function clearMessages (state) {
         Vue.set(state, 'messages', [])
+        clearSelected(state)
     }
 
     function setLimit (state, count) {
@@ -50,14 +53,14 @@ export default function (Vue, LocalStorage) {
                 let timeObj = state.from ? getFromTo(state.from) : getFromTo()
                 state.from = timeObj.from
                 state.to = timeObj.to
-                state.messages = []
+                clearMessages(state)
                 break
             }
             case 1: {
                 let now = Date.now() - 6000
                 state.from = now - 1000
                 state.to = now
-                state.messages = []
+                clearMessages(state)
                 state.newMessagesCount = 0
                 break
             }
@@ -308,6 +311,14 @@ export default function (Vue, LocalStorage) {
         state.messages.splice(index + 1, 0, ...data)
     }
 
+    function setSelected (state, index) {
+        Vue.set(state, 'selected', index)
+    }
+
+    function clearSelected (state) {
+        Vue.set(state, 'selected', null)
+    }
+
     return {
         setOffline,
         setReconnected,
@@ -332,6 +343,8 @@ export default function (Vue, LocalStorage) {
         setCols,
         updateCols,
         setNewMessagesCount,
-        setMissingMessages
+        setMissingMessages,
+        setSelected,
+        clearSelected
     }
 }

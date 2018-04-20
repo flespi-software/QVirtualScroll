@@ -15,7 +15,8 @@ export default function (Store, Vue, LocalStorage, name) {
         limit: 1000,
         cols: [],
         newMessagesCount: 0,
-        offline: false
+        offline: false,
+        selected: null
     }
 
     return {

@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.6] - 2018-04-20
+[feature] selected field added
 ### [0.1.5] - 2018-03-30
 [fix] scroll
 ### [0.1.4] - 2018-03-26

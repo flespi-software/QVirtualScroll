@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Component for show messages",
   "main": "index.js",
   "author": "SeBu",
@@ -11,9 +11,8 @@
   },
   "dependencies": {
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
-    "moment": "^2.21.0",
-    "vue-draggable-resizable": "^1.6.1",
-    "vue-virtual-scroll-list": "^1.2.4",
+    "vue-draggable-resizable": "^1.7.1",
+    "vue-virtual-scroll-list": "^1.2.5",
     "vuedraggable": "^2.16.0"
   },
   "devDependencies": {

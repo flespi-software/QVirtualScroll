@@ -496,7 +496,7 @@
         }, 100),
         update: function (el, { value }) {
             if (value) {
-                setTimeout(() => { el.scrollTop = el.scrollHeight }, 5)
+                el.scrollTop = el.scrollHeight
             }
         }
       }
