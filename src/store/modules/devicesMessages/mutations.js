@@ -29,14 +29,16 @@ export default function (Vue, LocalStorage) {
                         length = state.messages.length - 1,
                         index = null,
                         escapeFlag = true
-                    for (let i = length; i !== 0 || escapeFlag; i--) {
-                        if (messages[i][fieldName] > message[fieldName]) {
-                            index = i
-                            if (i === 0) {
+                    if (length > 0) {
+                        for (let i = length; i !== 0 || escapeFlag; i--) {
+                            if (messages[i][fieldName] > message[fieldName]) {
+                                index = i
+                                if (i === 0) {
+                                    escapeFlag = false
+                                }
+                            } else {
                                 escapeFlag = false
                             }
-                        } else {
-                            escapeFlag = false
                         }
                     }
                     if (index) {

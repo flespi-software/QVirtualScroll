@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.8] - 2018-04-27
+[fix] sort
 ### [0.1.7] - 2018-04-20
 [feature] sortBy added to deviceMessages
 ### [0.1.6] - 2018-04-20
