@@ -1,7 +1,7 @@
 export default function (Vue, LocalStorage) {
     function getFromTo (val) {
         let now = val || Date.now(),
-            from = now - (now % 86400000),
+            from = new Date(now).setHours(0,0,0,0),
             to = from + 86400000
         return {from, to}
     }
