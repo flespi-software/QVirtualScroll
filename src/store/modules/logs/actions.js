@@ -1,8 +1,6 @@
 export default function (Vue) {
     function getParams (state) {
-        let params = {
-            filter: `event_origin=${state.origin}`
-        }
+        let params = {}
         if (state.limit) { params.count = state.limit }
         if (state.filter && state.sysFilter) {
             if (state.mode === 1) {
@@ -37,6 +35,23 @@ export default function (Vue) {
         commit('setCols')
     }
 
+    function getLogs (origin) {
+        let parts = origin.split('/'),
+            id = parts.pop(),
+            namespace = parts.reduce((result, part) => {
+                return result[part]
+            }, Vue.connector.http)
+        if (id !== '*') {
+            return function (params) {
+                return namespace.logs.get(id, {data: JSON.stringify(params)})
+            }
+        } else {
+            return function (params) {
+                return namespace.logs.get({data: JSON.stringify(params)})
+            }
+        }
+    }
+
     async function initTime({ state, commit, rootState }) {
         if (rootState.token && state.origin) {
             try {
@@ -49,7 +64,7 @@ export default function (Vue) {
                    count: 1,
                    fields: 'timestamp'
                 }
-                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(params)})
+                let resp = await getLogs(state.origin)(params)
                 let data = resp.data
                 if (data.result.length) {
                     commit('setDate', Math.round(data.result[0].timestamp * 1000))
@@ -82,7 +97,7 @@ export default function (Vue) {
                 if (typeof rootState.isLoading !== 'undefined') {
                     rootState.isLoading = true
                 }
-                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(getParams(state))})
+                let resp = await getLogs(state.origin)(getParams(state))
                 let data = resp.data
                 if (preaction) {
                     if (data.result.length) {
@@ -163,7 +178,7 @@ export default function (Vue) {
                     from: Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
                     to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
                 }
-                let resp = await Vue.connector.platform.getCustomerLogs({data: JSON.stringify(params)})
+                let resp = await getLogs(state.origin)(params)
                 let data = resp.data
                 commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
                 if (typeof rootState.isLoading !== 'undefined') {

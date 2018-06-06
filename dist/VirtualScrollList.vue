@@ -105,7 +105,7 @@
       </q-modal-layout>
     </q-modal>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-dark': currentTheme.contentInverted}" :style="{top: needShowToolbar ? '50px' : '0',  bottom: 0, right: 0, left: 0}">
-      <q-window-resize-observable @resize="wrapperResizeHandler" />
+      <q-resize-observable @resize="wrapperResizeHandler" />
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]" v-if="items.length && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header" @dblclick="colsConfigurator === 'header' ? $refs.colsModal.show() : ''">
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
           <div class="header__item item_actions" v-if="actionField.display">
@@ -375,6 +375,10 @@
         let isFieldWidtherThanWrapper = this.rowWidth - this.$refs.wrapper.offsetWidth > 0
         this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight - (isFieldWidtherThanWrapper ? this.itemHeight : 0) // - header - scroll-bottom
         this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
+        if (this.$refs.scroller) {
+            let element = this.$refs.scroller.$el
+            element.scrollTop += 1
+         }
       },
       wrapperResizeHandler () {
         this.resetParams()
