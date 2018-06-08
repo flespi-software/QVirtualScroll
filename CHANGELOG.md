@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.11] - 2018-06-08
+[fix] logs module
+[fix] code style
 ### [0.1.10] - 2018-06-06
 [feature] rebase logs module
 [fix] resize wrapper of scroller
