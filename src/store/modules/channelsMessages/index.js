@@ -1,9 +1,9 @@
 import getActions from './actions'
 import getMutations from './mutations'
 
-export default function (Store, Vue, LocalStorage, name) {
-  let actions = getActions(Vue),
-    mutations = getMutations(Vue, LocalStorage)
+export default function ({Vue, LocalStorage, name, errorHandler}) {
+  let actions = getActions({Vue, errorHandler}),
+    mutations = getMutations({Vue, LocalStorage})
 
   const state = {
     name: name,

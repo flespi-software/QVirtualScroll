@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.12] - 2018-06-12
+[feature] errors handling
 ### [0.1.11] - 2018-06-08
 [fix] logs module
 [fix] code style

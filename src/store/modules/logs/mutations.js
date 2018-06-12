@@ -1,4 +1,4 @@
-export default function (Vue, LocalStorage) {
+export default function ({Vue, LocalStorage}) {
   function getFromTo(val) {
     let now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),

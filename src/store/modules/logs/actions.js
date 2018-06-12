@@ -1,4 +1,4 @@
-export default function (Vue) {
+export default function ({Vue, errorHandler}) {
   function getParams(state) {
     let params = { filter: [] }
     if (state.origin.indexOf('platform') !== -1) {
@@ -47,6 +47,15 @@ export default function (Vue) {
     commit('setCols')
   }
 
+  function errorsCheck (data) {
+    if (data.errors) {
+      data.errors.forEach((error) => {
+        let errObject = new Error(error.reason)
+        errorHandler && errorHandler(errObject)
+      })
+    }
+  }
+
   function getLogs(origin) {
     let parts = origin.split('/'),
       id = parts.pop(),
@@ -80,6 +89,7 @@ export default function (Vue) {
         }
         let resp = await getLogs(state.origin)(params)
         let data = resp.data
+        errorsCheck(data)
         if (data.result.length) {
           commit('setDate', Math.round(data.result[0].timestamp * 1000))
         }
@@ -91,7 +101,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
@@ -113,6 +124,7 @@ export default function (Vue) {
         }
         let resp = await getLogs(state.origin)(getParams(state))
         let data = resp.data
+        errorsCheck(data)
         if (preaction) {
           if (data.result.length) {
             commit('setMessages', data.result)
@@ -148,7 +160,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
@@ -196,19 +209,23 @@ export default function (Vue) {
           return result
         }, 0)
         let params = {
-          filter: `event_origin=${state.origin}`,
           from: Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
           to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
         }
+        if (state.origin.indexOf('platform') !== -1) {
+          params.filter = `event_origin=${state.origin}`
+        }
         let resp = await getLogs(state.origin)(params)
         let data = resp.data
+        errorsCheck(data)
         commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }

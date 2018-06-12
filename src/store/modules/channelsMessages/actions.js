@@ -1,4 +1,4 @@
-export default function (Vue) {
+export default function ({Vue, errorHandler}) {
   function getParams(state) {
     let params = {}
     if (state.limit) {
@@ -10,6 +10,15 @@ export default function (Vue) {
     return params
   }
 
+  function errorsCheck (data) {
+    if (data.errors) {
+      data.errors.forEach((error) => {
+        let errObject = new Error(error.reason)
+        errorHandler && errorHandler(errObject)
+      })
+    }
+  }
+
   async function getCols({state, commit, rootState}) {
     commit('reqStart')
     if (rootState.token && state.active) {
@@ -19,9 +28,11 @@ export default function (Vue) {
         }
         let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
         let protocolIdData = protocolIdResp.data
+        errorsCheck(protocolIdData)
         if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
           let colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
           let colsData = colsResp.data
+          errorsCheck(colsData)
           let cols = []
           colsData.result[0].message_parameters.forEach(col => {
             cols.push({
@@ -38,7 +49,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
@@ -52,9 +64,11 @@ export default function (Vue) {
       try {
         let resp = await Vue.connector.gw.getChannelsMessages(state.active, {data: JSON.stringify(getParams(state))})
         data = resp.data
+        errorsCheck(data)
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         data = {
           errors: [e]
         }

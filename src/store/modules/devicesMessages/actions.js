@@ -1,4 +1,4 @@
-export default function (Vue) {
+export default function ({Vue, errorHandler}) {
   function getParams(state) {
     let params = {}
     if (state.limit) {
@@ -46,6 +46,15 @@ export default function (Vue) {
     return params
   }
 
+  function errorsCheck (data) {
+    if (data.errors) {
+      data.errors.forEach((error) => {
+        let errObject = new Error(error.reason)
+        errorHandler && errorHandler(errObject)
+      })
+    }
+  }
+
   async function getCols({state, commit, rootState}) {
     commit('reqStart')
     if (rootState.token && state.active) {
@@ -55,6 +64,7 @@ export default function (Vue) {
         }
         let deviceResp = await Vue.connector.gw.getDevices(state.active, {fields: 'telemetry,device_type_id'})
         let deviceData = deviceResp.data
+        errorsCheck(deviceData)
         let cols = []
         // if (deviceData.result && deviceData.result[0] && deviceData.result[0].device_type_id) {
         //     let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${deviceData.result[0].device_type_id}`, {/*rewrite this request to new api*/
@@ -103,7 +113,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
@@ -124,6 +135,7 @@ export default function (Vue) {
         }
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(params)})
         let data = resp.data
+        errorsCheck(data)
         if (data.result.length) {
           commit('setDate', Math.round(data.result[0].timestamp * 1000))
         }
@@ -135,7 +147,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
@@ -157,6 +170,7 @@ export default function (Vue) {
         }
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(getParams(state))})
         let data = resp.data
+        errorsCheck(data)
         if (preaction) {
           if (data.result.length) {
             commit('setMessages', data.result)
@@ -192,7 +206,8 @@ export default function (Vue) {
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
           rootState.isLoading = false
         }
@@ -247,13 +262,15 @@ export default function (Vue) {
         }
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(params)})
         let data = resp.data
+        errorsCheck(data)
         commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }
       }
       catch (e) {
-        console.log(e)
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }

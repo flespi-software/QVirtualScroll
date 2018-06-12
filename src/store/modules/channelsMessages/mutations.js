@@ -1,4 +1,4 @@
-export default function (Vue, LocalStorage) {
+export default function ({Vue, LocalStorage}) {
   function setMessages(state, data) {
     if (data && data.length) {
       if (state.reverse) {
