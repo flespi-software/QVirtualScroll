@@ -257,8 +257,8 @@ export default function ({Vue, errorHandler}) {
           return result
         }, 0)
         let params = {
-          from: Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
-          to: Math.floor(state.messages[lastIndexOffline + 1].timestamp / 1000)
+          from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
+          to: Math.floor(state.messages[lastIndexOffline + 1].timestamp)
         }
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(params)})
         let data = resp.data

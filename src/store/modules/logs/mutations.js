@@ -300,14 +300,14 @@ export default function ({Vue, LocalStorage}) {
 
   function setOffline(state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
-      setMessages(state, [{__connectionStatus: 'offline', timestamp: Date.now()}])
+      setMessages(state, [{__connectionStatus: 'offline', timestamp: Date.now() / 1000}])
     }
     state.offline = true
   }
 
   function setReconnected(state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
-      setMessages(state, [{__connectionStatus: 'reconnected', timestamp: Date.now()}])
+      setMessages(state, [{__connectionStatus: 'reconnected', timestamp: Date.now() / 1000}])
     }
     state.offline = false
   }
