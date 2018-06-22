@@ -62,32 +62,15 @@ export default function ({Vue, errorHandler}) {
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = true
         }
-        let deviceResp = await Vue.connector.gw.getDevices(state.active, {fields: 'telemetry,device_type_id'})
+        let deviceResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
         let deviceData = deviceResp.data
         errorsCheck(deviceData)
         let cols = []
-        // if (deviceData.result && deviceData.result[0] && deviceData.result[0].device_type_id) {
-        //     let protocolIdResp = await Vue.http.get(`${rootState.server}/gw/channels/${deviceData.result[0].device_type_id}`, {/*rewrite this request to new api*/
-        //         params: {fields: 'protocol_id'}
-        //     })
-        //     let protocolIdData = await protocolIdResp.json()
-        //     if (protocolIdData.result && protocolIdData.result[0].protocol_id) {
-        //         let colsResp = await Vue.http.get(`${rootState.server}/gw/protocols/${protocolIdData.result[0].protocol_id}`, {
-        //             params: {fields: 'message_parameters'}
-        //         })
-        //         let colsData = await colsResp.json()
-        //         colsData.result[0].message_parameters.forEach(col => {
-        //             cols.push({
-        //                 name: col.name,
-        //                 width: 150,
-        //                 display: true,
-        //                 description: col.info
-        //             })
-        //         })
-        //     }
-        // }
-        // else {
         let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
+        /* remove position object */
+        if (colNames.includes('position')) {
+          colNames.splice(colNames.indexOf('position'), 1)
+        }
         if (colNames.length) {
           cols = colNames.reduce((acc, col) => {
             if (col === 'timestamp') { // todo remove after get configure for cols
