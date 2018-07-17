@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.15] - 2018-07-17
+[feature] new filter logic for RT mode
 ### [0.1.14] - 2018-06-22
 [feature] rebase getting devices cols
 ### [0.1.13] - 2018-06-13

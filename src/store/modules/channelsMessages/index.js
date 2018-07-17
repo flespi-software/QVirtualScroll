@@ -1,9 +1,9 @@
 import getActions from './actions'
 import getMutations from './mutations'
 
-export default function ({Vue, LocalStorage, name, errorHandler}) {
+export default function ({Vue, LocalStorage, name, errorHandler, filterHandler}) {
   let actions = getActions({Vue, errorHandler}),
-    mutations = getMutations({Vue, LocalStorage})
+    mutations = getMutations({Vue, LocalStorage, filterHandler})
 
   const state = {
     name: name,

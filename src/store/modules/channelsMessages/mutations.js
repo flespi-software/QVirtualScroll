@@ -1,8 +1,13 @@
-export default function ({Vue, LocalStorage}) {
+export default function ({Vue, LocalStorage, filterHandler}) {
   function setMessages(state, data) {
     if (data && data.length) {
       if (state.reverse) {
         data.reverse()
+      }
+      if (state.mode === 1) {
+        if (state.filter && filterHandler) {
+          data = filterHandler(state.filter, data)
+        }
       }
       let messages = state.messages.concat(data)
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting

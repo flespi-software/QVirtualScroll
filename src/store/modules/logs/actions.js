@@ -170,12 +170,15 @@ export default function ({Vue, errorHandler}) {
   }
 
   async function getHistory({state, commit, rootState}, count) {
-    let limit = state.limit
+    let limit = state.limit,
+      filter = state.filter
     commit('setReverse', true)
     commit('setLimit', count)
+    commit('setFilter', '')
     await get({state, commit, rootState})
     commit('setReverse', false)
     commit('setLimit', limit)
+    commit('setFilter', filter)
   }
 
   async function pollingGet({state, commit, rootState}) {

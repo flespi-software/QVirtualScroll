@@ -1,4 +1,4 @@
-export default function ({Vue, LocalStorage}) {
+export default function ({Vue, LocalStorage, filterHandler}) {
   function getFromTo(val) {
     let now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
@@ -16,6 +16,9 @@ export default function ({Vue, LocalStorage}) {
       }
       if (state.mode === 1) {
         Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
+        if (state.filter && filterHandler) {
+          data = filterHandler(state.filter, data)
+        }
       }
       let messages = state.messages.concat(data)
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
