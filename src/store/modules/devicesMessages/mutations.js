@@ -78,6 +78,14 @@ export default function ({Vue, LocalStorage, filterHandler}) {
 
   function setFilter(state, value) {
     if (state.filter !== value) {
+      if (state.mode === 1) {
+        if (state.filter) {
+          state.messages.push({'x-flespi-filter-prev': state.filter})
+        }
+        if (value) {
+          state.messages.push({'x-flespi-filter-next': value})
+        }
+      }
       Vue.set(state, 'filter', value)
     }
   }
