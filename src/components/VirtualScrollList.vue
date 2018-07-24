@@ -17,6 +17,7 @@
         :color="currentTheme.controlsInverted ? 'none' : currentTheme.color"
         placeholder="param1=n*,param2,param3>=5"
         :before="[{icon: 'search', handler: openSearch}]"
+        :debounce="0"
       />
       <q-btn :color="currentTheme.color" flat class="on-left" v-if="colsConfigurator === 'toolbar'"
              @click="colsModalOpenHandler">
