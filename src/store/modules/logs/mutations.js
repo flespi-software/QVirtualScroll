@@ -99,7 +99,10 @@ export default function ({Vue, LocalStorage, filterHandler}) {
 
   function setDate(state, date) {
     let timeObj = getFromTo(date)
-    state.from = timeObj.from
+    if (timeObj.from === date) {
+      return false
+    }
+    state.from = date
     state.to = timeObj.to
   }
 
@@ -117,7 +120,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
 
   function paginationPrev(state, firstTimestamp) {
     state.reverse = true
-    setSysFilter(state, `timestamp>=${state.from / 1000}`)
+    setSysFilter(state, `timestamp>=${getFromTo(state.from).from / 1000}`)
     if (firstTimestamp) {
       state.from = getFromTo(firstTimestamp).from
       state.to = firstTimestamp - 1000
@@ -134,7 +137,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
 
   function postaction(state) {
     let timeObj = getFromTo(state.from)
-    setFrom(state, timeObj.from)
+    setFrom(state, state.from || timeObj.from)
     setTo(state, timeObj.to)
     if (state.reverse) {
       setReverse(state, false)

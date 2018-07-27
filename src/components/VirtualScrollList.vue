@@ -16,7 +16,6 @@
         :inverted="currentTheme.controlsInverted"
         :color="currentTheme.controlsInverted ? 'none' : currentTheme.color"
         placeholder="param1=n*,param2,param3>=5"
-        :before="[{icon: 'search', handler: openSearch}]"
         :debounce="0"
       />
       <q-btn :color="currentTheme.color" flat class="on-left" v-if="colsConfigurator === 'toolbar'"
@@ -39,18 +38,20 @@
       <div class="on-left date" style="min-width: 180px"
            v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
         <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click.native="$emit('change:date-prev')"
-                class="cursor-pointer" size="1.5rem" name="keyboard_arrow_left"/>
+                class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_left"/>
         <q-datetime
-          format="DD-MM-YYYY"
-          @change="$emit('change:date', currentDate)"
-          style="display: inline-flex;"
-          v-model="currentDate"
+          format="DD-MM-YYYY HH:mm:ss"
+          @change="(val) => { currentDate = val; $emit('change:date', val)}"
+          :value="currentDate"
           :inverted="currentTheme.controlsInverted"
           :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+          type="datetime"
+          format24h
+          class="vsl-date"
         />
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
         <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click.native="$emit('change:date-next')"
-                class="cursor-pointer" size="1.5rem" name="keyboard_arrow_right"/>
+                class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"/>
       </div>
       <q-checkbox
         v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
@@ -296,7 +297,7 @@
         uid: 0,
         currentFilter: this.filter,
         currentMode: !!this.mode,
-        currentDate: this.date,
+        dateValue: this.date,
         wrapperHeight: 0,
         itemsCount: 0,
         defaultItemWidth: 150,
@@ -363,6 +364,10 @@
       },
       formatedDate() {
         return date.formatDate(this.currentDate, 'DD MMMM YYYY')
+      },
+      currentDate: {
+        set (value) { this.dateValue = new Date(value).setSeconds(0) },
+        get () { return this.dateValue }
       }
     },
     methods: {
@@ -623,4 +628,21 @@
 
   .q-field[draggable="true"]
     background-color #9e9e9e
+  .date
+    .arrows
+      position relative
+      top 7px
+    .vsl-date
+      display inline-flex
+      max-width 105px
+      padding 2px 5px
+      .row .col
+        font-size 13px
+        white-space inherit
+        text-align center
+        line-height 15px
+        margin-bottom 3px
+        margin-top 4px
+      i
+        display none
 </style>

@@ -73,6 +73,13 @@ export default function ({Vue, errorHandler}) {
     }
   }
 
+  function getFromTo(val) {
+    let now = val || Date.now(),
+      from = new Date(now).setHours(0, 0, 0, 0),
+      to = from + 86400000
+    return {from, to}
+  }
+
   async function initTime({state, commit, rootState}) {
     if (rootState.token && state.origin) {
       try {
@@ -90,12 +97,11 @@ export default function ({Vue, errorHandler}) {
         let resp = await getLogs(state.origin)(params)
         let data = resp.data
         errorsCheck(data)
+        let date = Date.now()
         if (data.result.length) {
-          commit('setDate', Math.round(data.result[0].timestamp * 1000))
+          date = Math.round(data.result[0].timestamp * 1000)
         }
-        else {
-          commit('setDate', Date.now())
-        }
+        commit('setDate', getFromTo(date).from)
         if (typeof rootState.isLoading !== 'undefined') {
           rootState.isLoading = false
         }

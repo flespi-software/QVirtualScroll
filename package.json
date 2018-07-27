@@ -1,13 +1,13 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Component for show messages",
   "main": "index.js",
   "author": "SeBu",
   "license": "MIT",
   "scripts": {
-    "build": "mkdir dist;cp ./src/components/VirtualScrollList.vue ./dist;cp ./src/components/ListItem.vue ./dist;rollup -c;",
-    "deploy": "cd ./example/simple && npm run build && rm -rf deploy && mkdir deploy && cp -R dist/* package.json deploy && cp README.md deploy/README.md && cd ../../ && rm -rf deploy && mkdir -p deploy/simple && cp -R ./example/simple/deploy/* ./deploy/simple && cp ./example/index.html ./deploy && node_modules/git-directory-deploy/bin/git-directory-deploy.sh -ddeploy -bgh-pages -rhttps://github.com/flespi-software/QVirtualScroll.git && rm -rf deploy"
+    "build": "rm -rf dist && mkdir dist;cp ./src/components/VirtualScrollList.vue ./dist;cp ./src/components/ListItem.vue ./dist;rollup -c;",
+    "deploy": "rm -rf dist && cd ./example/simple && npm run build && rm -rf deploy && mkdir deploy && cp -R dist/* package.json deploy && cp README.md deploy/README.md && cd ../../ && rm -rf deploy && mkdir -p deploy/simple && cp -R ./example/simple/deploy/* ./deploy/simple && cp ./example/index.html ./deploy && node_modules/git-directory-deploy/bin/git-directory-deploy.sh -ddeploy -bgh-pages -rhttps://github.com/flespi-software/QVirtualScroll.git && rm -rf deploy"
   },
   "dependencies": {
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",

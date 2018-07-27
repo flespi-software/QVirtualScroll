@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.18] - 2018-07-27
+[feature] date and time in date picker
 ### [0.1.17] - 2018-07-24
 [fix] debounce in filter field
 ### [0.1.16] - 2018-07-24
