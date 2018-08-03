@@ -198,7 +198,7 @@ export default function ({Vue, errorHandler}) {
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
       }
-    })
+    }, { rh: 2 })
   }
 
   /* getting missed messages after offline */

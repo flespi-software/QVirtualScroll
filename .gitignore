@@ -45,6 +45,13 @@ typings/
 # Optional npm cache directory
 .npm
 
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
 # Optional eslint cache
 .eslintcache
 

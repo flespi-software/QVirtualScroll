@@ -106,7 +106,7 @@ export default function ({Vue, errorHandler}) {
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
       }
-    })
+    }, { rh: 2 })
   }
 
   /* unsubscribe from current active topic */
