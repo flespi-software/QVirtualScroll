@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.20] - 2018-08-27
+[fix] autoscroll
 ### [0.1.19] - 2018-08-03
 [feature] remove retain messages from subscriptions
 ### [0.1.18] - 2018-07-27

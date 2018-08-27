@@ -144,10 +144,10 @@
           </q-field>
         </div>
         <q-toolbar :color="currentTheme.bgColor" slot="footer" style="justify-content: flex-end;">
-          <q-btn flat class="pull-right" :color="currentTheme.color" flat @click="colsModalSave">
+          <q-btn flat class="pull-right" :color="currentTheme.color" @click="colsModalSave">
             save
           </q-btn>
-          <q-btn flat class="pull-right" :color="currentTheme.color" flat @click="colsModalClose">
+          <q-btn flat class="pull-right" :color="currentTheme.color" @click="colsModalClose">
             close
           </q-btn>
         </q-toolbar>
@@ -517,6 +517,12 @@
         })
       }
     },
+    updated () {
+      if (!this.items.length) { this.currentScrollTop = 0 }
+      else {
+        if (this.needAutoScroll) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
+      }
+    },
     watch: {
       date(val) {
         this.currentDate = val
@@ -568,7 +574,7 @@
             el.scrollTop = el.scrollHeight
           }
         }, 100),
-        update: function (el, {value}) {
+        componentUpdated: (el, {value}) => {
           if (value) {
             el.scrollTop = el.scrollHeight
           }
