@@ -560,6 +560,10 @@
     mounted() {
       this.hasItemClickHandler = !!this._events['item-click']
       this.uid = uid().split('-')[0]
+      let fullWidth = this.$refs.wrapper.offsetWidth
+      if (this.rowWidth < fullWidth) {
+        this.etcField.width = fullWidth - (this.rowWidth - 150)
+      }
       this.resetParams()
       this.updateDynamicCSS()
     },

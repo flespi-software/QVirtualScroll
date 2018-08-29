@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.21] - 2018-08-28
+[feature] autowidth to etc field
 ### [0.1.20] - 2018-08-27
 [fix] autoscroll
 ### [0.1.19] - 2018-08-03
