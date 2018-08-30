@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.23] - 2018-08-30
+[fix] scroller existance update
 ### [0.1.22] - 2018-08-28
 [fix] cols settings modal
 ### [0.1.21] - 2018-08-28

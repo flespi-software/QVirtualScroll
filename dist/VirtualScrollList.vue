@@ -520,7 +520,7 @@
     updated () {
       if (!this.items.length) { this.currentScrollTop = 0 }
       else {
-        if (this.needAutoScroll) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
+        if (this.needAutoScroll && this.$refs.scroller) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
       }
     },
     watch: {
