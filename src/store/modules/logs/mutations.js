@@ -24,7 +24,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
         let count = (messages.length - 1) - (state.limit - 1)
         messages = messages.slice(count)
-        Vue.set(state, 'selected', state.selected - count)
+        Vue.set(state, 'selected', state.selected.map((index) => index - count))
       }
       Vue.set(state, 'messages', messages)
     }
@@ -333,12 +333,12 @@ export default function ({Vue, LocalStorage, filterHandler}) {
     state.messages.splice(index + 1, 0, ...data)
   }
 
-  function setSelected(state, index) {
-    Vue.set(state, 'selected', index)
+  function setSelected(state, indexes) {
+    Vue.set(state, 'selected', indexes)
   }
 
   function clearSelected(state) {
-    Vue.set(state, 'selected', null)
+    Vue.set(state, 'selected', [])
   }
 
   return {

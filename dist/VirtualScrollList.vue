@@ -641,18 +641,14 @@
   .date
     .arrows
       position relative
-      top 7px
     .vsl-date
       display inline-flex
       max-width 105px
-      padding 2px 5px
       .row .col
         font-size 13px
         white-space inherit
         text-align center
         line-height 15px
-        margin-bottom 3px
-        margin-top 4px
       i
         display none
 </style>

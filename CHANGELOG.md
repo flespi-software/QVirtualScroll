@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.24] - 2018-09-07
+[feature] rebase selected to multiselect
+[fix] style date control
 ### [0.1.23] - 2018-08-30
 [fix] scroller existance update
 ### [0.1.22] - 2018-08-28
