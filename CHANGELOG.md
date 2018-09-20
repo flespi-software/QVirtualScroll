@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.25] - 2018-09-20
+[feature] newMessagesInterseptor added
 ### [0.1.24] - 2018-09-07
 [feature] rebase selected to multiselect
 [fix] style date control

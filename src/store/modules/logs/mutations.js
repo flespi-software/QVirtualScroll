@@ -1,4 +1,4 @@
-export default function ({Vue, LocalStorage, filterHandler}) {
+export default function ({Vue, LocalStorage, filterHandler, newMessagesInterseptor}) {
   function getFromTo(val) {
     let now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
@@ -20,6 +20,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
           data = filterHandler(state.filter, data)
         }
       }
+      newMessagesInterseptor && newMessagesInterseptor(data)
       let messages = state.messages.concat(data)
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
         let count = (messages.length - 1) - (state.limit - 1)
@@ -36,6 +37,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
   }
 
   function clearMessages(state) {
+    newMessagesInterseptor && newMessagesInterseptor([])
     Vue.set(state, 'messages', [])
     clearSelected(state)
   }

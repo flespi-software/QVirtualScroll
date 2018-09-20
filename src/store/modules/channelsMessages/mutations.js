@@ -1,4 +1,4 @@
-export default function ({Vue, LocalStorage, filterHandler}) {
+export default function ({Vue, LocalStorage, filterHandler, newMessagesInterseptor}) {
   function setMessages(state, data) {
     if (data && data.length) {
       if (state.reverse) {
@@ -9,6 +9,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
           data = filterHandler(state.filter, data)
         }
       }
+      newMessagesInterseptor && newMessagesInterseptor(data)
       let messages = state.messages.concat(data)
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
         let count = (messages.length - 1) - (state.limit - 1)
@@ -21,6 +22,7 @@ export default function ({Vue, LocalStorage, filterHandler}) {
 
   function clearMessages(state) {
     Vue.set(state, 'messages', [])
+    newMessagesInterseptor && newMessagesInterseptor([])
     clearSelected(state)
   }
 

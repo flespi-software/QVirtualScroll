@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "Component for show messages",
   "main": "index.js",
   "author": "SeBu",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
-    "vue-draggable-resizable": "^1.7.1",
-    "vue-virtual-scroll-list": "^1.2.5",
+    "vue-draggable-resizable": "^1.7.2",
+    "vue-virtual-scroll-list": "^1.2.8",
     "vuedraggable": "^2.16.0"
   },
   "devDependencies": {
@@ -24,9 +24,9 @@
     "babel-runtime": "6.26.0",
     "git-directory-deploy": "^1.5.1",
     "rollup": "^0.51.5",
-    "rollup-plugin-babel": "^3.0.4",
+    "rollup-plugin-babel": "^3.0.7",
     "rollup-plugin-commonjs": "^8.4.1",
-    "rollup-plugin-node-resolve": "^3.2.0",
+    "rollup-plugin-node-resolve": "^3.4.0",
     "rollup-plugin-uglify": "^2.0.1"
   }
 }
