@@ -65,6 +65,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
       if (state.mode === 1) {
         Vue.set(state, 'from', state.to + 1000)
       }
+      Vue.set(state, 'messages', [])
     }
   }
 
@@ -105,7 +106,6 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
         let now = Date.now() - 4000
         state.from = now - 1000
         state.to = now
-        clearMessages(state)
         state.newMessagesCount = 0
         break
       }
@@ -138,9 +138,6 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
 
   function setDate(state, date) {
     let timeObj = getFromTo(date)
-    if (timeObj.from === date) {
-      return false
-    }
     state.from = date
     state.to = timeObj.to
   }

@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.26] - 2018-10-15
+[fix] mode change logic
+[fix] get messages
 ### [0.1.25] - 2018-09-20
 [feature] newMessagesInterseptor added
 ### [0.1.24] - 2018-09-07

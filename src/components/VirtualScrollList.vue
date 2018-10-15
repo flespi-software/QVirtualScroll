@@ -467,7 +467,10 @@
         if (!this.currentScrollTop) {
           this.currentScrollTop = data.offset
         }
-        this.allScrollTop = this.$refs.scroller.$el.scrollHeight - this.$refs.scroller.$el.clientHeight
+        if (this.$refs.scroller) {
+          let el = this.$refs.scroller.$el || this.$refs.scroller
+          this.allScrollTop = el.scrollHeight - el.clientHeight
+        }
         if (this.items.length) {
           if (data.offset < this.currentScrollTop && this.needAutoScroll) {
             this.needAutoScroll = false

@@ -157,7 +157,10 @@ export default function ({Vue, errorHandler}) {
         if (typeof rootState.isLoading !== 'undefined' && !state.timerId) {
           rootState.isLoading = true
         }
+        let currentMode = JSON.parse(JSON.stringify(state.mode))
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(getParams(state))})
+        /* if mode changed in time request */
+        if (currentMode !== state.mode) { return false }
         let data = resp.data
         errorsCheck(data)
         if (preaction) {
