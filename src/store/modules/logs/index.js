@@ -7,6 +7,7 @@ export default function ({Vue, LocalStorage, name, errorHandler, filterHandler, 
 
   const state = {
     name: name,
+    isLoading: false,
     origin: '',
     messages: [],
     filter: '',

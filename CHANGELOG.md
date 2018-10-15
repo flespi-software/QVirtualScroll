@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.27] - 2018-10-15
+[feature] rebase isLoading flag to local state
 ### [0.1.26] - 2018-10-15
 [fix] mode change logic
 [fix] get messages

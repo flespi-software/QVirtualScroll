@@ -83,9 +83,7 @@ export default function ({Vue, errorHandler}) {
   async function initTime({state, commit, rootState}) {
     if (rootState.token && state.origin) {
       try {
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = true
-        }
+        Vue.set(state, 'isLoading', true)
         let params = {
           reverse: true,
           count: 1,
@@ -102,16 +100,12 @@ export default function ({Vue, errorHandler}) {
           date = Math.round(data.result[0].timestamp * 1000)
         }
         commit('setDate', getFromTo(date).from)
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
       catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
     }
   }
@@ -125,9 +119,7 @@ export default function ({Vue, errorHandler}) {
     }
     if (rootState.token && state.origin) {
       try {
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = true
-        }
+        Vue.set(state, 'isLoading', true)
         let currentMode = JSON.parse(JSON.stringify(state.mode))
         let resp = await getLogs(state.origin)(getParams(state))
         /* if mode changed in time request */
@@ -164,16 +156,12 @@ export default function ({Vue, errorHandler}) {
         else {
           commit('setMessages', data.result)
         }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
       catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
     }
   }
@@ -208,9 +196,7 @@ export default function ({Vue, errorHandler}) {
   async function getMissedMessages({state, commit, rootState}) {
     if (rootState.token && state.origin) {
       try {
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = true
-        }
+        Vue.set(state, 'isLoading', true)
         let lastIndexOffline = state.messages.reduceRight((result, value, index) => {
           if (result) {
             return result
@@ -231,16 +217,12 @@ export default function ({Vue, errorHandler}) {
         let data = resp.data
         errorsCheck(data)
         commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
       catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
     }
   }

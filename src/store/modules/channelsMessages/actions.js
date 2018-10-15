@@ -23,9 +23,7 @@ export default function ({Vue, errorHandler}) {
     commit('reqStart')
     if (rootState.token && state.active) {
       try {
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = true
-        }
+        Vue.set(state, 'isLoading', true)
         let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
         let protocolIdData = protocolIdResp.data
         errorsCheck(protocolIdData)
@@ -44,16 +42,12 @@ export default function ({Vue, errorHandler}) {
           })
           commit('setCols', cols)
         }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
       catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
-        if (typeof rootState.isLoading !== 'undefined') {
-          rootState.isLoading = false
-        }
+        Vue.set(state, 'isLoading', false)
       }
     }
   }
@@ -79,17 +73,13 @@ export default function ({Vue, errorHandler}) {
 
   async function get({state, commit, rootState}) {
     commit('reqStart')
-    if (typeof rootState.isLoading !== 'undefined') {
-      rootState.isLoading = true
-    }
+    Vue.set(state, 'isLoading', true)
     let data = await getData({state, commit, rootState})
     if (data.result) {
       commit('setMessages', data.result)
       commit('setFrom', data.next_key)
     }
-    if (typeof rootState.isLoading !== 'undefined') {
-      rootState.isLoading = false
-    }
+    Vue.set(state, 'isLoading', false)
   }
 
   async function pollingGet({state, commit, rootState}) {
