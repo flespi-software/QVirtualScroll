@@ -56,6 +56,8 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
         state.from = Math.ceil((now - 4000 - 1000) / 1000)
         clearMessages(state)
         state.newMessagesCount = 0
+        Vue.set(state, 'messages', state.rtMessagesBuff)
+        clearRtMessagesBuff(state)
         break
       }
     }
@@ -167,6 +169,17 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     Vue.set(state, 'selected', [])
   }
 
+  function setRtMessagesBuff (state, message) {
+    if (state.rtMessagesBuff.length >= 100) {
+      state.rtMessagesBuff.splice(0, 1)
+    }
+    state.rtMessagesBuff.push(message)
+  }
+
+  function clearRtMessagesBuff (state) {
+    Vue.set(state, 'rtMessagesBuff', [])
+  }
+
   return {
     setOffline,
     setReconnected,
@@ -183,6 +196,8 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     updateCols,
     setNewMessagesCount,
     setSelected,
-    clearSelected
+    clearSelected,
+    setRtMessagesBuff,
+    clearRtMessagesBuff
   }
 }

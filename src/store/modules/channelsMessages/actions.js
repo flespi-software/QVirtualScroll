@@ -95,6 +95,7 @@ export default function ({Vue, errorHandler}) {
       }
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
+        commit('setRtMessagesBuff', JSON.parse(message))
       }
     }, { rh: 2 })
   }

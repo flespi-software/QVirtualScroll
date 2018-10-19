@@ -17,7 +17,8 @@ export default function ({Vue, LocalStorage, name, errorHandler, filterHandler, 
     cols: [],
     newMessagesCount: 0,
     offline: false,
-    selected: []
+    selected: [],
+    rtMessagesBuff: []
   }
 
   return {
