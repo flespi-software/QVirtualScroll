@@ -84,9 +84,9 @@
                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
-          <draggable :list="currentCols">
+          <draggable :list="currentCols" :options="dragOptions">
             <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3"
-                     :dark="currentTheme.bgColor === 'dark'" style="cursor: move" class="q-pt-sm q-pb-sm">
+                     :dark="currentTheme.bgColor === 'dark'" class="q-pt-sm q-pb-sm">
               <div class="row">
                 <q-slider class="col-8" :min="50" :max="800" v-model="col.width" label
                           :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted"
@@ -100,7 +100,9 @@
                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
                   <q-icon name="remove"></q-icon>
                 </q-btn>
-                <q-icon size="1.5rem" class="col-1" name="mdi-drag" :inverted="currentTheme.controlsInverted"
+                <q-icon size="1.5rem" class="col-1" name="mdi-drag" :inverted="currentTheme.controlsInverted" style="cursor: move"
+                        @mouseover.native="dragOptions.disabled = false"
+                        @mouseleave.native="dragOptions.disabled = true"
                         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
               </div>
             </q-field>
@@ -335,7 +337,8 @@
         currentScrollTop: 0,
         currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
         isNeedResizer: true,
-        allScrollTop: 0
+        allScrollTop: 0,
+        dragOptions: { disabled: true }
       }
     },
     computed: {

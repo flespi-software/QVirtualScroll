@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.29] - 2018-11-12
+[feature] getting logs deleted items in log module
+[fix] draggable part in modal cols configurator
 ### [0.1.28] - 2018-10-19
 [feature] collect messages in history mode for rt mode in channels messages
 ### [0.1.27] - 2018-10-15

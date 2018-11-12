@@ -1,7 +1,7 @@
 export default function ({Vue, errorHandler}) {
   function getParams(state) {
     let params = { filter: [] }
-    if (state.origin.indexOf('platform') !== -1) {
+    if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
       params.filter.push(`event_origin=${state.origin}`)
     }
     if (state.limit) {
@@ -56,13 +56,15 @@ export default function ({Vue, errorHandler}) {
     }
   }
 
-  function getLogs(origin) {
+  function getLogs(origin, deletedStatus) {
     let parts = origin.split('/'),
       id = parts.pop(),
-      namespace = parts.reduce((result, part) => {
-        return result[part]
-      }, Vue.connector.http)
-    if (id !== '*') {
+      namespace = deletedStatus ?
+        Vue.connector.http.platform.customer :
+        parts.reduce((result, part) => {
+          return result[part]
+        }, Vue.connector.http)
+    if (id !== '*' && !deletedStatus) {
       return function (params) {
         return namespace.logs.get(id, {data: JSON.stringify(params)})
       }
@@ -89,10 +91,10 @@ export default function ({Vue, errorHandler}) {
           count: 1,
           fields: 'timestamp'
         }
-        if (state.origin.indexOf('platform') !== -1) {
+        if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
           params.filter = `event_origin=${state.origin}`
         }
-        let resp = await getLogs(state.origin)(params)
+        let resp = await getLogs(state.origin, state.isItemDeleted)(params)
         let data = resp.data
         errorsCheck(data)
         let date = Date.now()
@@ -121,7 +123,7 @@ export default function ({Vue, errorHandler}) {
       try {
         Vue.set(state, 'isLoading', true)
         let currentMode = JSON.parse(JSON.stringify(state.mode))
-        let resp = await getLogs(state.origin)(getParams(state))
+        let resp = await getLogs(state.origin, state.isItemDeleted)(getParams(state))
         /* if mode changed in time request */
         if (currentMode !== state.mode) { return false }
         let data = resp.data
@@ -213,7 +215,7 @@ export default function ({Vue, errorHandler}) {
         if (state.origin.indexOf('platform') !== -1) {
           params.filter = `event_origin=${state.origin}`
         }
-        let resp = await getLogs(state.origin)(params)
+        let resp = await getLogs(state.origin, state.isItemDeleted)(params)
         let data = resp.data
         errorsCheck(data)
         commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
