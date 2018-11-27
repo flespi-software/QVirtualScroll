@@ -178,7 +178,7 @@
               <span class="item__label">{{prop.title || prop.name}}</span>
               <vue-draggable-resizable :ref="`drag${index}`" v-if="$q.platform.is.desktop && isNeedResizer"
                                        :active="true" :draggable="false" :handles="['mr']" :w="prop.width"
-                                       :h="itemHeight * (itemsCount + 1)" :minw="50"
+                                       :h="itemHeight * (itemsCount + 1)" :minw="50" :z='0'
                                        @resizestop="(left, top, width) => {onResize(width, index)}"/>
             </div>
           </draggable>

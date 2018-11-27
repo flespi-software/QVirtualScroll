@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.30] - 2018-11-12
+[fix] draggable cols in table
 ### [0.1.29] - 2018-11-12
 [feature] getting logs deleted items in log module
 [fix] draggable part in modal cols configurator
