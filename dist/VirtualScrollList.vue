@@ -75,13 +75,13 @@
                         @input="(val) => { onResize(val,'actions') }" label
                         :label-value="`${actionField.width}px`"
                         :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+                        :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
               />
               <q-icon size="1.5rem" class="col-1 cursor-pointer"
                       :name="actionField.display ? 'mdi-eye' : 'mdi-eye-off'"
                       @click.native="actionField.display = !actionField.display"
                       :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                      :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
           <draggable :list="currentCols" :options="dragOptions">
@@ -90,20 +90,20 @@
               <div class="row">
                 <q-slider class="col-8" :min="50" :max="800" v-model="col.width" label
                           :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted"
-                          :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                          :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
                 <q-icon size="1.5rem" class="col-1 cursor-pointer"
                         :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click.native="col.display = !col.display"
                         :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                        :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
                 <q-btn flat class="col-1" v-if="col.custom" @click="customFieldRemove(index)"
                        :inverted="currentTheme.controlsInverted"
-                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
+                       :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color">
                   <q-icon name="remove"></q-icon>
                 </q-btn>
                 <q-icon size="1.5rem" class="col-1" name="mdi-drag" :inverted="currentTheme.controlsInverted" style="cursor: move"
                         @mouseover.native="dragOptions.disabled = false"
                         @mouseleave.native="dragOptions.disabled = true"
-                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                        :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
               </div>
             </q-field>
           </draggable>
@@ -114,12 +114,12 @@
                         @input="(val) => { onResize(val,'etc')}" label
                         :label-value="`${etcField.width}px`"
                         :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+                        :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
               />
               <q-icon size="1.5rem" class="col-1 cursor-pointer"
                       :name="etcField.display ? 'mdi-eye' : 'mdi-eye-off'"
                       @click.native="etcField.display = !etcField.display" :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                      :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"/>
             </div>
           </q-field>
           <q-field label="add custom field" style="border-top: 1px solid #333; padding-top: 10px" :labelWidth="3"
@@ -128,18 +128,18 @@
               <q-input class="col-4" :placeholder="customField.error ? customField.errMessages : 'name'"
                        type="text" v-model="customField.name" :error="customField.error"
                        :inverted="currentTheme.controlsInverted"
-                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+                       :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
               />
               <q-slider class="col-4" :min="50" :max="800" v-model="customField.width" label
                         :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                        :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"/>
               <q-icon size="1.5rem" class="col-1 cursor-pointer"
                       :name="customField.display ? 'mdi-eye' : 'mdi-eye-off'"
                       @click.native="customField.display = !customField.display"
                       :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"/>
+                      :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"/>
               <q-btn flat class="col-1" @click="customFieldSave" :inverted="currentTheme.controlsInverted"
-                     :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color">
+                     :color="currentTheme.controlsInverted ? 'white' : currentTheme.color">
                 <q-icon name="add"/>
               </q-btn>
             </div>
