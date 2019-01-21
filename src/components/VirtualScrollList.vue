@@ -95,7 +95,7 @@
                         :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click.native="col.display = !col.display"
                         :inverted="currentTheme.controlsInverted"
                         :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
-                <q-btn flat class="col-1" v-if="col.custom" @click="customFieldRemove(index)"
+                <q-btn flat class="col-1" @click="customFieldRemove(index)"
                        :inverted="currentTheme.controlsInverted"
                        :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color">
                   <q-icon name="remove"></q-icon>
@@ -128,7 +128,7 @@
               <q-input class="col-4" :placeholder="customField.error ? customField.errMessages : 'name'"
                        type="text" v-model="customField.name" :error="customField.error"
                        :inverted="currentTheme.controlsInverted"
-                       :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
+                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
               />
               <q-slider class="col-4" :min="50" :max="800" v-model="customField.width" label
                         :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted"
@@ -404,8 +404,7 @@
         this.customField = {
           name: '',
           width: 150,
-          display: false,
-          custom: true
+          display: false
         }
       },
       customFieldSave() {
@@ -425,7 +424,6 @@
           name: '',
           width: 150,
           display: false,
-          custom: true,
           error: false,
           errMessages: ''
         }

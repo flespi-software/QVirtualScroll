@@ -1,4 +1,4 @@
-export default function ({Vue, errorHandler}) {
+export default function ({Vue, LocalStorage, errorHandler}) {
   function getParams(state) {
     let params = {}
     if (state.limit) {
@@ -24,24 +24,29 @@ export default function ({Vue, errorHandler}) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
-        let protocolIdData = protocolIdResp.data
-        errorsCheck(protocolIdData)
-        if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-          let colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
-          let colsData = colsResp.data
-          errorsCheck(colsData)
-          let cols = []
-          colsData.result[0].message_parameters.forEach(col => {
-            cols.push({
-              name: col.name,
-              width: 160,
-              display: true,
-              description: col.info
+        let cols = [],
+          colsFromStorage = LocalStorage.get.item(state.name)
+        if (colsFromStorage && colsFromStorage[state.active]) {
+          cols = colsFromStorage[state.active]
+        } else {
+          let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
+          let protocolIdData = protocolIdResp.data
+          errorsCheck(protocolIdData)
+          if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
+            let colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, {fields: 'message_parameters'})
+            let colsData = colsResp.data
+            errorsCheck(colsData)
+            colsData.result[0].message_parameters.forEach(col => {
+              cols.push({
+                name: col.name,
+                width: 160,
+                display: true,
+                description: col.info
+              })
             })
-          })
-          commit('setCols', cols)
+          }
         }
+        commit('setCols', cols)
         Vue.set(state, 'isLoading', false)
       }
       catch (e) {

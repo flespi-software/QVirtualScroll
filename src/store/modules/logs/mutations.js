@@ -185,127 +185,16 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
   }
 
   function setCols(state, cols) {
-    if (cols) {
-      let colsFromStorage = LocalStorage.get.item(state.name)
-      if (colsFromStorage) {
-        if (colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
-          /* if cols has been added or modified */
-          if (cols.length >= colsFromStorage[state.origin].length) {
-            let newCols = cols.reduce((result, col, index) => {
-              let newCol = colsFromStorage[state.origin].find(colFromStorage => {
-                return colFromStorage.name === col.name
-              })
-              if (!newCol) {
-                result.push(col)
-              }
-              return result
-            }, [])
-            colsFromStorage[state.origin] = [...colsFromStorage[state.origin], ...newCols]
-          }
-          /* if cols has been removed */
-          else {
-            colsFromStorage[state.origin] = cols.reduce((result, col) => {
-              let newCol = colsFromStorage[state.origin].find(colFromStorage => {
-                return colFromStorage.name === col.name
-              })
-              if (newCol) {
-                result.push(newCol)
-              }
-              else {
-                result.push(col)
-              }
-
-              return result
-            }, [])
-          }
-        }
-        else {
-          colsFromStorage[state.origin] = cols
-        }
-        LocalStorage.set(state.name, colsFromStorage)
-        Vue.set(state, 'cols', colsFromStorage[state.origin])
-      }
-      else {
-        LocalStorage.set(state.name, {[state.origin]: cols})
-        Vue.set(state, 'cols', cols)
-      }
-    }
-    else {
-      let defaultCols = [
-        {
-          name: 'timestamp',
-          width: 100,
-          display: true,
-          description: 'Log event time'
-        },
-        {
-          name: 'event_code',
-          title: 'event',
-          width: 400,
-          display: true,
-          description: 'Log event code and description'
-        },
-        {
-          name: 'ident',
-          width: 150,
-          display: true,
-          description: 'Connected device\'s identification string'
-        },
-        {
-          name: 'msgs',
-          width: 85,
-          display: true,
-          description: 'Number of messages received'
-        },
-        {
-          name: 'recv',
-          width: 85,
-          display: true,
-          description: 'Number of bytes received'
-        },
-        {
-          name: 'send',
-          width: 85,
-          display: true,
-          description: 'Number of bytes sent'
-        },
-        {
-          name: 'source',
-          width: 150,
-          display: true,
-          description: 'Connected device\'s address'
-        },
-        {
-          name: 'host',
-          width: 150,
-          display: true,
-          description: 'IP address from which HTTP request was received'
-        },
-        {
-          name: 'duration',
-          width: 85,
-          display: true,
-          description: 'Connection duration in seconds'
-        },
-        {
-          name: 'transport',
-          width: 85,
-          display: true,
-          description: 'Connected device\'s transport: tcp, udp, http etc'
-        }
-      ]
-      Vue.set(state, 'cols', defaultCols)
-    }
-  }
-
-  function updateCols(state, cols) {
     let colsFromStorage = LocalStorage.get.item(state.name)
-    if (colsFromStorage) {
-      colsFromStorage[state.origin] = cols
-      LocalStorage.set(state.name, colsFromStorage)
+    if (!colsFromStorage) {
+      colsFromStorage = {}
     }
+    colsFromStorage[state.origin] = cols
+    LocalStorage.set(state.name, colsFromStorage)
     Vue.set(state, 'cols', cols)
   }
+
+  let updateCols = setCols
 
   function setNewMessagesCount(state, count) {
     Vue.set(state, 'newMessagesCount', count)

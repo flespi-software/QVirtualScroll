@@ -1,4 +1,4 @@
-export default function ({Vue, errorHandler}) {
+export default function ({Vue, LocalStorage, errorHandler}) {
   function getParams(state) {
     let params = {}
     if (state.limit) {
@@ -60,35 +60,40 @@ export default function ({Vue, errorHandler}) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let deviceResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
-        let deviceData = deviceResp.data
-        errorsCheck(deviceData)
-        let cols = []
-        let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
-        /* remove position object */
-        if (colNames.includes('position')) {
-          colNames.splice(colNames.indexOf('position'), 1)
-        }
-        if (colNames.length) {
-          cols = colNames.reduce((acc, col) => {
-            if (col === 'timestamp') { // todo remove after get configure for cols
-              acc.unshift({
+        let cols = [],
+          colsFromStorage = LocalStorage.get.item(state.name)
+        if (colsFromStorage && colsFromStorage[state.active]) {
+          cols = colsFromStorage[state.active]
+        } else {
+          let deviceResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
+          let deviceData = deviceResp.data
+          errorsCheck(deviceData)
+          let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
+          /* remove position object */
+          if (colNames.includes('position')) {
+            colNames.splice(colNames.indexOf('position'), 1)
+          }
+          if (colNames.length) {
+            cols = colNames.reduce((acc, col) => {
+              if (col === 'timestamp') { // todo remove after get configure for cols
+                acc.unshift({
+                  name: col,
+                  width: 190,
+                  display: true
+                })
+                return acc
+              }
+              acc.push({
                 name: col,
-                width: 190,
+                width: 150,
                 display: true
               })
               return acc
-            }
-            acc.push({
-              name: col,
-              width: 150,
-              display: true
-            })
-            return acc
-          }, [])
+            }, [])
+          }
         }
-        // }
-        cols.length ? commit('setCols', cols) : commit('setCols', [])
+
+        commit('setCols', cols)
         Vue.set(state, 'isLoading', false)
       }
       catch (e) {

@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.33] - 2019-01-21
+[fix] save modified cols
 ### [0.1.32] - 2019-01-21
 [fix] cols edit
 ### [0.1.31] - 2018-12-22

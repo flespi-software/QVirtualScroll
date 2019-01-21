@@ -1,4 +1,67 @@
-export default function ({Vue, errorHandler}) {
+export default function ({Vue, LocalStorage, errorHandler}) {
+  let defaultCols = [
+    {
+      name: 'timestamp',
+      width: 100,
+      display: true,
+      description: 'Log event time'
+    },
+    {
+      name: 'event_code',
+      title: 'event',
+      width: 400,
+      display: true,
+      description: 'Log event code and description'
+    },
+    {
+      name: 'ident',
+      width: 150,
+      display: true,
+      description: 'Connected device\'s identification string'
+    },
+    {
+      name: 'msgs',
+      width: 85,
+      display: true,
+      description: 'Number of messages received'
+    },
+    {
+      name: 'recv',
+      width: 85,
+      display: true,
+      description: 'Number of bytes received'
+    },
+    {
+      name: 'send',
+      width: 85,
+      display: true,
+      description: 'Number of bytes sent'
+    },
+    {
+      name: 'source',
+      width: 150,
+      display: true,
+      description: 'Connected device\'s address'
+    },
+    {
+      name: 'host',
+      width: 150,
+      display: true,
+      description: 'IP address from which HTTP request was received'
+    },
+    {
+      name: 'duration',
+      width: 85,
+      display: true,
+      description: 'Connection duration in seconds'
+    },
+    {
+      name: 'transport',
+      width: 85,
+      display: true,
+      description: 'Connected device\'s transport: tcp, udp, http etc'
+    }
+  ]
   function getParams(state) {
     let params = { filter: [] }
     if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
@@ -43,8 +106,13 @@ export default function ({Vue, errorHandler}) {
     return params
   }
 
-  function getCols({state, commit, rootState}) {
-    commit('setCols')
+  function getCols({state, commit, rootState}, initCols) {
+    let cols = initCols || defaultCols,
+      colsFromStorage = LocalStorage.get.item(state.name)
+    if (colsFromStorage && colsFromStorage[state.origin]) {
+      cols = colsFromStorage[state.origin]
+    }
+    commit('setCols', cols)
   }
 
   function errorsCheck (data) {

@@ -194,58 +194,15 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
 
   function setCols(state, cols) {
     let colsFromStorage = LocalStorage.get.item(state.name)
-    if (colsFromStorage) {
-      if (colsFromStorage[state.active] && colsFromStorage[state.active].length) {
-        /* if cols has been added or modified */
-        if (cols.length >= colsFromStorage[state.active].length) {
-          let newCols = cols.reduce((result, col, index) => {
-            let newCol = colsFromStorage[state.active].find(colFromStorage => {
-              return colFromStorage.name === col.name
-            })
-            if (!newCol) {
-              result.push(col)
-            }
-            return result
-          }, [])
-          colsFromStorage[state.active] = [...colsFromStorage[state.active], ...newCols]
-        }
-        /* if cols has been removed */
-        else {
-          colsFromStorage[state.active] = cols.reduce((result, col) => {
-            let newCol = colsFromStorage[state.active].find(colFromStorage => {
-              return colFromStorage.name === col.name
-            })
-            if (newCol) {
-              result.push(newCol)
-            }
-            else {
-              result.push(col)
-            }
-
-            return result
-          }, [])
-        }
-      }
-      else {
-        colsFromStorage[state.active] = cols
-      }
-      LocalStorage.set(state.name, colsFromStorage)
-      Vue.set(state, 'cols', colsFromStorage[state.active])
+    if (!colsFromStorage) {
+      colsFromStorage = {}
     }
-    else {
-      LocalStorage.set(state.name, {[state.active]: cols})
-      Vue.set(state, 'cols', cols)
-    }
-  }
-
-  function updateCols(state, cols) {
-    let colsFromStorage = LocalStorage.get.item(state.name)
-    if (colsFromStorage) {
-      colsFromStorage[state.active] = cols
-      LocalStorage.set(state.name, colsFromStorage)
-    }
+    colsFromStorage[state.active] = cols
+    LocalStorage.set(state.name, colsFromStorage)
     Vue.set(state, 'cols', cols)
   }
+
+  let updateCols = setCols
 
   function setNewMessagesCount(state, count) {
     Vue.set(state, 'newMessagesCount', count)
