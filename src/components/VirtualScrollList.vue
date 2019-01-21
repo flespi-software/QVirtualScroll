@@ -85,7 +85,7 @@
             </div>
           </q-field>
           <draggable :list="currentCols" :options="dragOptions">
-            <q-field v-for="(col, index) in currentCols" :key="index" :label="col.name" :labelWidth="3"
+            <q-field v-for="(col, index) in currentCols" :key="col.name" :label="col.name" :labelWidth="3"
                      :dark="currentTheme.bgColor === 'dark'" class="q-pt-sm q-pb-sm">
               <div class="row">
                 <q-slider class="col-8" :min="50" :max="800" v-model="col.width" label
@@ -170,7 +170,7 @@
                                      :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
           </div>
           <draggable :list="cols" element="span" @end="$emit('update:cols', cols)">
-            <div class="header__item" v-for="(prop, index) in activeCols" :key="index"
+            <div class="header__item" v-for="(prop, index) in activeCols" :key="prop.name"
                  :class="{[`item_${index}`]: true}" style="cursor: move">
               <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
                 ''}`}}

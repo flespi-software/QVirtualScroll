@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.1.32] - 2019-01-21
+[fix] cols edit
 ### [0.1.31] - 2018-12-22
 [feature] cols editor modal: highlight active cols
 ### [0.1.30] - 2018-11-12
