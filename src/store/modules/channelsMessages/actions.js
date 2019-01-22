@@ -26,7 +26,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         Vue.set(state, 'isLoading', true)
         let cols = [],
           colsFromStorage = LocalStorage.get.item(state.name)
-        if (colsFromStorage && colsFromStorage[state.active]) {
+        if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
           cols = colsFromStorage[state.active]
         } else {
           let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})

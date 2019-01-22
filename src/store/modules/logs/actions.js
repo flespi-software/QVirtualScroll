@@ -109,7 +109,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   function getCols({state, commit, rootState}, initCols) {
     let cols = initCols || defaultCols,
       colsFromStorage = LocalStorage.get.item(state.name)
-    if (colsFromStorage && colsFromStorage[state.origin]) {
+    if (colsFromStorage && colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
       cols = colsFromStorage[state.origin]
     }
     commit('setCols', cols)

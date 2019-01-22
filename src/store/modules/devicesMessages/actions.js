@@ -62,7 +62,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         Vue.set(state, 'isLoading', true)
         let cols = [],
           colsFromStorage = LocalStorage.get.item(state.name)
-        if (colsFromStorage && colsFromStorage[state.active]) {
+        if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
           cols = colsFromStorage[state.active]
         } else {
           let deviceResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
