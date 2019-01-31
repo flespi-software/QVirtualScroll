@@ -197,9 +197,13 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     if (!colsFromStorage) {
       colsFromStorage = {}
     }
-    colsFromStorage[state.active] = cols
+    colsFromStorage[state.settings.device_type_id] = cols
     LocalStorage.set(state.name, colsFromStorage)
     Vue.set(state, 'cols', cols)
+  }
+
+  function setSettings (state, device) {
+    Vue.set(state, 'settings', device)
   }
 
   let updateCols = setCols
@@ -272,7 +276,8 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     setSelected,
     clearSelected,
     setSortBy,
-    clearSortBy
+    clearSortBy,
+    setSettings
   }
 
 }

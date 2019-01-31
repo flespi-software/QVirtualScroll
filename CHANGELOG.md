@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.2.0] - 2019-01-31
+[feature] rebased devices messages cols storaging by device_type_id
+[feature] rebased devices messages cols processing
 ### [0.1.34] - 2019-01-22
 [fix] empty cols from ls
 ### [0.1.33] - 2019-01-21

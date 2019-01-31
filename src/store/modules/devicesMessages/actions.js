@@ -56,44 +56,94 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   }
 
   async function getCols({state, commit, rootState}) {
+    const DEFAULT_COL_NAMES = ['timestamp', 'position.latitude', 'position.longitude', 'position.altitude', 'position.speed']
     commit('reqStart')
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
+        /* getting telemetry */
+        let deviceTelemetryResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
+        let deviceTelemetryData = deviceTelemetryResp.data
+        errorsCheck(deviceTelemetryData)
+        let telemetry = deviceTelemetryData.result && deviceTelemetryData.result[0] && deviceTelemetryData.result[0].telemetry
+        /* getting device info */
+        let deviceResp = await Vue.connector.gw.getDevices(state.active)
+        let deviceData = deviceResp.data
+        errorsCheck(deviceData)
+        let device = deviceData.result && deviceData.result[0]
+        commit('setSettings', device)
         let cols = [],
           colsFromStorage = LocalStorage.get.item(state.name)
-        if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
-          cols = colsFromStorage[state.active]
+        if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
+          cols = colsFromStorage[device.device_type_id]
         } else {
-          let deviceResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
-          let deviceData = deviceResp.data
-          errorsCheck(deviceData)
-          let colNames = deviceData.result && deviceData.result[0] && deviceData.result[0].telemetry ? Object.keys(deviceData.result[0].telemetry) : []
-          /* remove position object */
-          if (colNames.includes('position')) {
-            colNames.splice(colNames.indexOf('position'), 1)
-          }
-          if (colNames.length) {
-            cols = colNames.reduce((acc, col) => {
-              if (col === 'timestamp') { // todo remove after get configure for cols
-                acc.unshift({
-                  name: col,
+          if (device.device_type_id) {
+            /* getting protocol id */
+            let protocolResp = await Vue.connector.gw.getProtocolsDeviceTypes('all', device.device_type_id, {fields: 'protocol_id'})
+            let protocolData = protocolResp.data
+            errorsCheck(protocolData)
+            let protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
+            /* gettings messages parameters */
+            let messageParamsResp = await Vue.connector.gw.getProtocols(protocolId, {fields: 'message_parameters'})
+            let messageParamsData = messageParamsResp.data
+            errorsCheck(messageParamsData)
+            let messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters
+            /* initing columns by message parameters */
+            cols = messageParams.reduce((cols, param) => {
+              let name = param.name
+              if (name === 'timestamp') {
+                cols.unshift({
+                  name,
                   width: 190,
-                  display: true
+                  display: false
                 })
-                return acc
+                return cols
               }
-              acc.push({
-                name: col,
+              cols.push({
+                name,
                 width: 150,
-                display: true
+                display: false
               })
-              return acc
+              return cols
             }, [])
+            /* enable cols by active telemetry */
+            if (telemetry) {
+              /* remove position object */
+              if (!!telemetry.position) {
+                delete telemetry.position
+              }
+              let colNames = Object.keys(telemetry)
+              if (cols.length && colNames) {
+                /* merging existed columns with telemetry for creating actual columns */
+                cols.forEach(col => {
+                  if (!!telemetry[col.name]) {
+                    col.display = true
+                  }
+                })
+              }
+            } else { /* enable default cols w/o saving */
+              cols = DEFAULT_COL_NAMES.reduce((cols, name) => {
+                let index = cols.findIndex((col) => col.name === name)
+                if (index === -1) {
+                  cols.push({
+                    name,
+                    width: 150,
+                    display: true
+                  })
+                } else {
+                  cols[index].display = true
+                }
+                return cols
+              }, cols)
+            }
           }
         }
 
-        commit('setCols', cols)
+        if (telemetry) {
+          commit('setCols', cols)
+        } else {
+          Vue.set(state, 'cols', cols)
+        }
         Vue.set(state, 'isLoading', false)
       }
       catch (e) {
