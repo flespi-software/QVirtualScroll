@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.2.1] - 2019-03-20
+[fix] time in date setters mutations
 ### [0.2.0] - 2019-01-31
 [feature] rebased devices messages cols storaging by device_type_id
 [feature] rebased devices messages cols processing

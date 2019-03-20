@@ -101,7 +101,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
 
   function setDate(state, date) {
     let timeObj = getFromTo(date)
-    state.from = date
+    state.from = timeObj.from
     state.to = timeObj.to
   }
 
