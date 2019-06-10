@@ -13,7 +13,9 @@
           :items="filteredItems"
           :actions="actions"
           :date="date"
+          :dateRange="dateRange"
           :mode="mode"
+          :theme="theme"
           :viewConfig="viewConfig"
           :colsConfigurator="'toolbar'"
           :i18n="{from: 'FROM', to: 'TO'}"
@@ -27,6 +29,7 @@
           @action="actionHandler"
           @change:mode="modeChange"
           @update:cols="updateColsHandler"
+          @change:date-range="updateDateRange"
         >
         </virtual-scroll-list>
       </q-page>
@@ -63,12 +66,20 @@ export default {
       date: Date.now(),
       currentVal: 1000,
       defaultLimit: 1000,
+      theme: {
+        color: 'white',
+        bgColor: 'dark',
+        contentInverted: true,
+        controlsInverted: true
+      },
       viewConfig: {
-        needShowMode: true,
+        needShowMode: false,
         needShowPageScroll: 'right left',
-        needShowDate: true,
+        needShowDateRange: true,
+        // needShowDate: true,
         needShowFilter: true
-      }
+      },
+      dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000]
     }
   },
   computed: {
@@ -79,6 +90,10 @@ export default {
     }
   },
   methods: {
+    updateDateRange (range) {
+      this.dateRange = range
+      console.log(range)
+    },
     generateItems () {
       let limit = this.defaultLimit
       let randVal = () => {

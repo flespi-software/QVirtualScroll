@@ -20,6 +20,15 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         params.filter = `${state.filter}`
       }
     }
+    //uncomment after release get cols by protocol
+    // if (state.cols.length) {
+    //     params.fields = state.cols.filter(col => {
+    //         if (col.name === 'timestamp') { return true }
+    //         return col.display
+    //     }).reduce((acc, col, index, arr) => {
+    //         return `${acc}${col.name}${index !== arr.length - 1 ? ',' : ''}`
+    //     }, '')
+    // }
     if (state.from && (!state.reverse || state.mode === 1)) {
       if (!state.reverse) {
         params.from = Math.floor(state.from / 1000)
@@ -265,6 +274,37 @@ export default function ({Vue, LocalStorage, errorHandler}) {
 
   /* getting missed messages after offline */
   async function getMissedMessages({state, commit, rootState}) {
+    if (rootState.token && state.active) {
+      try {
+        Vue.set(state, 'isLoading', true)
+        let lastIndexOffline = state.messages.reduceRight((result, value, index) => {
+          if (result) {
+            return result
+          }
+          if (value.__connectionStatus === 'offline') {
+            result = index
+          }
+          return result
+        }, 0)
+        let params = {
+          from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
+          to: Math.floor(state.messages[lastIndexOffline + 1].timestamp)
+        }
+        let resp = await Vue.connector.gw.getDevicesMessages(state.active, {data: JSON.stringify(params)})
+        let data = resp.data
+        errorsCheck(data)
+        commit('setMissingMessages', {data: data.result, index: lastIndexOffline})
+        Vue.set(state, 'isLoading', false)
+      }
+      catch (e) {
+        errorHandler && errorHandler(e)
+        if (DEV) { console.log(e) }
+        Vue.set(state, 'isLoading', false)
+      }
+    }
+  }
+
+  async function getDevices({state, commit, rootState}, id) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)

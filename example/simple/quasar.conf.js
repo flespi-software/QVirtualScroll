@@ -52,7 +52,6 @@ module.exports = function (ctx) {
         'QWindowResizeObservable',
         'QInput',
         'QToggle',
-        'QToolbar',
         'QToolbarTitle',
         'QDatetime',
         'QBtn',
@@ -63,7 +62,10 @@ module.exports = function (ctx) {
         'QModalLayout',
         'QSlider',
         'QField',
-        'QCheckbox'
+        'QCheckbox',
+        'QResizeObservable',
+        'QBtnToggle',
+        'QPopover'
       ],
       directives: [
         'Ripple'

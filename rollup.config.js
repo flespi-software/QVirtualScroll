@@ -35,5 +35,12 @@ export default [
             { file: './dist/devicesMessages.js', format: 'cjs' }
         ],
         plugins: plugins
-    }
+    },
+    {
+      input: './src/store/modules/intervals/index.js',
+      output: [
+          { file: './dist/intervals.js', format: 'cjs' }
+      ],
+      plugins: plugins
+  }
 ];
