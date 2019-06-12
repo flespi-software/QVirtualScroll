@@ -62,10 +62,11 @@
             <div>{{formatDate(dateRange[1])}}</div>
           </div>
         </q-btn>
-        <q-popover @hide="dateRangePickerShowed = !dateRangePickerShowed, $emit('change:date-range', dateRange)" ref="dateRangePicker" v-if="$q.platform.is.desktop" class="q-pa-sm bg-dark" anchor="top left" fit>
+        <q-popover @hide="dateRangePopoverHide" ref="dateRangePicker" v-if="$q.platform.is.desktop" class="q-pa-sm bg-dark" anchor="top left" fit>
           <date-range-picker
-            :value="dateRange"
+            v-model="currentDateRange"
             :theme="currentTheme"
+            @hide="dateRangePopoverByChildHide"
           />
         </q-popover>
         <q-modal v-else ref="dateRangePicker" :content-css="{maxWidth: '500px'}" class="modal-date-range" @hide="dateRangePickerShowed = !dateRangePickerShowed">
@@ -76,7 +77,7 @@
               </div>
             </q-toolbar>
             <date-range-picker
-              :value="dateRange"
+              v-model="currentDateRange"
               :theme="currentTheme"
               v-if="dateRangePickerShowed"
             />
@@ -382,7 +383,8 @@
         isNeedResizer: true,
         allScrollTop: 0,
         dragOptions: { disabled: true },
-        dateRangePickerShowed: false
+        dateRangePickerShowed: false,
+        currentDateRange: this.dateRange
       }
     },
     computed: {
@@ -574,8 +576,16 @@
         }
       },
       dateRangeModalSave () {
-        this.$emit('change:date-range', this.dateRange)
+        this.$emit('change:date-range', this.currentDateRange)
         this.dateRangeModalClose()
+      },
+      dateRangePopoverHide () {
+        this.dateRangePickerShowed = !this.dateRangePickerShowed
+        this.$emit('change:date-range', this.currentDateRange)
+      },
+      dateRangePopoverByChildHide () {
+        // this.dateRangePopoverHide()
+        this.$refs.dateRangePicker.hide()
       },
       dateRangeModalClose () {
         this.$refs.dateRangePicker.hide()
@@ -590,6 +600,10 @@
     watch: {
       date(val) {
         this.currentDate = val
+      },
+      dateRange (val) {
+        this.$set(this.currentDateRange, 0, val[0])
+        this.$set(this.currentDateRange, 1, val[1])
       },
       mode(val) {
         this.currentMode = !!val

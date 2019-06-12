@@ -8,6 +8,7 @@
         ref="pickr"
         v-if="dateRangeShow"
         v-model="currentDateRange"
+        @input="inputCurrentDateRangeHandler"
         :config="dateRangeConfig"
       />
     </div>
@@ -16,14 +17,14 @@
         <div class="time__label" :class="[`text-${theme.color}`]">{{formatDate(currentDateRangeModel[0].valueOf(), 'DD/MM/YYYY')}}</div>
         <flat-pickr
           ref="beginTime"
-          v-model="currentBeginTime"
+          :value="currentBeginTime"
+          @input="beginTimeChangeHandler"
           :config="{
             enableTime: true,
             noCalendar: true,
             time_24hr: true,
             enableSeconds: true,
-            inline: true,
-            maxDate: 'today'
+            inline: true
           }"
         />
       </div>
@@ -32,14 +33,14 @@
         <div class="time__label" :class="[`text-${theme.color}`]">{{currentDateRangeModel[1] ? formatDate(currentDateRangeModel[1].valueOf(), 'DD/MM/YYYY') : formatDate(Date.now(), 'DD/MM/YYYY')}}</div>
         <flat-pickr
           ref="endTime"
-          v-model="currentEndTime"
+          :value="currentEndTime"
+          @input="endTimeChangeHandler"
           :config="{
             enableTime: true,
             noCalendar: true,
             time_24hr: true,
             enableSeconds: true,
-            inline: true,
-            maxDate: 'today'
+            inline: true
           }"
         />
       </div>
@@ -83,6 +84,7 @@ export default {
           firstDayOfWeek: 1
         },
         onChange: [function () {
+          if (!this.selectedDates.length) { return false }
           self.currentDateRangeModel = this.selectedDates
         }]
       },
@@ -100,7 +102,8 @@ export default {
       DATE_RANGE_MODE_DAY,
       DATE_RANGE_MODE_WEEK,
       DATE_RANGE_MODE_MONTH,
-      DATE_RANGE_MODE_CURRENT
+      DATE_RANGE_MODE_CURRENT,
+      isChangeFromOutside: false
     }
   },
   methods: {
@@ -136,7 +139,7 @@ export default {
       let range = this.$refs.pickr.fp.selectedDates
       if (this.dateRangeMode === DATE_RANGE_MODE_DAY) {
         let curr = range[0]
-        range = [curr.setHours(0, 0, 0, 0), curr.setHours(23, 59, 59, 999) + 1]
+        range = [curr.setHours(0, 0, 0, 0), curr.setHours(23, 59, 59, 999)]
       } else if (this.dateRangeMode === DATE_RANGE_MODE_WEEK) {
         let curr = range[0]
         let first = curr.getDate() - curr.getDay() + 1
@@ -145,16 +148,18 @@ export default {
         firstday.setHours(0, 0, 0, 0)
         let lastday = new Date(curr.setDate(last))
         lastday.setHours(0, 0, 0, 0)
+        lastday = lastday - 1
         if (lastday > new Date()) {
           lastday = new Date()
         }
         range = [firstday.valueOf(), lastday.valueOf()]
       } else if (this.dateRangeMode === DATE_RANGE_MODE_MONTH) {
-        let date = range[0], y = date.getUTCFullYear(), m = date.getUTCMonth()
+        let date = new Date(range[0].valueOf() + 86400000), y = date.getUTCFullYear(), m = date.getUTCMonth()
         let firstday = new Date(y, m, 1)
         firstday.setHours(0, 0, 0, 0)
         let lastday = new Date(y, m + 1, 1)
         lastday.setHours(0, 0, 0, 0)
+        lastday = lastday - 1
         if (lastday > new Date()) {
           lastday = new Date()
         }
@@ -165,29 +170,45 @@ export default {
         let first = range[0]
         let last = range[1]
         if (!first || !last) { return undefined }
-        first.setHours(begin.getHours())
-        first.setMinutes(begin.getMinutes())
-        first.setSeconds(begin.getSeconds())
-        last.setHours(end.getHours())
-        last.setMinutes(end.getMinutes())
-        last.setSeconds(end.getSeconds())
+        first.setHours(begin.getHours(), begin.getMinutes(), begin.getSeconds(), 0)
+        last.setHours(end.getHours(), end.getMinutes(), end.getSeconds())
         range = [first.valueOf(), last.valueOf()]
       }
       return range
+    },
+    beginTimeChangeHandler (val) {
+      this.currentBeginTime = val
+      let value = this.getValue()
+      if (value) { this.$emit('input', value) }
+    },
+    endTimeChangeHandler (val) {
+      this.currentEndTime = val
+      let value = this.getValue()
+      if (value) { this.$emit('input', value) }
+    },
+    inputCurrentDateRangeHandler () {
+      if (this.dateRangeMode !== DATE_RANGE_MODE_CURRENT) {
+        this.$emit('hide')
+      }
     }
   },
   watch: {
     currentDateRangeModel () {
+      if (this.isChangeFromOutside) {
+        this.isChangeFromOutside = false
+        return false
+      }
       let value = this.getValue()
       if (value) { this.$emit('input', value) }
     },
-    currentBeginTime () {
-      let value = this.getValue()
-      if (value) { this.$emit('input', value) }
-    },
-    currentEndTime () {
-      let value = this.getValue()
-      if (value) { this.$emit('input', value) }
+    value (value) {
+      if (value[0] === this.currentDateRangeModel[0].valueOf() && value[1] && this.currentDateRangeModel[1] && this.currentDateRangeModel[1].valueOf() === value[1]) { return false }
+      let currentDateRangeModel = value.map(timestamp => new Date(timestamp))
+      this.$refs.pickr.fp.setDate(this.dateRangeMode === DATE_RANGE_MODE_CURRENT ? [...currentDateRangeModel] : currentDateRangeModel[0])
+      this.currentBeginTime = currentDateRangeModel[0]
+      this.currentEndTime = currentDateRangeModel[1]
+      this.isChangeFromOutside = true
+      this.currentDateRangeModel = currentDateRangeModel
     }
   },
   components: { flatPickr }
