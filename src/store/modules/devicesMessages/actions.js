@@ -20,15 +20,6 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         params.filter = `${state.filter}`
       }
     }
-    //uncomment after release get cols by protocol
-    // if (state.cols.length) {
-    //     params.fields = state.cols.filter(col => {
-    //         if (col.name === 'timestamp') { return true }
-    //         return col.display
-    //     }).reduce((acc, col, index, arr) => {
-    //         return `${acc}${col.name}${index !== arr.length - 1 ? ',' : ''}`
-    //     }, '')
-    // }
     if (state.from && (!state.reverse || state.mode === 1)) {
       if (!state.reverse) {
         params.from = Math.floor(state.from / 1000)

@@ -1,17 +1,18 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Component for show messages",
   "main": "index.js",
   "author": "SeBu",
   "license": "MIT",
   "scripts": {
-    "build": "rm -rf dist && mkdir dist;cp ./src/components/VirtualScrollList.vue ./dist;cp ./src/components/ListItem.vue ./dist;rollup -c;",
+    "build": "rm -rf dist && mkdir dist; rollup -c;",
     "deploy": "rm -rf dist && cd ./example/simple && npm run build && rm -rf deploy && mkdir deploy && cp -R dist/* package.json deploy && cp README.md deploy/README.md && cd ../../ && rm -rf deploy && mkdir -p deploy/simple && cp -R ./example/simple/deploy/* ./deploy/simple && cp ./example/index.html ./deploy && node_modules/git-directory-deploy/bin/git-directory-deploy.sh -ddeploy -bgh-pages -rhttps://github.com/flespi-software/QVirtualScroll.git && rm -rf deploy"
   },
   "dependencies": {
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
     "vue-draggable-resizable": "^1.7.5",
+    "vue-flatpickr-component": "^8.1.2",
     "vue-virtual-scroll-list": "^1.2.8",
     "vuedraggable": "^2.16.0"
   },

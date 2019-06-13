@@ -18,6 +18,7 @@
         placeholder="param1=n*,param2,param3>=5"
         :debounce="0"
       />
+      <q-toolbar-title/>
       <q-btn :color="currentTheme.color" flat class="on-left" v-if="colsConfigurator === 'toolbar'"
              @click="colsModalOpenHandler">
         <q-icon name="tune"></q-icon>
@@ -52,6 +53,44 @@
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
         <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click.native="$emit('change:date-next')"
                 class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"/>
+      </div>
+      <div v-if="!currentMode && currentViewConfig.needShowDateRange" class="on-left q-v-date-range-picker">
+        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 130px; font-size: .8rem;" class="q-pa-none">
+          <div>
+            <div>{{formatDate(dateRange[0])}}</div>
+            <div style="font-size: .5rem">|</div>
+            <div>{{formatDate(dateRange[1])}}</div>
+          </div>
+        </q-btn>
+        <q-popover @hide="dateRangePopoverHide" ref="dateRangePicker" v-if="$q.platform.is.desktop" class="q-pa-sm bg-dark" anchor="top left" fit>
+          <date-range-picker
+            v-model="currentDateRange"
+            :theme="currentTheme"
+            @hide="dateRangePopoverByChildHide"
+          />
+        </q-popover>
+        <q-modal v-else ref="dateRangePicker" :content-css="{maxWidth: '500px'}" class="modal-date-range" @hide="dateRangePickerShowed = !dateRangePickerShowed">
+          <q-modal-layout :class="[`bg-${theme.bgColor}`]">
+            <q-toolbar :color="theme.bgColor" slot="header">
+              <div class="q-toolbar-title" :class="[`text-${theme.color}`]">
+                Time range
+              </div>
+            </q-toolbar>
+            <date-range-picker
+              v-model="currentDateRange"
+              :theme="currentTheme"
+              v-if="dateRangePickerShowed"
+            />
+            <q-toolbar :color="currentTheme.bgColor" slot="footer" style="justify-content: flex-end;">
+              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalSave">
+                save
+              </q-btn>
+              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalClose">
+                close
+              </q-btn>
+            </q-toolbar>
+          </q-modal-layout>
+        </q-modal>
       </div>
       <q-checkbox
         v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
@@ -241,6 +280,7 @@
   import VueDraggableResizable from 'vue-draggable-resizable'
   import ListItem from './ListItem.vue'
   import draggable from 'vuedraggable'
+  import DateRangePicker from './DateRangePicker'
 
   export default {
     name: 'VirtualScrollList',
@@ -262,6 +302,9 @@
       },
       date: {
         type: Number
+      },
+      dateRange: {
+        type: Array
       },
       filter: {
         type: String,
@@ -286,13 +329,14 @@
       theme: Object,
       viewConfig: Object
     },
-    components: {draggable, VirtualList, VueDraggableResizable, ListItem},
+    components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker },
     data() {
       let defaultConfig = {
         needShowFilter: false,
         needShowMode: false,
         needShowPageScroll: '',
         needShowDate: false,
+        needShowDateRange: false,
         needShowEtc: false
       }
       return {
@@ -338,7 +382,9 @@
         currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
         isNeedResizer: true,
         allScrollTop: 0,
-        dragOptions: { disabled: true }
+        dragOptions: { disabled: true },
+        dateRangePickerShowed: false,
+        currentDateRange: this.dateRange
       }
     },
     computed: {
@@ -519,6 +565,30 @@
             this.$refs[`drag${index}`][0].width = item.width
           }
         })
+      },
+      formatDate(timestamp) {
+        return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
+      },
+      dateRangeToggle () {
+        this.dateRangePickerShowed = !this.dateRangePickerShowed
+        if (this.$q.platform.is.mobile) {
+          this.$refs.dateRangePicker.toggle()
+        }
+      },
+      dateRangeModalSave () {
+        this.$emit('change:date-range', this.currentDateRange)
+        this.dateRangeModalClose()
+      },
+      dateRangePopoverHide () {
+        this.dateRangePickerShowed = !this.dateRangePickerShowed
+        this.$emit('change:date-range', this.currentDateRange)
+      },
+      dateRangePopoverByChildHide () {
+        // this.dateRangePopoverHide()
+        this.$refs.dateRangePicker.hide()
+      },
+      dateRangeModalClose () {
+        this.$refs.dateRangePicker.hide()
       }
     },
     updated () {
@@ -530,6 +600,10 @@
     watch: {
       date(val) {
         this.currentDate = val
+      },
+      dateRange (val) {
+        this.$set(this.currentDateRange, 0, val[0])
+        this.$set(this.currentDateRange, 1, val[1])
       },
       mode(val) {
         this.currentMode = !!val

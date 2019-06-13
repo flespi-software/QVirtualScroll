@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.0] - 2019-06-12
+[feature] DateRangeTimePicker added
+[feature] intervals vuex module
 ### [0.2.1] - 2019-03-20
 [fix] time in date setters mutations
 ### [0.2.0] - 2019-01-31
