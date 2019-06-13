@@ -1,5 +1,6 @@
 <template>
   <div class="message-viewer" :class="{[`uid${uid}`]: true}">
+    <q-window-resize-observable @resize="onWindowResize" />
     <q-toolbar class="viewer__toolbar" :color="currentTheme.bgColor" v-if="needShowToolbar">
       <span v-if="title && $q.platform.is.desktop" style="margin-right: 10px">{{title}}</span>
       <q-icon :color="currentTheme.color" name="search" @click.native="showSearch = true"
@@ -62,14 +63,14 @@
             <div>{{formatDate(dateRange[1])}}</div>
           </div>
         </q-btn>
-        <q-popover @hide="dateRangePopoverHide" ref="dateRangePicker" v-if="$q.platform.is.desktop" class="q-pa-sm bg-dark" anchor="top left" fit>
+        <q-popover @hide="dateRangePopoverHide" ref="dateRangePicker" v-show="$q.platform.is.desktop && !dateRangeModalView" class="q-pa-sm bg-dark" anchor="top left" fit>
           <date-range-picker
             v-model="currentDateRange"
             :theme="currentTheme"
             @hide="dateRangePopoverByChildHide"
           />
         </q-popover>
-        <q-modal v-else ref="dateRangePicker" :content-css="{maxWidth: '500px'}" class="modal-date-range" @hide="dateRangePickerShowed = !dateRangePickerShowed">
+        <q-modal v-if="$q.platform.is.mobile || dateRangeModalView" ref="dateRangePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date-range">
           <q-modal-layout :class="[`bg-${theme.bgColor}`]">
             <q-toolbar :color="theme.bgColor" slot="header">
               <div class="q-toolbar-title" :class="[`text-${theme.color}`]">
@@ -77,17 +78,13 @@
               </div>
             </q-toolbar>
             <date-range-picker
+              class="q-ma-sm"
               v-model="currentDateRange"
               :theme="currentTheme"
-              v-if="dateRangePickerShowed"
             />
             <q-toolbar :color="currentTheme.bgColor" slot="footer" style="justify-content: flex-end;">
-              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalSave">
-                save
-              </q-btn>
-              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalClose">
-                close
-              </q-btn>
+              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalSave">save</q-btn>
+              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalClose">close</q-btn>
             </q-toolbar>
           </q-modal-layout>
         </q-modal>
@@ -383,8 +380,8 @@
         isNeedResizer: true,
         allScrollTop: 0,
         dragOptions: { disabled: true },
-        dateRangePickerShowed: false,
-        currentDateRange: this.dateRange
+        currentDateRange: this.dateRange,
+        dateRangeModalView: true
       }
     },
     computed: {
@@ -570,9 +567,9 @@
         return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
       },
       dateRangeToggle () {
-        this.dateRangePickerShowed = !this.dateRangePickerShowed
-        if (this.$q.platform.is.mobile) {
-          this.$refs.dateRangePicker.toggle()
+        if (this.$q.platform.is.mobile || this.dateRangeModalView) {
+          let el = this.$q.platform.is.desktop && !this.dateRangeModalView ? this.$refs.dateRangePicker : this.$refs.dateRangePickerModal
+          el.toggle()
         }
       },
       dateRangeModalSave () {
@@ -580,15 +577,22 @@
         this.dateRangeModalClose()
       },
       dateRangePopoverHide () {
-        this.dateRangePickerShowed = !this.dateRangePickerShowed
         this.$emit('change:date-range', this.currentDateRange)
       },
       dateRangePopoverByChildHide () {
-        // this.dateRangePopoverHide()
-        this.$refs.dateRangePicker.hide()
+        let el = this.$q.platform.is.desktop && !this.dateRangeModalView ? this.$refs.dateRangePicker : this.$refs.dateRangePickerModal
+        el.hide()
       },
       dateRangeModalClose () {
-        this.$refs.dateRangePicker.hide()
+        let el = this.$q.platform.is.desktop && !this.dateRangeModalView ? this.$refs.dateRangePicker : this.$refs.dateRangePickerModal
+        el.hide()
+      },
+      onWindowResize (size) {
+        if (size.height < 670) {
+          this.dateRangeModalView = true
+        } else {
+          this.dateRangeModalView = false
+        }
       }
     },
     updated () {
