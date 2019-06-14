@@ -25,6 +25,17 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     return params
   }
 
+  function getCols({state, commit}, counters) {
+    let cols = [],
+      colsFromStorage = LocalStorage.get.item(state.name)
+    if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
+      cols = colsFromStorage[state.active]
+      commit('updateCols', cols)
+    } else {
+      commit('setCols', counters)
+    }
+  }
+
   function errorsCheck (data) {
     if (data.errors) {
       data.errors.forEach((error) => {
@@ -133,6 +144,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     get,
     pollingGet,
     initTime,
-    unsubscribePooling
+    unsubscribePooling,
+    getCols
   }
 }
