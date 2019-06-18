@@ -522,7 +522,9 @@
             this.needAutoScroll = true
           }
           this.currentScrollTop = data.offset
-          this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
+          if (this.$refs.wrapper) {
+            this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
+          }
         }
       },
       getDynamicCSS() {

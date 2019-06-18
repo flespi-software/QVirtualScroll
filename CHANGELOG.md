@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.3] - 2019-06-18
+[fix] scroll after removing
 ### [0.3.2] - 2019-06-12
 [fix] intervals` cols edit
 ### [0.3.1] - 2019-06-12
