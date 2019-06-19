@@ -96,7 +96,7 @@ export default {
         {label: 'Day', value: DATE_RANGE_MODE_DAY},
         {label: 'Week', value: DATE_RANGE_MODE_WEEK},
         {label: 'Month', value: DATE_RANGE_MODE_MONTH},
-        {label: 'Current', value: DATE_RANGE_MODE_CURRENT}
+        {label: 'Range', value: DATE_RANGE_MODE_CURRENT}
       ],
       selectedInput: 0,
       DATE_RANGE_MODE_DAY,

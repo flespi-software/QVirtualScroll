@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.4] - 2019-06-19
+[fix] change label
 ### [0.3.3] - 2019-06-18
 [fix] scroll after removing
 ### [0.3.2] - 2019-06-12
