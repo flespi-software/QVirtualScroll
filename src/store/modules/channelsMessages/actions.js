@@ -87,6 +87,17 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     Vue.set(state, 'isLoading', false)
   }
 
+  let messagesBuffer = [],
+    loopId = 0
+  function initRenderLoop (commit) {
+    return setInterval(() => {
+      if (messagesBuffer.length) {
+        commit('setMessages', [...messagesBuffer])
+        messagesBuffer = []
+      }
+    }, 500)
+  }
+
   async function pollingGet({state, commit, rootState}) {
     commit('reqStart')
     let data = await getData({state, commit, rootState})
@@ -94,9 +105,10 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       commit('setMessages', data.result)
       commit('setFrom', data.next_key)
     }
+    loopId = initRenderLoop(commit)
     await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => {
       if (state.mode === 1) {
-        commit('setMessages', [JSON.parse(message)])
+        messagesBuffer.push(JSON.parse(message))
       }
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
@@ -107,6 +119,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling({state}) {
+    if (loopId) { clearInterval(loopId) }
     await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
   }
 

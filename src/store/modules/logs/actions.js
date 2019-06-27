@@ -248,13 +248,25 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     commit('setFilter', filter)
   }
 
+  let messagesBuffer = [],
+    loopId = 0
+  function initRenderLoop (commit) {
+    return setInterval(() => {
+      if (messagesBuffer.length) {
+        commit('setMessages', [...messagesBuffer])
+        messagesBuffer = []
+      }
+    }, 500)
+  }
+
   async function pollingGet({state, commit, rootState}) {
     let api = state.origin.split('/')[0],
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
+    loopId = initRenderLoop(commit)
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       if (state.mode === 1) {
-        commit('setMessages', [JSON.parse(message)])
+        messagesBuffer.push(JSON.parse(message))
       }
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
@@ -301,6 +313,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   async function unsubscribePooling({state}) {
     let api = state.origin.split('/')[0],
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
+    if (loopId) { clearInterval(loopId) }
     await Vue.connector.unsubscribeLogs(api, origin, '#')
   }
 
