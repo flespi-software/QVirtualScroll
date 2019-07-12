@@ -211,7 +211,7 @@
               <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
                 ''}`}}
               </q-tooltip>
-              <span class="item__label">{{prop.title || prop.name}}</span>
+              <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span></span>
               <vue-draggable-resizable :ref="`drag${index}`" v-if="$q.platform.is.desktop && isNeedResizer"
                                        :active="true" :draggable="false" :handles="['mr']" :w="prop.width"
                                        :h="itemHeight * (itemsCount + 1)" :minw="50" :z='0'

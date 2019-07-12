@@ -27,6 +27,13 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         let cols = [],
           colsFromStorage = LocalStorage.get.item(state.name)
         if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
+          /* remove after sometime 12.07.19 */
+          colsFromStorage[state.active].forEach((col) => {
+            if (col.name === 'timestamp') {
+              let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+              col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+            }
+          })
           cols = colsFromStorage[state.active]
         } else {
           let protocolIdResp = await Vue.connector.gw.getChannels(state.active, {fields: 'protocol_id'})
@@ -37,12 +44,17 @@ export default function ({Vue, LocalStorage, errorHandler}) {
             let colsData = colsResp.data
             errorsCheck(colsData)
             colsData.result[0].message_parameters.forEach(col => {
-              cols.push({
+              let colItem = {
                 name: col.name,
                 width: 160,
                 display: true,
                 description: col.info
-              })
+              }
+              if (colItem.name === 'timestamp') {
+                let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+                colItem.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+              }
+              cols.push(colItem)
             })
           }
         }

@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.6] - 2019-07-12
+[feature] addition field in cols
 ### [0.3.5] - 2019-06-27
 [feature] render loop for modules
 ### [0.3.4] - 2019-06-19
