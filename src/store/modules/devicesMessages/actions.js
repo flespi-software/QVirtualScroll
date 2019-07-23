@@ -66,6 +66,13 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         let cols = [],
           colsFromStorage = LocalStorage.get.item(state.name)
         if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
+          /* remove after sometime 12.07.19 */
+          colsFromStorage[device.device_type_id].forEach((col) => {
+            if (col.name === 'timestamp') {
+              let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+              col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+            }
+          })
           cols = colsFromStorage[device.device_type_id]
         } else {
           if (device.device_type_id) {
@@ -83,10 +90,12 @@ export default function ({Vue, LocalStorage, errorHandler}) {
             cols = messageParams.reduce((cols, param) => {
               let name = param.name
               if (name === 'timestamp') {
+                let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
                 cols.unshift({
                   name,
                   width: 190,
-                  display: false
+                  display: false,
+                  addition: `${locale.slice(0, 3)}:${locale.slice(3)}`
                 })
                 return cols
               }

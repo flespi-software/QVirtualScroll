@@ -1,10 +1,12 @@
 export default function ({Vue, LocalStorage, errorHandler}) {
+  let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
   let defaultCols = [
     {
       name: 'timestamp',
       width: 100,
       display: true,
-      description: 'Log event time'
+      description: 'Log event time',
+      addition: `${locale.slice(0, 3)}:${locale.slice(3)}`
     },
     {
       name: 'event_code',
@@ -110,6 +112,13 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     let cols = initCols || defaultCols,
       colsFromStorage = LocalStorage.get.item(state.name)
     if (colsFromStorage && colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
+      /* remove after sometime 12.07.19 */
+      colsFromStorage[state.origin].forEach((col) => {
+        if (col.name === 'timestamp') {
+          let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+          col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+        }
+      })
       cols = colsFromStorage[state.origin]
     }
     commit('setCols', cols)
