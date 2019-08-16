@@ -136,7 +136,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   function getLogs(origin, deletedStatus) {
     let parts = origin.split('/'),
       id = parts.pop(),
-      namespace = deletedStatus ?
+      namespace = deletedStatus || origin === '*' ?
         Vue.connector.http.platform.customer :
         parts.reduce((result, part) => {
           return result[part]
@@ -269,7 +269,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   }
 
   async function pollingGet({state, commit, rootState}) {
-    let api = state.origin.split('/')[0],
+    let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
     loopId = initRenderLoop(commit)
@@ -320,7 +320,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling({state}) {
-    let api = state.origin.split('/')[0],
+    let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
     if (loopId) { clearInterval(loopId) }
     await Vue.connector.unsubscribeLogs(api, origin, '#')

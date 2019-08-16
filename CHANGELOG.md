@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.8] - 2019-08-16
+[fix] work with all logs
 ### [0.3.7] - 2019-07-23
 [feature] addition field in cols in logs and devices
 ### [0.3.6] - 2019-07-12
