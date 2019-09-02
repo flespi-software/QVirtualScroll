@@ -39,7 +39,7 @@
       </div>
       <div class="on-left date" style="min-width: 180px"
            v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
-        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click.native="$emit('change:date-prev')"
+        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.prev)" @click.native="$emit('change:date-prev')"
                 class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_left"/>
         <q-datetime
           format="DD-MM-YYYY HH:mm:ss"
@@ -52,7 +52,7 @@
           class="vsl-date"
         />
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
-        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop" @click.native="$emit('change:date-next')"
+        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.next)" @click.native="$emit('change:date-next')"
                 class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"/>
       </div>
       <div v-if="!currentMode && currentViewConfig.needShowDateRange" class="on-left q-v-date-range-picker">

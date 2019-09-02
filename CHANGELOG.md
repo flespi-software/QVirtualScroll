@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.9] - 2019-09-02
+[feature] setting for hiding data arrows scroll
 ### [0.3.8] - 2019-08-16
 [fix] work with all logs
 ### [0.3.7] - 2019-07-23
