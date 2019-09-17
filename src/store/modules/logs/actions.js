@@ -108,6 +108,14 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     return params
   }
 
+  function getHeaders (state) {
+    let headers = {}
+    if (state.cid) {
+      headers['x-flespi-cid'] = state.cid
+    }
+    return headers
+  }
+
   function getCols({state, commit, rootState}, initCols) {
     let cols = initCols || defaultCols,
       colsFromStorage = LocalStorage.get.item(state.name)
@@ -143,11 +151,11 @@ export default function ({Vue, LocalStorage, errorHandler}) {
         }, Vue.connector.http)
     if (id !== '*' && !deletedStatus) {
       return function (params) {
-        return namespace.logs.get(id, {data: JSON.stringify(params)})
+        return namespace.logs.get(id, {data: JSON.stringify(params.data)}, { headers: params.headers })
       }
     } else {
       return function (params) {
-        return namespace.logs.get({data: JSON.stringify(params)})
+        return namespace.logs.get({data: JSON.stringify(params.data)}, { headers: params.headers })
       }
     }
   }
@@ -164,12 +172,15 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       try {
         Vue.set(state, 'isLoading', true)
         let params = {
-          reverse: true,
-          count: 1,
-          fields: 'timestamp'
+          data: {
+            reverse: true,
+            count: 1,
+            fields: 'timestamp'
+          },
+          headers: getHeaders(state)
         }
         if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
-          params.filter = `event_origin=${state.origin}`
+          params.data.filter = `event_origin=${state.origin}`
         }
         let resp = await getLogs(state.origin, state.isItemDeleted)(params)
         let data = resp.data
@@ -200,7 +211,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       try {
         Vue.set(state, 'isLoading', true)
         let currentMode = JSON.parse(JSON.stringify(state.mode))
-        let resp = await getLogs(state.origin, state.isItemDeleted)(getParams(state))
+        let resp = await getLogs(state.origin, state.isItemDeleted)({data: getParams(state), headers: getHeaders(state)})
         /* if mode changed in time request */
         if (currentMode !== state.mode) { return false }
         let data = resp.data
@@ -273,6 +284,10 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
     loopId = initRenderLoop(commit)
+    let properties = {}
+    if (state.cid) {
+      properties = { userProperties: { cid: state.cid } }
+    }
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       if (state.mode === 1) {
         messagesBuffer.push(JSON.parse(message))
@@ -280,7 +295,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       else {
         commit('setNewMessagesCount', state.newMessagesCount + 1)
       }
-    }, { rh: 2 })
+    }, { rh: 2, properties })
   }
 
   /* getting missed messages after offline */
@@ -298,11 +313,14 @@ export default function ({Vue, LocalStorage, errorHandler}) {
           return result
         }, 0)
         let params = {
-          from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
-          to: Math.floor(state.messages[lastIndexOffline + 1].timestamp)
+          data: {
+            from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
+            to: Math.floor(state.messages[lastIndexOffline + 1].timestamp)
+          },
+          headers: getHeaders(state)
         }
         if (state.origin.indexOf('platform') !== -1) {
-          params.filter = `event_origin=${state.origin}`
+          params.data.filter = `event_origin=${state.origin}`
         }
         let resp = await getLogs(state.origin, state.isItemDeleted)(params)
         let data = resp.data
@@ -323,7 +341,11 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
     if (loopId) { clearInterval(loopId) }
-    await Vue.connector.unsubscribeLogs(api, origin, '#')
+    let properties = {}
+    if (state.cid) {
+      properties = { userProperties: { cid: state.cid } }
+    }
+    await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { properties })
   }
 
   return {

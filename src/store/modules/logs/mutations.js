@@ -233,6 +233,10 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     Vue.set(state, 'isItemDeleted', flag)
   }
 
+  function setCid (state, cid) {
+    Vue.set(state, 'cid', cid)
+  }
+
   return {
     setOffline,
     setReconnected,
@@ -260,6 +264,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     setMissingMessages,
     setSelected,
     clearSelected,
-    setItemDeletedStatus
+    setItemDeletedStatus,
+    setCid
   }
 }
