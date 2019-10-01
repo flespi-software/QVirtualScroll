@@ -89,6 +89,8 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     if (state.from && (!state.reverse || state.mode === 1)) {
       if (!state.reverse) {
         params.from = Math.floor(state.from / 1000)
+      } else if (state.mode === 1) {
+        params.from = Math.floor((Date.now() / 1000) - 172800)
       }
     }
     if (state.to) {
