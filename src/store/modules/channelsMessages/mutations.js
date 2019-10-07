@@ -54,6 +54,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
       case 1: {
         let now = Date.now()
         state.from = Math.ceil((now - 4000 - 1000) / 1000)
+        state.to = state.from
         clearMessages(state)
         state.newMessagesCount = 0
         Vue.set(state, 'messages', state.rtMessagesBuff)
@@ -66,6 +67,10 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
 
   function setFrom(state, from) {
     Vue.set(state, 'from', from)
+  }
+
+  function setTo(state, to) {
+    Vue.set(state, 'to', to)
   }
 
   function reqStart() {
@@ -84,6 +89,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     state.filter = ''
     state.mode = null
     state.from = 0
+    state.to = 0
     state.limit = 1000
     await Vue.connector.unsubscribeMessagesChannels(state.active, '+')
   }
@@ -146,6 +152,7 @@ export default function ({Vue, LocalStorage, filterHandler, newMessagesIntersept
     setFilter,
     setMode,
     setFrom,
+    setTo,
     reqStart,
     clear,
     setActive,

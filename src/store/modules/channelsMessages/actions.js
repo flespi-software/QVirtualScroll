@@ -94,7 +94,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     let data = await getData({state, commit, rootState})
     if (data.result) {
       commit('setMessages', data.result)
-      commit('setFrom', data.next_key)
+      commit('setTo', data.next_key)
     }
     Vue.set(state, 'isLoading', false)
   }
@@ -115,7 +115,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     let data = await getData({state, commit, rootState})
     if (data.result) {
       commit('setMessages', data.result)
-      commit('setFrom', data.next_key)
+      commit('setTo', data.next_key)
     }
     loopId = initRenderLoop(commit)
     await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => {

@@ -49,6 +49,7 @@
           :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
           type="datetime"
           format24h
+          modal
           class="vsl-date"
         />
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>

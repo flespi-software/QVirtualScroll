@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.12] - 2019-10-07
+[fix] datetime in modal view
+[fix] channels messages user pick time
 ### [0.3.9] - 2019-09-02
 [feature] setting for hiding data arrows scroll
 ### [0.3.8] - 2019-08-16
