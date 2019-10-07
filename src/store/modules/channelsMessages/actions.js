@@ -101,10 +101,12 @@ export default function ({Vue, LocalStorage, errorHandler}) {
 
   let messagesBuffer = [],
     loopId = 0
-  function initRenderLoop (commit) {
+  function initRenderLoop (state, commit) {
     return setInterval(() => {
       if (messagesBuffer.length) {
-        commit('setMessages', [...messagesBuffer])
+        if (state.mode === 1) {
+          commit('setMessages', [...messagesBuffer])
+        }
         messagesBuffer = []
       }
     }, 500)
@@ -117,7 +119,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
       commit('setMessages', data.result)
       commit('setTo', data.next_key)
     }
-    loopId = initRenderLoop(commit)
+    loopId = initRenderLoop(state, commit)
     await Vue.connector.subscribeMessagesChannels(state.active, '+', (message) => {
       if (state.mode === 1) {
         messagesBuffer.push(JSON.parse(message))

@@ -1,5 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+### [0.3.13] - 2019-10-07
+[fix] clear messages buffer
 ### [0.3.12] - 2019-10-07
 [fix] datetime in modal view
 [fix] channels messages user pick time

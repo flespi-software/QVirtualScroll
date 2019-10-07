@@ -272,10 +272,12 @@ export default function ({Vue, LocalStorage, errorHandler}) {
 
   let messagesBuffer = [],
     loopId = 0
-  function initRenderLoop (commit) {
+  function initRenderLoop (state, commit) {
     return setInterval(() => {
       if (messagesBuffer.length) {
-        commit('setMessages', [...messagesBuffer])
+        if (state.mode === 1) {
+          commit('setMessages', [...messagesBuffer])
+        }
         messagesBuffer = []
       }
     }, 500)
@@ -285,7 +287,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
     let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
 
-    loopId = initRenderLoop(commit)
+    loopId = initRenderLoop(state, commit)
     let properties = {}
     if (state.cid) {
       properties = { userProperties: { cid: state.cid } }
@@ -342,6 +344,7 @@ export default function ({Vue, LocalStorage, errorHandler}) {
   async function unsubscribePooling({state}) {
     let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
+    console.log()
     if (loopId) { clearInterval(loopId) }
     let properties = {}
     if (state.cid) {
