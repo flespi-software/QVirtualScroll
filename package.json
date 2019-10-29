@@ -1,0 +1,76 @@
+{
+  "name": "qvirtualscroll",
+  "version": "0.4.0",
+  "description": "Quasar component for displaing messages",
+  "productName": "QVirtualScroll",
+  "cordovaId": "org.cordova.quasar.app",
+  "author": "Sergey Buntsevich <scarry92@yandex.ru>",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint --ext .js,.vue src",
+    "dev_lib": "rollup -cw",
+    "dev": "quasar dev",
+    "build_lib": "rollup -c",
+    "build_example": "quasar build",
+    "make_example": "rm -rf dist && npm run build_example && rm -rf deploy && mkdir deploy && cp -R dist/spa-mat/* package.json README.md deploy && mkdir deploy/docs && cp -R docs/* deploy/docs && rm -rf dist",
+    "push_example": "node_modules/git-directory-deploy/bin/git-directory-deploy.sh -ddeploy -bgh-pages -rhttps://github.com/flespi-software/QVirtualScroll.git && rm -rf deploy",
+    "deploy_example": "npm run make_example && npm run push_example",
+    "push_lib": "node_modules/git-directory-deploy/bin/git-directory-deploy.sh -d. -bmaster -rhttps://github.com/flespi-software/QVirtualScroll.git && git push origin master",
+    "deploy_lib": "npm run build_lib && npm run push_lib",
+    "deploy": "npm run deploy_lib && npm run deploy_example"
+  },
+  "dependencies": {
+    "datetimerangepicker": "git+https://github.com/flespi-software/DateTimeRangePicker.git",
+    "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
+    "vue-draggable-resizable": "^2.0.1",
+    "vue-virtual-scroll-list": "^1.4.2",
+    "vuedraggable": "^2.23.2"
+  },
+  "peerDependencies": {
+    "quasar": "^1.2.2",
+    "vue": ">=2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/plugin-proposal-decorators": "^7.6.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.5.2",
+    "@babel/plugin-proposal-function-sent": "^7.5.0",
+    "@babel/plugin-proposal-numeric-separator": "^7.2.0",
+    "@babel/plugin-proposal-throw-expressions": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.6.2",
+    "@babel/preset-env": "^7.6.3",
+    "@vue/eslint-config-standard": "^4.0.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^6.5.1",
+    "eslint-loader": "^3.0.2",
+    "eslint-plugin-vue": "^5.2.3",
+    "git-directory-deploy": "^1.5.1",
+    "rollup": "^1.25.2",
+    "rollup-plugin-auto-external": "^2.0.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-filesize": "^6.2.1",
+    "rollup-plugin-ignore": "^1.0.5",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-uglify": "^6.0.3",
+    "rollup-plugin-vue": "^5.0.1",
+    "quasar-cli": "^0.17.0",
+    "strip-ansi": "^3.0.1"
+  },
+  "engines": {
+    "node": ">= 8.9.0",
+    "npm": ">= 5.6.0",
+    "yarn": ">= 1.6.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 10"
+  ],
+  "resolutions": {
+    "ajv": "6.8.1"
+  }
+}
