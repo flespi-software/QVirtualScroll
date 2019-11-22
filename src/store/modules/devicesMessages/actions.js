@@ -61,7 +61,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         let device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
         let cols = [],
-          colsFromStorage = LocalStorage.get.item(state.name)
+          colsFromStorage = LocalStorage.getItem(state.name)
         if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[device.device_type_id].forEach((col) => {

@@ -25,7 +25,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       try {
         Vue.set(state, 'isLoading', true)
         let cols = [],
-          colsFromStorage = LocalStorage.get.item(state.name)
+          colsFromStorage = LocalStorage.getItem(state.name)
         if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[state.active].forEach((col) => {

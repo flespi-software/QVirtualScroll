@@ -118,7 +118,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
 
   function getCols ({ state, commit, rootState }, initCols) {
     let cols = initCols || defaultCols,
-      colsFromStorage = LocalStorage.get.item(state.name)
+      colsFromStorage = LocalStorage.getItem(state.name)
     if (colsFromStorage && colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
       /* remove after sometime 12.07.19 */
       colsFromStorage[state.origin].forEach((col) => {

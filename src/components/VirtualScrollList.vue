@@ -1,210 +1,270 @@
 <template>
   <div class="message-viewer" :class="{[`uid${uid}`]: true}">
-    <q-window-resize-observable @resize="onWindowResize" />
-    <q-toolbar class="viewer__toolbar" :color="currentTheme.bgColor" v-if="needShowToolbar">
+    <q-toolbar class="viewer__toolbar" v-if="needShowToolbar" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
       <span v-if="title && $q.platform.is.desktop" style="margin-right: 10px">{{title}}</span>
       <q-icon :color="currentTheme.color" name="search" @click.native="showSearch = true"
-              v-if="$q.platform.is.mobile && currentViewConfig.needShowFilter && !showSearch"
-              :style="{fontSize: '24px', marginBottom: currentTheme.controlsInverted ? '' : '8px', paddingLeft: currentTheme.controlsInverted ? '8px' : ''}"></q-icon>
-      <q-search
-        :class="{'full-width': $q.platform.is.desktop || showSearch, collapsed: $q.platform.is.mobile && !showSearch}"
+        v-if="$q.platform.is.mobile && currentViewConfig.needShowFilter && !showSearch"
+        :style="{fontSize: '24px', marginBottom: currentTheme.controlsInverted ? '' : '8px', paddingLeft: currentTheme.controlsInverted ? '8px' : ''}"
+      />
+      <q-input
+        :class="{'full-width': $q.platform.is.desktop || showSearch, collapsed: $q.platform.is.mobile && !showSearch}" outlined hide-bottom-space dense
         @focus="showSearch = true"
         :autofocus="$q.platform.is.mobile"
         @blur="searchBlurHandler"
         v-if="currentViewConfig.needShowFilter && ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
         @keyup.enter="searchSubmitHandler"
         type="text" v-model="currentFilter"
-        :inverted="currentTheme.controlsInverted"
-        :color="currentTheme.controlsInverted ? 'none' : currentTheme.color"
+        :dark="currentTheme.controlsInverted"
+        :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
         placeholder="param1=n*,param2,param3>=5"
         :debounce="0"
-      />
+      >
+        <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
+      </q-input>
       <q-toolbar-title/>
-      <q-btn :color="currentTheme.color" flat class="on-left" v-if="colsConfigurator === 'toolbar'"
-             @click="colsModalOpenHandler">
+      <q-btn :color="currentTheme.color" flat class="on-left" @click="colsModalOpenHandler"
+        v-if="colsConfigurator === 'toolbar' && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
+      >
         <q-icon name="tune"></q-icon>
       </q-btn>
       <div class="pagination on-left" style="min-width: 52px"
-           v-if="!currentMode && currentViewConfig.needShowPageScroll && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
+        v-if="!currentMode && currentViewConfig.needShowPageScroll && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
+      >
         <q-icon :color="currentTheme.color" class="cursor-pointer on-right"
-                v-if="currentViewConfig.needShowPageScroll.indexOf('left') !== -1"
-                @click.native="$emit('change:pagination-prev')" size="1.5rem" name="arrow_back">
+          v-if="currentViewConfig.needShowPageScroll.indexOf('left') !== -1"
+          @click.native="$emit('change:pagination-prev')" size="1.5rem" name="arrow_back"
+        >
           <q-tooltip>{{i18n.from}}</q-tooltip>
         </q-icon>
         <q-icon :color="currentTheme.color" class="cursor-pointer on-right"
-                v-if="currentViewConfig.needShowPageScroll.indexOf('right') !== -1"
-                @click.native="$emit('change:pagination-next')" size="1.5rem" name="arrow_forward">
+          v-if="currentViewConfig.needShowPageScroll.indexOf('right') !== -1"
+          @click.native="$emit('change:pagination-next')" size="1.5rem" name="arrow_forward"
+        >
           <q-tooltip>{{i18n.to}}</q-tooltip>
         </q-icon>
       </div>
-      <div class="on-left date" style="min-width: 180px"
-           v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
-        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.prev)" @click.native="$emit('change:date-prev')"
-                class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_left"/>
-        <q-datetime
-          format="DD-MM-YYYY HH:mm:ss"
-          @change="(val) => { currentDate = val; $emit('change:date', val)}"
-          :value="currentDate"
-          :inverted="currentTheme.controlsInverted"
-          :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
-          type="datetime"
-          format24h
-          modal
-          class="vsl-date"
+      <div class="on-left date" style="min-width: 180px" v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
+        <q-icon :color="currentTheme.color"
+          v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.prev)"
+          @click.native="$emit('change:date-prev')"
+          class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_left"
         />
+        <q-btn flat :color="currentTheme.color" style="max-width: 120px; font-size: .8rem; line-height: .8rem;" class="q-pa-sm" @click="$refs.datePickerModal.toggle()">
+          <div>{{formatDate(date)}}</div>
+        </q-btn>
+        <q-dialog ref="datePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date" :maximized="$q.platform.is.mobile">
+          <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '30vw'}">
+            <q-card-section class="q-pa-none">
+              <q-toolbar :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
+                <div class="q-toolbar-title text-h6" :class="[`text-${theme.color}`]">
+                  Date/Time
+                </div>
+              </q-toolbar>
+            </q-card-section>
+            <q-separator />
+            <q-card-section :style="{height: $q.platform.is.mobile ? 'calc(100% - 104px)' : ''}" class="scroll" :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
+              <div class="flex flex-center">
+                <vue-flat-pickr
+                  :value="dateValue"
+                  @input="dateInputHandler"
+                  :config="dateConfig"
+                  :theme="currentTheme"
+                />
+              </div>
+            </q-card-section>
+            <q-separator />
+            <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+              <q-btn flat :color="currentTheme.color" @click="datePickerModalClose">close</q-btn>
+              <q-btn flat :color="currentTheme.color" @click="datePickerModalSave">save</q-btn>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
         <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
-        <q-icon :color="currentTheme.color" v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.next)" @click.native="$emit('change:date-next')"
-                class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"/>
+        <q-icon :color="currentTheme.color"
+          v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.next)"
+          @click.native="$emit('change:date-next')"
+          class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"
+        />
       </div>
-      <div v-if="!currentMode && currentViewConfig.needShowDateRange" class="on-left q-v-date-range-picker">
-        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 130px; font-size: .8rem;" class="q-pa-none">
+      <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker">
+        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 130px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
           <div>
             <div>{{formatDate(dateRange[0])}}</div>
             <div style="font-size: .5rem">|</div>
             <div>{{formatDate(dateRange[1])}}</div>
           </div>
         </q-btn>
-        <q-popover ref="dateRangePicker" v-show="$q.platform.is.desktop && !dateRangeModalView" class="q-pa-sm bg-dark" anchor="top left" self="center left" max-height="500px" fit>
-          <date-range-picker
-            v-model="currentDateRange"
-            :mode="currentDateRangeMode"
-            @change:mode="changeModeDateTimeRangeHandler"
-            :theme="currentTheme"
-          />
-          <q-btn style="float: right" color="white" flat icon="check" label="Set" @click="setDateRange" />
-        </q-popover>
-        <q-modal v-if="$q.platform.is.mobile || dateRangeModalView" ref="dateRangePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date-range">
-          <q-modal-layout :class="[`bg-${theme.bgColor}`]">
-            <q-toolbar :color="theme.bgColor" slot="header">
-              <div class="q-toolbar-title" :class="[`text-${theme.color}`]">
-                Time range
+        <q-dialog ref="dateRangePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date-range" :maximized="$q.platform.is.mobile">
+          <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '30vw'}">
+            <q-card-section class="q-pa-none">
+              <q-toolbar :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+                <div class="q-toolbar-title text-h6" :class="[`text-${currentTheme.color}`]">
+                  Time range
+                </div>
+              </q-toolbar>
+            </q-card-section>
+            <q-separator />
+            <q-card-section :style="{height: $q.platform.is.mobile ? 'calc(100% - 104px)' : ''}" class="scroll" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+              <div class="flex flex-center">
+                <date-range-picker
+                  class="q-ma-sm"
+                  v-model="currentDateRange"
+                  :mode="currentDateRangeMode"
+                  @change:mode="changeModeDateTimeRangeHandler"
+                  :theme="currentTheme"
+                />
               </div>
-            </q-toolbar>
-            <div class="flex flex-center">
-              <date-range-picker
-                class="q-ma-sm"
-                v-model="currentDateRange"
-                :mode="currentDateRangeMode"
-                @change:mode="changeModeDateTimeRangeHandler"
-                :theme="currentTheme"
-              />
-            </div>
-            <q-toolbar :color="currentTheme.bgColor" slot="footer" style="justify-content: flex-end;">
-              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalClose">close</q-btn>
-              <q-btn flat class="pull-right" :color="currentTheme.color" @click="dateRangeModalSave">save</q-btn>
-            </q-toolbar>
-          </q-modal-layout>
-        </q-modal>
+            </q-card-section>
+            <q-separator />
+            <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+              <q-btn flat :color="currentTheme.color" @click="dateRangeModalClose">close</q-btn>
+              <q-btn flat :color="currentTheme.color" @click="dateRangeModalSave">save</q-btn>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </div>
-      <q-checkbox
+      <q-btn
+        :icon="currentMode ? 'playlist_play' : 'history'" flat dense
         v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-        class="no-margin" @change="$emit('change:mode', Number(currentMode))" :color="currentTheme.color"
-        v-model="currentMode" checked-icon="playlist_play" unchecked-icon="history"/>
+        @click="currentMode = !currentMode, $emit('change:mode', Number(currentMode))"
+        :color="currentTheme.color"
+      />
     </q-toolbar>
-    <q-modal ref="colsModal" :content-css="{minWidth: '50vw', minHeight: '50vh', maxWidth: '500px'}"
-             class="modal-cols-configurator">
-      <q-modal-layout :class="[`bg-${currentTheme.bgColor}`]">
-        <q-toolbar :color="currentTheme.bgColor" slot="header">
-          <div class="q-toolbar-title" :class="[`text-${currentTheme.color}`]">
-            Configure cols
-          </div>
-        </q-toolbar>
-        <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
-          <q-field v-if="actions && actions.length" :label="actionField.name" :labelWidth="3"
-                   :dark="currentTheme.bgColor === 'dark'" class="q-pt-sm q-pb-sm">
-            <div class="row">
-              <q-slider class="col-8" :min="50" :max="800"
-                        :value="actionField.width"
-                        @input="(val) => { onResize(val,'actions') }" label
-                        :label-value="`${actionField.width}px`"
-                        :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
-              />
-              <q-icon size="1.5rem" class="col-1 cursor-pointer"
-                      :name="actionField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                      @click.native="actionField.display = !actionField.display"
-                      :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"/>
+    <q-dialog ref="colsModal" :content-css="{minWidth: '70vw', minHeight: '50vh', maxWidth: '100vw'}" class="modal-cols-configurator" :maximized="$q.platform.is.mobile">
+      <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '70vw'}">
+        <q-card-section class="q-pa-none">
+          <q-toolbar :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+            <div class="q-toolbar-title text-h6" :class="[`text-${currentTheme.color}`]">
+              Configure cols
             </div>
-          </q-field>
-          <draggable :list="currentCols" handle=".handle">
-            <q-field v-for="(col, index) in currentCols" :key="col.name" :label="col.name" :labelWidth="3"
-                     :dark="currentTheme.bgColor === 'dark'" class="q-pt-sm q-pb-sm">
-              <div class="row">
-                <q-slider class="col-8" :min="50" :max="800" v-model="col.width" label
-                          :label-value="`${col.width}px`" :inverted="currentTheme.controlsInverted"
-                          :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
-                <q-icon size="1.5rem" class="col-1 cursor-pointer"
-                        :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click.native="col.display = !col.display"
-                        :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
-                <q-btn flat class="col-1" @click="customFieldRemove(index)"
-                       :inverted="currentTheme.controlsInverted"
-                       :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color">
-                  <q-icon name="remove"></q-icon>
-                </q-btn>
-                <q-icon size="1.5rem" class="col-1 handle" name="mdi-drag" :inverted="currentTheme.controlsInverted" style="cursor: move"
-                        :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"/>
+          </q-toolbar>
+        </q-card-section>
+        <q-separator />
+        <q-card-section :style="{ height: $q.platform.is.mobile ? 'calc(100% - 104px)' : '55vh'}" class="scroll" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+          <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
+            <div class="row full-width q-pt-sm q-pb-sm" v-if="actions && actions.length">
+              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{actionField.name}}</span></div>
+              <div class="col-md-7 col-9">
+                <q-slider :min="50" :max="800" :step="25"
+                  :value="actionField.width"
+                  @input="(val) => { onResize(val,'actions') }" label
+                  :label-value="`${actionField.width}px`"
+                  :dark="currentTheme.controlsInverted"
+                  :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
+                />
               </div>
-            </q-field>
-          </draggable>
-          <q-field :label="etcField.name" :labelWidth="3" :dark="currentTheme.bgColor === 'dark'"
-                   class="q-pt-sm q-pb-sm">
-            <div class="row">
-              <q-slider class="col-8" :min="50" :max="800" :value="etcField.width"
-                        @input="(val) => { onResize(val,'etc')}" label
-                        :label-value="`${etcField.width}px`"
-                        :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
-              />
-              <q-icon size="1.5rem" class="col-1 cursor-pointer"
-                      :name="etcField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                      @click.native="etcField.display = !etcField.display" :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"/>
+              <div class="col-1 flex flex-center">
+                <q-icon size="1.5rem" class="cursor-pointer"
+                  :name="actionField.display ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click.native="actionField.display = !actionField.display"
+                  :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
+                />
+              </div>
             </div>
-          </q-field>
-          <q-field label="add custom field" style="border-top: 1px solid #333; padding-top: 10px" :labelWidth="3"
-                   :dark="currentTheme.bgColor === 'dark'" class="q-pt-lg">
-            <div class="row">
-              <q-input class="col-4" :placeholder="customField.error ? customField.errMessages : 'name'"
-                       type="text" v-model="customField.name" :error="customField.error"
-                       :inverted="currentTheme.controlsInverted"
-                       :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
-              />
-              <q-slider class="col-4" :min="50" :max="800" v-model="customField.width" label
-                        :label-value="`${customField.width}px`" :inverted="currentTheme.controlsInverted"
-                        :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"/>
-              <q-icon size="1.5rem" class="col-1 cursor-pointer"
-                      :name="customField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                      @click.native="customField.display = !customField.display"
-                      :inverted="currentTheme.controlsInverted"
-                      :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"/>
-              <q-btn flat class="col-1" @click="customFieldSave" :inverted="currentTheme.controlsInverted"
-                     :color="currentTheme.controlsInverted ? 'white' : currentTheme.color">
-                <q-icon name="add"/>
-              </q-btn>
+            <draggable :list="currentCols" handle=".handle">
+              <div class="cols-editor__col row full-width q-pt-sm q-pb-sm" v-for="(col, index) in currentCols" :key="col.name">
+                <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{col.name}}</span></div>
+                <div class="col-md-7 col-9">
+                  <q-slider :min="50" :max="800" :step="25" v-model="col.width" label
+                    :label-value="`${col.width}px`"
+                    :dark="currentTheme.controlsInverted"
+                    :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
+                    :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
+                  />
+                </div>
+                <div class="col-1 flex flex-center">
+                  <q-icon size="1.5rem" class="cursor-pointer"
+                    :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click.native="col.display = !col.display"
+                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
+                  />
+                </div>
+                <div class="col-1 flex flex-center">
+                  <q-btn flat @click="customFieldRemove(index)" icon="remove"
+                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
+                  />
+                </div>
+                <div class="col-1 flex flex-center">
+                  <q-icon size="1.5rem" class="handle" name="mdi-drag" style="cursor: move"
+                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
+                  />
+                </div>
+              </div>
+            </draggable>
+            <div class="row full-width q-pt-sm q-pb-sm">
+              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{etcField.name}}</span></div>
+              <div class="col-md-7 col-9">
+                <q-slider class="col-8" :min="50" :max="800" :step="25" v-model="etcField.width" label
+                  :label-value="`${etcField.width}px`"
+                  :dark="currentTheme.controlsInverted"
+                  :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
+                />
+              </div>
+              <div class="col-1 flex flex-center">
+                <q-icon size="1.5rem" class="cursor-pointer"
+                  :name="etcField.display ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click.native="etcField.display = !etcField.display"
+                  :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
+                />
+              </div>
             </div>
-          </q-field>
-        </div>
-        <q-toolbar :color="currentTheme.bgColor" slot="footer" style="justify-content: flex-end;">
-          <q-btn flat class="pull-right" :color="currentTheme.color" @click="colsModalClose">close</q-btn>
-          <q-btn flat class="pull-right" :color="currentTheme.color" @click="colsModalSave">save</q-btn>
-        </q-toolbar>
-      </q-modal-layout>
-    </q-modal>
-    <div ref="wrapper" class="list-wrapper" :class="{'bg-dark': currentTheme.contentInverted}"
-         :style="{top: needShowToolbar ? '50px' : '0',  bottom: 0, right: 0, left: 0}">
-      <q-resize-observable @resize="wrapperResizeHandler"/>
+            <q-separator spaced :color="currentTheme.controlsInverted ? 'white' : 'grey-9'"/>
+            <div class="row full-width q-pt-sm q-pb-sm">
+              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>add custom field</span></div>
+              <div class="col-md-3 col-4 q-pr-sm">
+                <q-input :placeholder="customField.error ? customField.errMessages : 'name'" outlined hide-bottom-space dense
+                  type="text" v-model="customField.name" :error="customField.error"
+                  :dark="currentTheme.controlsInverted"
+                  :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+                />
+              </div>
+              <div class="col-md-4 col-5">
+                <q-slider :min="50" :max="800" :step="25" v-model="customField.width" label
+                  :label-value="`${customField.width}px`" :dark="currentTheme.controlsInverted"
+                  :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
+                />
+              </div>
+              <div class="col-1 flex flex-center">
+                <q-icon size="1.5rem" class="cursor-pointer"
+                  :name="customField.display ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click.native="customField.display = !customField.display"
+                  :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
+                />
+              </div>
+              <div class="col-1 flex flex-center">
+                <q-btn flat @click="customFieldSave" icon="add"
+                  :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
+                />
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+          <q-btn flat :color="currentTheme.color" @click="colsModalClose">close</q-btn>
+          <q-btn flat :color="currentTheme.color" @click="colsModalSave">save</q-btn>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
+      :style="{top: needShowToolbar ? '50px' : '0',  bottom: 0, right: 0, left: 0}"
+    >
+      <q-resize-observer @resize="wrapperResizeHandler"/>
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]"
-           v-if="items.length && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
-           @dblclick="colsConfigurator === 'header' ? $refs.colsModal.show() : ''">
+        v-if="items.length && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
+        @dblclick="colsConfigurator === 'header' ? $refs.colsModal.show() : ''"
+      >
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
           <div class="header__item item_actions" v-if="actionField.display">
             <q-tooltip>Actions</q-tooltip>
             <span class="item__label">{{actionField.name}}</span>
-            <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop && isNeedResizer" :active="true" style="background-color: transparent;"
-                                     :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight"
-                                     :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"/>
+            <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop && isNeedResizer"
+              :active="true" style="background-color: transparent;"
+              :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight"
+              :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"
+            />
           </div>
           <draggable :list="cols" element="span" @end="$emit('update:cols', cols)">
             <template v-for="(prop, index) in cols">
@@ -214,24 +274,30 @@
                   ''}`}}
                 </q-tooltip>
                 <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span></span>
-                <vue-draggable-resizable :ref="`drag${activeColsIndexes[index]}`" v-if="$q.platform.is.desktop && isNeedResizer"
-                                        :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
-                                        :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
-                                        @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index])}"/>
+                <vue-draggable-resizable :ref="`drag${activeColsIndexes[index]}`"
+                  v-if="$q.platform.is.desktop && isNeedResizer"
+                  :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
+                  :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
+                  @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index])}"
+                />
               </div>
             </template>
           </draggable>
           <div v-if="etcField.display" class="header__item item_etc">
             <q-tooltip>Another info by message</q-tooltip>
             <span class="item__label">{{etcField.name}}</span>
-            <vue-draggable-resizable ref="dragEtc" v-if="$q.platform.is.desktop && isNeedResizer" :active="true" :enable-native-drag="true"
-                                     :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50"
-                                     @resizestop="(left, top, width) => {onResize(width, 'etc')}"/>
+            <vue-draggable-resizable ref="dragEtc" v-if="$q.platform.is.desktop && isNeedResizer"
+              :active="true" :enable-native-drag="true"
+              :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50"
+              @resizestop="(left, top, width) => {onResize(width, 'etc')}"
+            />
           </div>
         </div>
       </div>
       <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}"
-           style="font-size: 3rem; padding-top: 40px; " v-if="!items.length">{{i18n['Messages not found'] || 'Messages not found'}}
+        style="font-size: 3rem; padding-top: 40px; " v-if="!items.length"
+      >
+        {{i18n['Messages not found'] || 'Messages not found'}}
       </div>
       <VirtualList
         v-auto-bottom="needAutoScroll"
@@ -239,21 +305,21 @@
         v-if="items.length"
         ref="scroller"
         :style="{position: 'absolute', top: `${itemHeight}px`, bottom: 0, right: 0, left: 0, height: 'auto'}"
-        :class="{'bg-dark': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
         :debounce="10"
         wclass="q-w-list">
         <slot name="items"
-              v-for="(item, index) in items"
-              :item="item"
-              :index="index"
-              :actions="actions"
-              :cols="activeCols"
-              :etcVisible="etcField.display"
-              :actionsVisible="actionField.display"
-              :itemHeight="itemHeight"
-              :rowWidth="rowWidth"
+          v-for="(item, index) in items"
+          :item="item"
+          :index="index"
+          :actions="actions"
+          :cols="activeCols"
+          :etcVisible="etcField.display"
+          :actionsVisible="actionField.display"
+          :itemHeight="itemHeight"
+          :rowWidth="rowWidth"
         >
           <list-item
             :key="index"
@@ -280,7 +346,7 @@ import { uid, date, debounce } from 'quasar'
 import VueDraggableResizable from 'vue-draggable-resizable'
 import ListItem from './ListItem.vue'
 import draggable from 'vuedraggable'
-import DateRangePicker from 'datetimerangepicker'
+import DateRangePicker, { VueFlatPickr } from 'datetimerangepicker'
 
 export default {
   name: 'VirtualScrollList',
@@ -329,7 +395,7 @@ export default {
     theme: Object,
     viewConfig: Object
   },
-  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker },
+  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, VueFlatPickr },
   data () {
     let defaultConfig = {
       needShowFilter: false,
@@ -344,6 +410,14 @@ export default {
       currentFilter: this.filter,
       currentMode: !!this.mode,
       dateValue: this.date,
+      dateConfig: {
+        enableTime: true,
+        time_24hr: true,
+        inline: true,
+        maxDate: (new Date()).setHours(23, 59, 59, 999),
+        mode: 'single',
+        locale: { firstDayOfWeek: 1 }
+      },
       wrapperHeight: 0,
       itemsCount: 0,
       defaultItemWidth: 150,
@@ -354,7 +428,7 @@ export default {
       customField: {
         name: '',
         width: 150,
-        display: false,
+        display: true,
         custom: true,
         error: false,
         errMessages: ''
@@ -370,7 +444,7 @@ export default {
         display: this.viewConfig.needShowEtc || false
       },
       defaultTheme: {
-        color: 'dark',
+        color: 'grey-9',
         bgColor: 'white',
         controlsInverted: false,
         contentInverted: false,
@@ -383,8 +457,7 @@ export default {
       isNeedResizer: true,
       allScrollTop: 0,
       currentDateRange: this.dateRange,
-      currentDateRangeMode: 0,
-      dateRangeModalView: true
+      currentDateRangeMode: 0
     }
   },
   computed: {
@@ -422,11 +495,7 @@ export default {
       return res + 5 // 5 is margin of container
     },
     formatedDate () {
-      return date.formatDate(this.currentDate, 'DD MMMM YYYY')
-    },
-    currentDate: {
-      set (value) { this.dateValue = new Date(value).setSeconds(0) },
-      get () { return this.dateValue }
+      return date.formatDate(this.dateValue, 'DD MMMM YYYY')
     }
   },
   methods: {
@@ -567,37 +636,30 @@ export default {
     formatDate (timestamp) {
       return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
     },
-    setDateRange () {
-      this.$emit('change:date-range', this.currentDateRange)
-      this.dateRangeModalClose()
+    datePickerModalClose () {
+      this.dateValue = this.date
+      this.$refs.datePickerModal.hide()
+    },
+    datePickerModalSave () {
+      this.$emit('change:date', this.dateValue.valueOf())
+      this.$refs.datePickerModal.hide()
+    },
+    dateInputHandler (date) {
+      this.dateValue = date ? date.setSeconds(0) : new Date()
     },
     changeModeDateTimeRangeHandler (mode) {
       this.currentDateRangeMode = mode
-      /* change popup height fix */
-      this.$nextTick(() => {
-        this.$refs.dateRangePicker.$el.style.maxHeight = '500px'
-      })
     },
     dateRangeToggle () {
-      if (this.$q.platform.is.mobile || this.dateRangeModalView) {
-        let el = this.$q.platform.is.desktop && !this.dateRangeModalView ? this.$refs.dateRangePicker : this.$refs.dateRangePickerModal
-        el.toggle()
-      }
+      this.$refs.dateRangePickerModal.toggle()
     },
     dateRangeModalSave () {
       this.$emit('change:date-range', this.currentDateRange)
-      this.dateRangeModalClose()
+      this.$refs.dateRangePickerModal.hide()
     },
     dateRangeModalClose () {
-      let el = this.$q.platform.is.desktop && !this.dateRangeModalView ? this.$refs.dateRangePicker : this.$refs.dateRangePickerModal
-      el.hide()
-    },
-    onWindowResize (size) {
-      if (size.height < 670) {
-        this.dateRangeModalView = true
-      } else {
-        this.dateRangeModalView = false
-      }
+      this.currentDateRange = this.dateRange
+      this.$refs.dateRangePickerModal.hide()
     }
   },
   updated () {
@@ -607,12 +669,9 @@ export default {
   },
   watch: {
     date (val) {
-      this.currentDate = val
+      if (val === this.dateValue.valueOf()) { return false }
+      this.dateValue = new Date(val)
     },
-    // dateRange (val) {
-    //   this.$set(this.currentDateRange, 0, val[0])
-    //   this.$set(this.currentDateRange, 1, val[1])
-    // },
     mode (val) {
       this.currentMode = !!val
       this.needAutoScroll = !!val
@@ -720,27 +779,9 @@ export default {
         white-space nowrap
         &:nth-child(odd)
           background-color rgba(0, 0, 0, .2)
-
-  .modal-cols-configurator
-    .q-field-label-inner
-      span
-        text-overflow ellipsis
-        width 100%
-        overflow hidden
-
-  .q-field[draggable="true"]
+  .cols-editor__col[draggable="true"]
     background-color #9e9e9e
   .date
     .arrows
       position relative
-    .vsl-date
-      display inline-flex
-      max-width 105px
-      .row .col
-        font-size 13px
-        white-space inherit
-        text-align center
-        line-height 15px
-      i
-        display none
 </style>

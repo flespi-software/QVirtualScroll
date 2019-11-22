@@ -182,7 +182,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   function setCols (state, cols) {
-    let colsFromStorage = LocalStorage.get.item(state.name)
+    let colsFromStorage = LocalStorage.getItem(state.name)
     if (!colsFromStorage) {
       colsFromStorage = {}
     }
