@@ -106,7 +106,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       return counter
     })
     cols = [...cols, ...colsFromCounters]
-    let colsFromStorage = LocalStorage.get.item(state.name)
+    let colsFromStorage = LocalStorage.getItem(state.name)
     if (!colsFromStorage) {
       colsFromStorage = {}
     }
@@ -116,7 +116,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   function updateCols (state, cols) {
-    let colsFromStorage = LocalStorage.get.item(state.name)
+    let colsFromStorage = LocalStorage.getItem(state.name)
     if (!colsFromStorage) {
       colsFromStorage = {}
     }

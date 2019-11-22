@@ -27,7 +27,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
 
   function getCols ({ state, commit }, counters) {
     let cols = [],
-      colsFromStorage = LocalStorage.get.item(state.name)
+      colsFromStorage = LocalStorage.getItem(state.name)
     if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
       cols = colsFromStorage[state.active]
       commit('updateCols', cols)

@@ -92,23 +92,19 @@ In quasar.conf.js
 ```javascript
 framework: {
   components: [
-    'QResizeObservable',
-    'QWindowResizeObservable',
+    'QResizeObserver',
     'QInput',
-    'QToggle',
     'QToolbar',
     'QToolbarTitle',
-    'QDatetime',
     'QBtn',
+    'QCard',
+    'QCardSection',
+    'QCardActions',
+    'QSeparator',
     'QIcon',
-    'QSearch',
     'QTooltip',
-    'QModal',
-    'QModalLayout',
+    'QDialog',
     'QSlider',
-    'QField',
-    'QCheckbox',
-    'QPopover',
     'QBtnToggle'
   ]
 }

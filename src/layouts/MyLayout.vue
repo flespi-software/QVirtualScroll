@@ -1,10 +1,5 @@
 <template>
-  <q-layout ref="layout" view="hHh LpR lFf">
-    <q-layout-header>
-      <q-toolbar slot="header">
-        <div v-if="items">{{items.length}}</div>
-      </q-toolbar>
-    </q-layout-header>
+  <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <q-page>
         <virtual-scroll-list
@@ -68,16 +63,17 @@ export default {
       defaultLimit: 1000,
       theme: {
         color: 'white',
-        bgColor: 'dark',
+        bgColor: 'grey-9',
         contentInverted: true,
         controlsInverted: true
       },
       viewConfig: {
-        needShowMode: false,
         needShowPageScroll: 'right left',
         needShowDateRange: true,
-        // needShowDate: true,
-        needShowFilter: true
+        needShowDate: true,
+        needShowFilter: true,
+        needShowMode: true,
+        needShowEtc: true
       },
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000]
     }
@@ -275,6 +271,3 @@ export default {
   }
 }
 </script>
-
-<style>
-</style>

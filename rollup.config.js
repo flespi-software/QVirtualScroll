@@ -10,7 +10,6 @@ import { uglify } from 'rollup-plugin-uglify'
 
 const extensions = ['.js', '.vue']
 const isProduction = !process.env.ROLLUP_WATCH
-const globals = { vue: 'Vue', dev: 'DEV' }
 
 const lintOpts = {
   extensions,
@@ -49,21 +48,8 @@ const devPlugins = [
 ]
 
 let plugins = isProduction ? prodPlugins : [...devPlugins, ...prodPlugins]
-let vueConfig = {
-  plugins,
-  external: ['flatpickr/src/style/flatpickr'],
-  input: 'src/components/VirtualScrollList.vue',
-  output: {
-    globals,
-    name: 'qvirualscroll',
-    sourcemap: true,
-    file: 'lib/qvirualscroll.js',
-    format: 'umd',
-    exports: 'named'
-  }
-}
+
 export default [
-  vueConfig,
   {
     input: './src/store/modules/logs/index.js',
     output: [
