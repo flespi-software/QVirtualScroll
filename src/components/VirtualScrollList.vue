@@ -87,7 +87,7 @@
         />
       </div>
       <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker">
-        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 130px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
+        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 154px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
           <div>
             <div>{{formatDate(dateRange[0])}}</div>
             <div style="font-size: .5rem">|</div>
@@ -304,7 +304,7 @@
         :onscroll="listScroll"
         v-if="items.length"
         ref="scroller"
-        :style="{position: 'absolute', top: `${itemHeight}px`, bottom: 0, right: 0, left: 0, height: 'auto'}"
+        :style="{position: 'absolute', top: `${itemHeight}px`, bottom: 0, right: 0, left: 0, height: 'auto', overflow: 'auto'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
