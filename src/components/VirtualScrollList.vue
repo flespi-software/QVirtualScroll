@@ -683,13 +683,15 @@ export default {
     },
     toggleAllCols () {
       let flag = this.currentCols.reduce((flag, col) => flag || col.display, false)
-      flag = flag || this.currentActionFieldDisplay
+      if (this.currentActionFieldDisplay) {
+        flag = flag || this.currentActionFieldDisplay
+      }
       flag = !flag
       this.currentCols.forEach((_, index) => {
         this.$set(this.currentCols[index], 'display', flag)
       })
       this.currentActionFieldDisplay = flag
-      if (!flag) { this.currentEtcFieldDisplay = !flag }
+      if (!flag && this.viewConfig.needShowEtc) { this.currentEtcFieldDisplay = !flag }
     }
   },
   updated () {
