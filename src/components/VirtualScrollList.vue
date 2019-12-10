@@ -142,6 +142,20 @@
         <q-separator />
         <q-card-section :style="{ height: $q.platform.is.mobile ? 'calc(100% - 104px)' : '55vh'}" class="scroll" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
           <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
+            <div class="row full-width">
+              <div class="col-md-2 col-12 ellipsis text-bold" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>Name</span></div>
+              <div class="col-md-7 col-9 text-bold" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}">Width</div>
+              <div class="col-1 flex flex-center" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}">
+                <q-icon size="1.5rem" class="cursor-pointer"
+                  name="mdi-eye-settings-outline"
+                  @click.native="toggleAllCols"
+                  :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
+                >
+                  <q-tooltip>Toggle all columns</q-tooltip>
+                </q-icon>
+              </div>
+            </div>
+            <q-separator spaced :color="currentTheme.controlsInverted ? 'white' : 'grey-9'"/>
             <div class="row full-width q-pt-sm q-pb-sm" v-if="actions && actions.length">
               <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{actionField.name}}</span></div>
               <div class="col-md-7 col-9">
@@ -150,15 +164,15 @@
                   @input="(val) => { onResize(val,'actions') }" label
                   :label-value="`${actionField.width}px`"
                   :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :color="currentTheme.controlsInverted ? currentActionFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
                   :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
                 />
               </div>
               <div class="col-1 flex flex-center">
                 <q-icon size="1.5rem" class="cursor-pointer"
-                  :name="actionField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click.native="actionField.display = !actionField.display"
-                  :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :name="currentActionFieldDisplay ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click.native="currentActionFieldDisplay = !currentActionFieldDisplay"
+                  :color="currentTheme.controlsInverted ? currentActionFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
                 />
               </div>
             </div>
@@ -197,15 +211,15 @@
                 <q-slider class="col-8" :min="50" :max="800" :step="25" v-model="etcField.width" label
                   :label-value="`${etcField.width}px`"
                   :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :color="currentTheme.controlsInverted ? currentEtcFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
                   :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
                 />
               </div>
               <div class="col-1 flex flex-center">
                 <q-icon size="1.5rem" class="cursor-pointer"
-                  :name="etcField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click.native="etcField.display = !etcField.display"
-                  :color="currentTheme.controlsInverted ? etcField.display ? 'white' : 'grey-8' : currentTheme.color"
+                  :name="currentEtcFieldDisplay ? 'mdi-eye' : 'mdi-eye-off'"
+                  @click.native="currentEtcFieldDisplay = !currentEtcFieldDisplay"
+                  :color="currentTheme.controlsInverted ? currentEtcFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
                 />
               </div>
             </div>
@@ -438,11 +452,13 @@ export default {
         width: !this.actions.length ? 150 : this.actions.length >= 2 ? this.actions.length * 28 : 50,
         display: this.actions && !!this.actions.length
       },
+      currentActionFieldDisplay: this.actions && !!this.actions.length,
       etcField: {
         name: 'etc',
         width: 150,
         display: this.viewConfig.needShowEtc || false
       },
+      currentEtcFieldDisplay: this.viewConfig.needShowEtc || false,
       defaultTheme: {
         color: 'grey-9',
         bgColor: 'white',
@@ -521,11 +537,15 @@ export default {
     },
     colsModalSave () {
       this.$refs.colsModal.hide()
+      this.$set(this.actionField, 'display', this.currentActionFieldDisplay)
+      this.$set(this.etcField, 'display', this.currentEtcFieldDisplay)
       this.$emit('update:cols', this.currentCols)
     },
     colsModalClose () {
       this.$refs.colsModal.hide()
       this.currentCols = JSON.parse(JSON.stringify(this.cols))
+      this.currentActionFieldDisplay = this.actionField.display
+      this.currentEtcFieldDisplay = this.etcField.display
       this.customField = {
         name: '',
         width: 150,
@@ -660,6 +680,16 @@ export default {
     dateRangeModalClose () {
       this.currentDateRange = this.dateRange
       this.$refs.dateRangePickerModal.hide()
+    },
+    toggleAllCols () {
+      let flag = this.currentCols.reduce((flag, col) => flag || col.display, false)
+      flag = flag || this.currentActionFieldDisplay
+      flag = !flag
+      this.currentCols.forEach((_, index) => {
+        this.$set(this.currentCols[index], 'display', flag)
+      })
+      this.currentActionFieldDisplay = flag
+      if (!flag) { this.currentEtcFieldDisplay = !flag }
     }
   },
   updated () {
