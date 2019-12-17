@@ -1,5 +1,5 @@
 <template>
-  <div class="message-viewer" :class="{[`uid${uid}`]: true}">
+  <div class="message-viewer full-height" :class="{[`uid${uid}`]: true}">
     <q-toolbar class="viewer__toolbar" v-if="needShowToolbar" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
       <span v-if="title && $q.platform.is.desktop" style="margin-right: 10px">{{title}}</span>
       <q-icon :color="currentTheme.color" name="search" @click.native="showSearch = true"
@@ -263,7 +263,7 @@
       </q-card>
     </q-dialog>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
-      :style="{top: needShowToolbar ? '50px' : '0',  bottom: 0, right: 0, left: 0}"
+      :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}"
     >
       <q-resize-observer @resize="wrapperResizeHandler"/>
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]"
@@ -314,10 +314,11 @@
         {{i18n['Messages not found'] || 'Messages not found'}}
       </div>
       <VirtualList
+        v-else
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
         ref="scroller"
-        :style="{position: 'relative', height: `${wrapperHeight + itemHeight}px`, overflow: 'auto'}"
+        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
@@ -365,6 +366,7 @@ import TableSkeleton from './TableSkeleton'
 import draggable from 'vuedraggable'
 import DateRangePicker, { VueFlatPickr } from 'datetimerangepicker'
 import PerfectScrollbar from 'perfect-scrollbar'
+import get from 'lodash/get'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
 
 export default {
@@ -593,8 +595,7 @@ export default {
       if (!this.$refs.wrapper) {
         return false
       }
-      let isFieldWidtherThanWrapper = this.rowWidth - this.$refs.wrapper.offsetWidth > 0
-      this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight - (isFieldWidtherThanWrapper ? this.itemHeight : 0) // - header - scroll-bottom
+      this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight // - header - scroll-bottom
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       if (this.$refs.scroller) {
         let element = this.$refs.scroller.$el
@@ -703,15 +704,22 @@ export default {
       if (!flag && this.viewConfig.needShowEtc) { this.currentEtcFieldDisplay = !flag }
     },
     scrollInit () {
-      let el = this.$refs.scroller.$el
-      this.ps = new PerfectScrollbar(el)
+      if (this.items.length) {
+        let el = get(this.$refs, 'scroller.$el', undefined)
+        this.ps ? this.ps.update() : this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15 })
+      } else {
+        if (this.ps) {
+          this.ps.destroy()
+          this.ps = null
+        }
+      }
     }
   },
   updated () {
     if (!this.items.length) { this.currentScrollTop = 0 } else {
       if (this.needAutoScroll && this.$refs.scroller) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
     }
-    this.ps.update()
+    this.scrollInit()
   },
   watch: {
     date (val) {
@@ -786,7 +794,7 @@ export default {
       .on-right
         margin-left 0
     .list-wrapper
-      position absolute
+      position relative
       .list__header
         display block
         overflow hidden
