@@ -3,7 +3,6 @@
     <q-page-container>
       <q-page>
         <virtual-scroll-list
-          v-if="filteredItems.length"
           :cols="cols"
           :items="filteredItems"
           :actions="actions"
@@ -15,6 +14,7 @@
           :colsConfigurator="'toolbar'"
           :i18n="{from: 'FROM', to: 'TO'}"
           :filter="filter"
+          :loading="loading"
           @change:filter="filterChangeHandler"
           @change:pagination-prev="paginationPrevChangeHandler"
           @change:pagination-next="paginationNextChangeHandler"
@@ -75,7 +75,8 @@ export default {
         needShowMode: true,
         needShowEtc: true
       },
-      dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000]
+      dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
+      loading: true
     }
   },
   computed: {
@@ -267,7 +268,10 @@ export default {
     VirtualScrollList
   },
   created () {
-    this.generateItems()
+    setTimeout(() => {
+      this.generateItems()
+      this.loading = false
+    }, 3000)
   }
 }
 </script>

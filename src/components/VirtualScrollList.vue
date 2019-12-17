@@ -275,7 +275,7 @@
             <q-tooltip>Actions</q-tooltip>
             <span class="item__label">{{actionField.name}}</span>
             <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop && isNeedResizer"
-              :active="true" style="background-color: transparent;"
+              :active="true" :z="1" :preventDeactivation="true"
               :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight"
               :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"
             />
@@ -301,7 +301,7 @@
             <q-tooltip>Another info by message</q-tooltip>
             <span class="item__label">{{etcField.name}}</span>
             <vue-draggable-resizable ref="dragEtc" v-if="$q.platform.is.desktop && isNeedResizer"
-              :active="true" :enable-native-drag="true"
+              :active="true" :z="1" :preventDeactivation="true"
               :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50"
               @resizestop="(left, top, width) => {onResize(width, 'etc')}"
             />
@@ -309,22 +309,24 @@
         </div>
       </div>
       <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}"
-        style="font-size: 3rem; padding-top: 40px; " v-if="!items.length"
+        style="font-size: 3rem; padding-top: 40px; " v-if="!items.length && !loading"
       >
         {{i18n['Messages not found'] || 'Messages not found'}}
       </div>
       <VirtualList
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
-        v-if="items.length"
         ref="scroller"
-        :style="{position: 'absolute', top: `${itemHeight}px`, bottom: 0, right: 0, left: 0, height: 'auto', overflow: 'auto'}"
+        :style="{position: 'relative', height: `${wrapperHeight + itemHeight}px`, overflow: 'auto'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
         :debounce="10"
         wclass="q-w-list">
-        <slot name="items"
+        <template v-if="loading">
+          <table-skeleton v-for="(i, key) in new Array(itemsCount + 2).fill('')" :key="key"/>
+        </template>
+        <slot name="items" v-else
           v-for="(item, index) in items"
           :item="item"
           :index="index"
@@ -359,8 +361,11 @@ import VirtualList from 'vue-virtual-scroll-list'
 import { uid, date, debounce } from 'quasar'
 import VueDraggableResizable from 'vue-draggable-resizable'
 import ListItem from './ListItem.vue'
+import TableSkeleton from './TableSkeleton'
 import draggable from 'vuedraggable'
 import DateRangePicker, { VueFlatPickr } from 'datetimerangepicker'
+import PerfectScrollbar from 'perfect-scrollbar'
+import 'perfect-scrollbar/css/perfect-scrollbar.css'
 
 export default {
   name: 'VirtualScrollList',
@@ -407,9 +412,10 @@ export default {
       default: 19
     },
     theme: Object,
-    viewConfig: Object
+    viewConfig: Object,
+    loading: Boolean
   },
-  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, VueFlatPickr },
+  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, VueFlatPickr, TableSkeleton },
   data () {
     let defaultConfig = {
       needShowFilter: false,
@@ -473,7 +479,8 @@ export default {
       isNeedResizer: true,
       allScrollTop: 0,
       currentDateRange: this.dateRange,
-      currentDateRangeMode: 0
+      currentDateRangeMode: 0,
+      ps: null
     }
   },
   computed: {
@@ -694,12 +701,17 @@ export default {
         this.currentActionFieldDisplay = flag
       }
       if (!flag && this.viewConfig.needShowEtc) { this.currentEtcFieldDisplay = !flag }
+    },
+    scrollInit () {
+      let el = this.$refs.scroller.$el
+      this.ps = new PerfectScrollbar(el)
     }
   },
   updated () {
     if (!this.items.length) { this.currentScrollTop = 0 } else {
       if (this.needAutoScroll && this.$refs.scroller) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
     }
+    this.ps.update()
   },
   watch: {
     date (val) {
@@ -745,6 +757,7 @@ export default {
     }
     this.resetParams()
     this.updateDynamicCSS()
+    this.scrollInit()
   },
   destroyed () {
     let head = document.head || document.getElementsByTagName('head')[0]
@@ -791,6 +804,7 @@ export default {
               text-overflow ellipsis
               overflow hidden
               display block
+              line-height 19px
             .handle-mr
               box-sizing: border-box
               position: absolute
