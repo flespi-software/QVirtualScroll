@@ -318,7 +318,7 @@
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
         ref="scroller"
-        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto'}"
+        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: '15px'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
@@ -595,7 +595,7 @@ export default {
       if (!this.$refs.wrapper) {
         return false
       }
-      this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight // - header - scroll-bottom
+      this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight // - header
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       if (this.$refs.scroller) {
         let element = this.$refs.scroller.$el
