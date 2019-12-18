@@ -318,7 +318,7 @@
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
         ref="scroller"
-        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: '15px'}"
+        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: wrapperOverflowing ? '15px' : ''}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
@@ -441,6 +441,7 @@ export default {
         locale: { firstDayOfWeek: 1 }
       },
       wrapperHeight: 0,
+      wrapperWidth: 0,
       itemsCount: 0,
       defaultItemWidth: 150,
       dynamicCSS: document.createElement('style'),
@@ -521,6 +522,9 @@ export default {
     },
     formatedDate () {
       return date.formatDate(this.dateValue, 'DD MMMM YYYY')
+    },
+    wrapperOverflowing () {
+      return this.wrapperWidth < this.rowWidth
     }
   },
   methods: {
@@ -596,6 +600,7 @@ export default {
         return false
       }
       this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight // - header
+      this.wrapperWidth = this.$refs.wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       if (this.$refs.scroller) {
         let element = this.$refs.scroller.$el
