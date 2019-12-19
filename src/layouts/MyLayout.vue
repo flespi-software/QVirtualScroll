@@ -2,31 +2,33 @@
   <q-layout view="lHh Lpr lFf">
     <q-page-container>
       <q-page>
-        <virtual-scroll-list
-          :cols="cols"
-          :items="filteredItems"
-          :actions="actions"
-          :date="date"
-          :dateRange="dateRange"
-          :mode="mode"
-          :theme="theme"
-          :viewConfig="viewConfig"
-          :colsConfigurator="'toolbar'"
-          :i18n="{from: 'FROM', to: 'TO'}"
-          :filter="filter"
-          :loading="loading"
-          @change:filter="filterChangeHandler"
-          @change:pagination-prev="paginationPrevChangeHandler"
-          @change:pagination-next="paginationNextChangeHandler"
-          @change:date="dateChangeHandler"
-          @change:date-prev="datePrevChangeHandler"
-          @change:date-next="dateNextChangeHandler"
-          @action="actionHandler"
-          @change:mode="modeChange"
-          @update:cols="updateColsHandler"
-          @change:date-range="updateDateRange"
-        >
-        </virtual-scroll-list>
+        <div class="absolute-top-left absolute-bottom-right">
+          <virtual-scroll-list
+            :cols="cols"
+            :items="filteredItems"
+            :actions="actions"
+            :date="date"
+            :dateRange="dateRange"
+            :mode="mode"
+            :theme="theme"
+            :viewConfig="viewConfig"
+            :colsConfigurator="'toolbar'"
+            :i18n="{from: 'FROM', to: 'TO'}"
+            :filter="filter"
+            :loading="loading"
+            @change:filter="filterChangeHandler"
+            @change:pagination-prev="paginationPrevChangeHandler"
+            @change:pagination-next="paginationNextChangeHandler"
+            @change:date="dateChangeHandler"
+            @change:date-prev="datePrevChangeHandler"
+            @change:date-next="dateNextChangeHandler"
+            @action="actionHandler"
+            @change:mode="modeChange"
+            @update:cols="updateColsHandler"
+            @change:date-range="updateDateRange"
+          >
+          </virtual-scroll-list>
+        </div>
       </q-page>
     </q-page-container>
   </q-layout>

@@ -1,10 +1,23 @@
 <template>
   <section class="table-skeleton">
     <div class="table-skeleton__row">
-      <div class="row__item" v-for="(_, i) in new Array(12)" :key="i"></div>
+      <div class="row__item" v-for="(rowWidth, i) in rowsWidths" :key="i" :style="{ minWidth: `${rowWidth ? rowWidth : '150'}px` }"></div>
     </div>
   </section>
 </template>
+
+<script>
+export default {
+  name: 'TableSkeleton',
+  props: [ 'rows' ],
+  computed: {
+    rowsWidths () {
+      let rows = this.rows ? this.rows : new Array(12)
+      return rows
+    }
+  }
+}
+</script>
 
 <style lang="stylus">
   .table-skeleton
@@ -16,7 +29,6 @@
       display flex
       .row__item
         height 15px
-        min-width 150px
         animation flashing 1s infinite
         background-color rgba(255, 255, 255, .6)
         margin 2px 4px

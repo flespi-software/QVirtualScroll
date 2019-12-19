@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Quasar component for displaing messages",
   "productName": "QVirtualScroll",
   "cordovaId": "org.cordova.quasar.app",
@@ -32,7 +32,7 @@
     "vuedraggable": "^2.23.2"
   },
   "peerDependencies": {
-    "quasar": "^1.2.2",
+    "quasar": "^1.5.9",
     "vue": ">=2"
   },
   "devDependencies": {

@@ -325,7 +325,7 @@
         :debounce="10"
         wclass="q-w-list">
         <template v-if="loading">
-          <table-skeleton v-for="(i, key) in new Array(itemsCount + 2).fill('')" :key="key"/>
+          <table-skeleton v-for="(i, key) in new Array(itemsCount + 2).fill('')" :key="key" :rows="rowWidths"/>
         </template>
         <slot name="items" v-else
           v-for="(item, index) in items"
@@ -511,13 +511,7 @@ export default {
     },
     rowWidth () {
       let res = 0
-      if (this.etcField.display) {
-        res += this.etcField.width + 15 // 15 is a margins of elements
-      }
-      if (this.actionField.display) {
-        res += this.actionField.width + 15
-      }
-      res += this.activeCols.reduce((acc, col) => acc + col.width + 15, 0)
+      res += this.rowWidths.reduce((acc, width) => acc + width, 0)
       return res + 5 // 5 is margin of container
     },
     formatedDate () {
@@ -525,6 +519,19 @@ export default {
     },
     wrapperOverflowing () {
       return this.wrapperWidth < this.rowWidth
+    },
+    rowWidths () {
+      let widths = []
+      if (this.actionField.display) {
+        widths.push(this.actionField.width + 15)
+      }
+      this.activeCols.forEach((col) => {
+        widths.push(col.width + 15)
+      })
+      if (this.etcField.display) {
+        widths.push(this.etcField.width + 15) // 15 is a margins of elements
+      }
+      return widths
     }
   },
   methods: {
@@ -762,12 +769,12 @@ export default {
     }
   },
   mounted () {
-    this.hasItemClickHandler = !!this._events['item-click']
-    this.uid = uid().split('-')[0]
     let fullWidth = this.$refs.wrapper.offsetWidth
     if (this.rowWidth < fullWidth) {
       this.etcField.width = fullWidth - (this.rowWidth - 150)
     }
+    this.hasItemClickHandler = !!this._events['item-click']
+    this.uid = uid().split('-')[0]
     this.resetParams()
     this.updateDynamicCSS()
     this.scrollInit()
