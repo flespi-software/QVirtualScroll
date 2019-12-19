@@ -1,7 +1,7 @@
 <template>
   <section class="table-skeleton">
     <div class="table-skeleton__row">
-      <div class="row__item" v-for="(rowWidth, i) in rowsWidths" :key="i" :style="{ minWidth: `${rowWidth ? rowWidth : '150'}px` }"></div>
+      <span class="row__item" v-for="(rowWidth, i) in rowsWidths" :key="i" :style="{ minWidth: `${rowWidth ? rowWidth : '150'}px` }"></span>
     </div>
   </section>
 </template>
@@ -31,7 +31,7 @@ export default {
         height 15px
         animation flashing 1s infinite
         background-color rgba(255, 255, 255, .6)
-        margin 2px 4px
+        margin 0 10px 0 5px
         border-radius 5px
   @keyframes flashing
     0%

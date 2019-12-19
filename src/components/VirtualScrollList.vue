@@ -267,7 +267,7 @@
     >
       <q-resize-observer @resize="wrapperResizeHandler"/>
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]"
-        v-if="items.length && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
+        v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
         @dblclick="colsConfigurator === 'header' ? $refs.colsModal.show() : ''"
       >
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
@@ -511,7 +511,7 @@ export default {
     },
     rowWidth () {
       let res = 0
-      res += this.rowWidths.reduce((acc, width) => acc + width, 0)
+      res += this.rowWidths.reduce((acc, width) => acc + width + 15, 0)
       return res + 5 // 5 is margin of container
     },
     formatedDate () {
@@ -523,13 +523,13 @@ export default {
     rowWidths () {
       let widths = []
       if (this.actionField.display) {
-        widths.push(this.actionField.width + 15)
+        widths.push(this.actionField.width)
       }
       this.activeCols.forEach((col) => {
-        widths.push(col.width + 15)
+        widths.push(col.width)
       })
       if (this.etcField.display) {
-        widths.push(this.etcField.width + 15) // 15 is a margins of elements
+        widths.push(this.etcField.width)
       }
       return widths
     }
