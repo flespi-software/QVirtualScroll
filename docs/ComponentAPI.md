@@ -185,6 +185,13 @@ You can use component with scoped slot:
       />
     </virtual-scroll-list>
 ```
+## Slots
+### Empty state
+```html
+<div slot="empty" class="no-messages text-center" style="font-size: 3rem; padding-top: 40px;">
+  Messages not found
+</div>
+```
 ## Scoped slot
 Component for scoped slot need design based on ListItem.vue. You can just expand yours component. All props is required.
 ```html

@@ -35,9 +35,9 @@ export default {
         border-radius 5px
   @keyframes flashing
     0%
-      opacity 1
+      opacity .3
     50%
-      opacity .7
+      opacity .2
     100%
-      opacity 1
+      opacity .3
 </style>

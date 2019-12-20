@@ -308,11 +308,11 @@
           </div>
         </div>
       </div>
-      <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}"
-        style="font-size: 3rem; padding-top: 40px; " v-if="!items.length && !loading"
-      >
-        {{i18n['Messages not found'] || 'Messages not found'}}
-      </div>
+      <slot name="empty" v-if="!items.length && !loading">
+        <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}" style="font-size: 3rem; padding-top: 40px;">
+          {{i18n['Messages not found'] || 'Messages not found'}}
+        </div>
+      </slot>
       <VirtualList
         v-else
         v-auto-bottom="needAutoScroll"
