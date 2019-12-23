@@ -365,6 +365,7 @@ import ListItem from './ListItem.vue'
 import TableSkeleton from './TableSkeleton'
 import draggable from 'vuedraggable'
 import DateRangePicker, { VueFlatPickr } from 'datetimerangepicker'
+import ScrollPlugin from 'flatpickr/dist/plugins/scrollPlugin'
 import PerfectScrollbar from 'perfect-scrollbar'
 import get from 'lodash/get'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
@@ -438,7 +439,9 @@ export default {
         inline: true,
         maxDate: (new Date()).setHours(23, 59, 59, 999),
         mode: 'single',
-        locale: { firstDayOfWeek: 1 }
+        locale: { firstDayOfWeek: 1 },
+        minuteIncrement: 1,
+        plugins: [ new ScrollPlugin() ]
       },
       wrapperHeight: 0,
       wrapperWidth: 0,

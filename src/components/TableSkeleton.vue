@@ -25,6 +25,7 @@ export default {
     &__row
       line-height 19px
       margin 0
+      padding 2px 0
       height: 19px
       display flex
       .row__item
