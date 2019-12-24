@@ -1,5 +1,5 @@
 export default function ({ Vue, LocalStorage, errorHandler }) {
-  let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+  let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
   let defaultCols = [
     {
       name: 'timestamp',
@@ -123,7 +123,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       /* remove after sometime 12.07.19 */
       colsFromStorage[state.origin].forEach((col) => {
         if (col.name === 'timestamp') {
-          let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+          let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
           col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
         }
       })
@@ -336,7 +336,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function unsubscribePooling ({ state }) {
     let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
-    console.log()
     if (loopId) { clearInterval(loopId) }
     let properties = {}
     if (state.cid) {

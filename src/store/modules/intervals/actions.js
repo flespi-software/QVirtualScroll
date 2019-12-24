@@ -94,49 +94,65 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function pollingGet ({ state, commit }) {
-    await Vue.connector.subscribeIntervals(state.active, state.activeDevice, '+', (message, topic) => {
-      message = JSON.parse(message)
-      let event = topic.split('/').slice(-1)[0]
-      switch (event) {
-        case 'created': {
-          let begin = state.begin,
-            end = state.end,
-            endDate = new Date(end),
-            intervalBegin = message.begin * 1000,
-            intervalEnd = message.end * 1000,
-            nowDate = new Date(),
-            isCurrentEndInTodayRange = endDate.getDate() === nowDate.getDate() && endDate.getMonth() === nowDate.getMonth() && endDate.getFullYear() === nowDate.getFullYear()
-          if ((intervalBegin <= end && intervalEnd >= begin) || isCurrentEndInTodayRange) {
-            // state.messages.push(message)
-            Vue.set(state.messages, message.id, message)
-          }
-          break
+  let messageProcessing = (state, packet) => {
+    let message = JSON.parse(packet.payload)
+    let topic = packet.topic
+    let event = topic.split('/').slice(-1)[0]
+    switch (event) {
+      case 'created': {
+        let begin = state.begin,
+          end = state.end,
+          endDate = new Date(end),
+          intervalBegin = message.begin * 1000,
+          intervalEnd = message.end * 1000,
+          nowDate = new Date(),
+          isCurrentEndInTodayRange = endDate.getDate() === nowDate.getDate() && endDate.getMonth() === nowDate.getMonth() && endDate.getFullYear() === nowDate.getFullYear()
+        if ((intervalBegin <= end && intervalEnd >= begin) || isCurrentEndInTodayRange) {
+          Vue.set(state.messages, message.id, message)
         }
-        case 'updated': {
-          if (state.messages[message.id]) {
-            Vue.set(state.messages, message.id, message)
-          }
-          break
-        }
-        case 'finished': {
-          if (state.messages[message.id]) {
-            Vue.set(state.messages, message.id, message)
-          }
-          break
-        }
-        case 'deleted': {
-          if (state.messages[message.id]) {
-            Vue.delete(state.messages, message.id)
-          }
-          break
-        }
+        break
       }
+      case 'updated': {
+        if (state.messages[message.id]) {
+          Vue.set(state.messages, message.id, message)
+        }
+        break
+      }
+      case 'finished': {
+        if (state.messages[message.id]) {
+          Vue.set(state.messages, message.id, message)
+        }
+        break
+      }
+      case 'deleted': {
+        if (state.messages[message.id]) {
+          Vue.delete(state.messages, message.id)
+        }
+        break
+      }
+    }
+  }
+
+  let messagesBuffer = [],
+    intervalId = 0
+  function initRenderLoop (state) {
+    return setInterval(() => {
+      if (messagesBuffer.length) {
+        messagesBuffer.forEach(message => messageProcessing(state, message))
+        messagesBuffer = []
+      }
+    }, 500)
+  }
+  async function pollingGet ({ state, commit }) {
+    intervalId = initRenderLoop(state)
+    await Vue.connector.subscribeIntervals(state.active, state.activeDevice, '+', (message, topic, packet) => {
+      messagesBuffer.push(packet)
     }, { rh: 2 })
   }
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling ({ state }) {
+    if (intervalId) { clearInterval(intervalId) }
     await Vue.connector.unsubscribeIntervals(state.active, state.activeDevice, '+')
   }
 
