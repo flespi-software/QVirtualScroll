@@ -1,17 +1,16 @@
 # Virtual scroll component API
 ## Props
-| Name  | Type | Description  |Default |
+| Name  | Type | Description  | Default |
 |---|---|---|---|
 | actions  | Array  | A array of actions that displays for each of row data| [] |
 |  cols | Array  | A array of cols of data  |*Required*|
 |  items |  Array | A array of items of list  |*Required*|
 |  i18n | Object  |  Object with fields of translate some things |{}|
-|  date | Number  | The timestamp for dataset component  |0|
 |  dateRange | Number  | The timestamps range for dataset component  |0|
 |  filter | String  |  Init text for filter input |''|
 |  title | String  |  Title dataset section  |''|
 | mode |  Number |  Inverted mode. Color is applied to background instead. |0|
-| viewConfig |  Object |  Config for view of component |{ needShowFilter: false,needShowMode: false,needShowPageScroll: '',needShowDate: false,needShowEtc: false}|
+| viewConfig |  Object |  Config for view of component |{ needShowFilter: false,needShowMode: false,needShowPageScroll: '',needShowEtc: false}|
 | colsConfigurator |  String |  String that displays where need show control of configurator of cols. Can be a 'header', 'toolbar' and 'none' |'none'|
 | theme |  Object |  Object of params that modifies view of component |{color: 'dark', bgColor: 'white', controlsInverted: false, contentInverted: false}|
 | itemHeight |  Number |  Height of list item |19|
@@ -66,7 +65,6 @@ config = {
     needShowFilter: false, // Flag that displays need filter input or not
     needShowPageScroll: '', // String that displays which controls scroll by limit is needed show. Example: 'right left'
     needShowEtc: false, // Flag that displays need show field etc in list items or not
-    needShowDate: false, // Flag that displays need show date-set or not. It can be an Object: {prev: false, next: false}
     needShowDateRange: false, // Flag that displays need show dateRange-set or not.
 }
 
@@ -82,10 +80,12 @@ config = {
 |item-click|Handling click by item |{index, content}|
 |change:pagination-prev|Handling click by control for scroll by limit (previous *limit* items)  |*Empty*|
 |change:pagination-next|Handling click by control for scroll by limit (next *limit* items)  |*Empty*|
-|change:date-prev|Handling click by control for change current date for previous day  |*Empty*|
-|change:date-next|Handling click by control for change current date for next day  |*Empty*|
-|change:date|Handling click by control for change current in dateset-component  |timestamp of start picked day|
 |change:date-range|Handling click by control for change current in datesetRange-component  |timestamps array|
+|change:date-range-prev|Handling click by control for change current date range for previous day  |*Empty*|
+|change:date-range-next|Handling click by control for change current date range for next day  |*Empty*|
+|scroll| Scroll event  |{ event, data: { offset, offsetAll, start, end } }|
+|scroll:top| Scroll event to top  |*Empty*|
+|scroll:bottom| Scroll event to bottom  |*Empty*|
 
 ## Example
 In quasar.conf.js

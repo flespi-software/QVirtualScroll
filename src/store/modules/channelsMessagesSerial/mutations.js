@@ -6,22 +6,18 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     return { from, to }
   }
 
-  function setMessages (state, data) {
+  function setRTMessages (state, data) {
     if (data && data.length) {
       if (state.reverse) {
         data.reverse()
-        if (state.mode === 1) {
-          data[data.length - 1].delimiter = true
-        }
+        data[data.length - 1].delimiter = true
       }
-      if (state.mode === 1) {
-        Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
-        if (state.filter && filterHandler) {
-          data = filterHandler(state.filter, data)
-        }
+      Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
+      if (state.filter && filterHandler) {
+        data = filterHandler(state.filter, data)
       }
       let messages = state.messages
-      if (state.sortBy && state.mode === 1) {
+      if (state.sortBy) {
         if (data.length > 1) {
           /* write history for rt mode */
           messages = messages.concat(data)
@@ -54,17 +50,62 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         messages = messages.concat(data)
       }
       newMessagesInterseptor && newMessagesInterseptor(data)
-      if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
+      if (state.limit && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
         let count = (messages.length - 1) - (state.limit - 1)
         messages = messages.slice(count)
         Vue.set(state, 'selected', state.selected.map((index) => index - count))
       }
       Vue.set(state, 'messages', messages)
     } else {
-      if (state.mode === 1) {
-        Vue.set(state, 'from', state.to + 1000)
+      Vue.set(state, 'from', state.to + 1000)
+    }
+  }
+
+  function prependMessages (state, data) {
+    if (data && data.length) {
+      data.reverse()
+      let messages = state.messages
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      messages.splice(0, 0, ...data)
+      if (state.limit && (state.limit * 3) < messages.length) {
+        let limit = state.limit * 3 // 3 pages in memory
+        let overCount = messages.length - limit
+        messages.splice(messages.length - overCount, overCount)
       }
+    }
+  }
+
+  function appendMessages (state, data) {
+    if (data && data.length) {
+      let messages = state.messages
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      messages.splice(messages.length, 0, ...data)
+      if (state.limit && (state.limit * 3) < messages.length) {
+        let limit = state.limit * 3 // 3 pages in memory
+        messages.splice(0, messages.length - limit)
+      }
+    }
+  }
+
+  function setHistoryMessages (state, data) {
+    if (data && data.length) {
+      if (state.reverse) {
+        data.reverse()
+      }
+      let messages = state.messages
+      messages = messages.concat(data)
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      Vue.set(state, 'messages', messages)
+    } else {
       Vue.set(state, 'messages', [])
+    }
+  }
+
+  function setMessages (state, data) {
+    if (state.mode === 1) {
+      setRTMessages(state, data)
+    } else {
+      setHistoryMessages(state, data)
     }
   }
 
@@ -105,7 +146,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         let now = Date.now() - 4000
         state.from = now - 1000
         state.to = now
-        state.newMessagesCount = 0
         break
       }
     }
@@ -127,57 +167,11 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   function setActive (state, id) {
-    state.newMessagesCount = 0
     Vue.set(state, 'active', id)
   }
 
   function setReverse (state, val) {
     Vue.set(state, 'reverse', val)
-  }
-
-  function setDate (state, date) {
-    let timeObj = getFromTo(date)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function dateNext (state) {
-    let timeObj = getFromTo(state.from + 86400000)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function datePrev (state) {
-    let timeObj = getFromTo(state.from - 86400000)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function paginationPrev (state, firstTimestamp) {
-    state.reverse = true
-    state.sysFilter += `timestamp>=${getFromTo(state.from).from / 1000}`
-    if (firstTimestamp) {
-      state.from = getFromTo(firstTimestamp).from
-      state.to = firstTimestamp - 1000
-    }
-  }
-
-  function paginationNext (state, lastTimestamp) {
-    state.sysFilter += `timestamp<=${state.to / 1000}`
-    if (lastTimestamp) {
-      state.to = getFromTo(lastTimestamp).to
-      state.from = lastTimestamp + 1000
-    }
-  }
-
-  function postaction (state) {
-    let timeObj = getFromTo(state.from)
-    setFrom(state, state.from || timeObj.from)
-    setTo(state, timeObj.to)
-    if (state.reverse) {
-      setReverse(state, false)
-    }
-    state.sysFilter = ''
   }
 
   async function clear (state) {
@@ -206,10 +200,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   let updateCols = setCols
-
-  function setNewMessagesCount (state, count) {
-    Vue.set(state, 'newMessagesCount', count)
-  }
 
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
@@ -253,6 +243,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setReconnected,
     setMissingMessages,
     setMessages,
+    prependMessages,
+    appendMessages,
     clearMessages,
     setLimit,
     setFilter,
@@ -261,17 +253,10 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setTo,
     reqStart,
     setReverse,
-    dateNext,
-    datePrev,
-    paginationPrev,
-    paginationNext,
-    setDate,
-    postaction,
     clear,
     setActive,
     setCols,
     updateCols,
-    setNewMessagesCount,
     setSelected,
     clearSelected,
     setSortBy,

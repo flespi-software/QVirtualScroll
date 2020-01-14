@@ -6,33 +6,74 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     return { from, to }
   }
 
-  function setMessages (state, data) {
+  function setRTMessages (state, data) {
     if (data && data.length) {
       if (state.reverse) {
         data.reverse()
-        if (state.mode === 1) {
-          data[data.length - 1].delimiter = true
-        }
+        data[data.length - 1].delimiter = true
       }
-      if (state.mode === 1) {
-        Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
-        if (state.filter && filterHandler) {
-          data = filterHandler(state.filter, data)
-        }
+      Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
+      if (state.filter && filterHandler) {
+        data = filterHandler(state.filter, data)
       }
       newMessagesInterseptor && newMessagesInterseptor(data)
       let messages = state.messages.concat(data)
-      if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
+      if (state.limit && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
         let count = (messages.length - 1) - (state.limit - 1)
         messages = messages.slice(count)
         Vue.set(state, 'selected', state.selected.map((index) => index - count))
       }
       Vue.set(state, 'messages', messages)
     } else {
-      if (state.mode === 1) {
-        Vue.set(state, 'from', state.to + 1000)
+      Vue.set(state, 'from', state.to + 1000)
+    }
+  }
+
+  function prependMessages (state, data) {
+    if (data && data.length) {
+      data.reverse()
+      let messages = state.messages
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      messages.splice(0, 0, ...data)
+      if (state.limit && (state.limit * 3) < messages.length) {
+        let limit = state.limit * 3 // 3 pages in memory
+        let overCount = messages.length - limit
+        messages.splice(messages.length - overCount, overCount)
       }
+    }
+  }
+
+  function appendMessages (state, data) {
+    if (data && data.length) {
+      let messages = state.messages
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      messages.splice(messages.length, 0, ...data)
+      if (state.limit && (state.limit * 3) < messages.length) {
+        let limit = state.limit * 3 // 3 pages in memory
+        messages.splice(0, messages.length - limit)
+      }
+    }
+  }
+
+  function setHistoryMessages (state, data) {
+    if (data && data.length) {
+      if (state.reverse) {
+        data.reverse()
+      }
+      let messages = state.messages
+      messages = messages.concat(data)
+      newMessagesInterseptor && newMessagesInterseptor(data)
+      Vue.set(state, 'messages', messages)
+    } else {
       Vue.set(state, 'messages', [])
+    }
+  }
+
+  function setMessages (state, data) {
+    if (state.mode === 1) {
+      setRTMessages(state, data)
+    } else {
+      setHistoryMessages(state, data)
     }
   }
 
@@ -73,7 +114,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         let now = Date.now() - 6000
         state.from = now - 1000
         state.to = now
-        state.newMessagesCount = 0
         break
       }
     }
@@ -98,71 +138,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'reverse', val)
   }
 
-  function setDate (state, date) {
-    let timeObj = getFromTo(date)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function dateNext (state) {
-    let timeObj = getFromTo(state.from + 86400000)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function datePrev (state) {
-    let timeObj = getFromTo(state.from - 86400000)
-    state.from = timeObj.from
-    state.to = timeObj.to
-  }
-
-  function paginationPrev (state, firstTimestamp) {
-    state.reverse = true
-    setSysFilter(state, `timestamp>=${getFromTo(state.from).from / 1000}`)
-    if (firstTimestamp) {
-      state.from = getFromTo(firstTimestamp).from
-      state.to = firstTimestamp - 1000
-    }
-  }
-
-  function paginationNext (state, lastTimestamp) {
-    setSysFilter(state, `timestamp<=${state.to / 1000}`)
-    if (lastTimestamp) {
-      state.to = getFromTo(lastTimestamp).to
-      state.from = lastTimestamp + 1000
-    }
-  }
-
-  function postaction (state) {
-    let timeObj = getFromTo(state.from)
-    setFrom(state, state.from || timeObj.from)
-    setTo(state, timeObj.to)
-    if (state.reverse) {
-      setReverse(state, false)
-    }
-    let timestampIndex = state.sysFilter.indexOf('timestamp'),
-      sliceFromTo = (start, end) => string => `${start ? string.slice(0, start) : ''}${end ? string.slice(end) : ''}`
-    if (timestampIndex === 0) {
-      let commaIndex = state.sysFilter.indexOf(',', timestampIndex)
-      commaIndex !== -1
-        ? state.sysFilter = sliceFromTo(0, commaIndex + 1)(state.sysFilter)
-        : state.sysFilter = ''
-    } else if (timestampIndex > 0) {
-      let commaIndex = state.sysFilter.indexOf(',', timestampIndex)
-      commaIndex !== -1
-        ? state.sysFilter = sliceFromTo(timestampIndex, commaIndex + 1)(state.sysFilter)
-        : state.sysFilter = sliceFromTo(timestampIndex - 1)(state.sysFilter)
-    }
-  }
-
-  function setSysFilter (state, filter) {
-    if (state.sysFilter) {
-      state.sysFilter += `,${filter}`
-    } else {
-      state.sysFilter = filter
-    }
-  }
-
   async function clear (state) {
     let api = state.origin.split('/')[0],
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
@@ -177,7 +152,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   function setOrigin (state, origin) {
-    state.newMessagesCount = 0
     Vue.set(state, 'origin', origin)
   }
 
@@ -192,10 +166,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   let updateCols = setCols
-
-  function setNewMessagesCount (state, count) {
-    Vue.set(state, 'newMessagesCount', count)
-  }
 
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
@@ -238,6 +208,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setOffline,
     setReconnected,
     setMessages,
+    prependMessages,
+    appendMessages,
     clearMessages,
     setLimit,
     setFilter,
@@ -246,18 +218,18 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setTo,
     reqStart,
     setReverse,
-    dateNext,
-    datePrev,
-    paginationPrev,
-    paginationNext,
-    setDate,
-    postaction,
+    // dateNext,
+    // datePrev,
+    // paginationPrev,
+    // paginationNext,
+    // setDate,
+    // postaction,
     clear,
     setOrigin,
-    setSysFilter,
+    // setSysFilter,
     setCols,
     updateCols,
-    setNewMessagesCount,
+    // setNewMessagesCount,
     setMissingMessages,
     setSelected,
     clearSelected,

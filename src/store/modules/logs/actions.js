@@ -1,3 +1,4 @@
+import _get from 'lodash/get'
 export default function ({ Vue, LocalStorage, errorHandler }) {
   let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
   let defaultCols = [
@@ -72,14 +73,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (state.limit) {
       params.count = state.limit
     }
-    if (state.filter && state.sysFilter) {
-      params.filter.push(`${state.sysFilter}`)
-      if (state.mode !== 1) {
-        params.filter.push(`${state.filter}`)
-      }
-    } else if (state.sysFilter && !state.filter) {
-      params.filter.push(`${state.sysFilter}`)
-    } else if (!state.sysFilter && state.filter) {
+    if (state.filter) {
       if (state.mode === 0) {
         params.filter.push(`${state.filter}`)
       }
@@ -141,7 +135,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  function getLogs (origin, deletedStatus) {
+  function getLogsEntries (origin, deletedStatus) {
     let parts = origin.split('/'),
       id = parts.pop(),
       namespace = deletedStatus || origin === '*'
@@ -163,7 +157,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function getFromTo (val) {
     let now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
-      to = from + 86400000
+      to = from + 86399999
     return { from, to }
   }
 
@@ -182,14 +176,16 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
           params.data.filter = `event_origin=${state.origin}`
         }
-        let resp = await getLogs(state.origin, state.isItemDeleted)(params)
+        let resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
         let data = resp.data
         errorsCheck(data)
         let date = Date.now()
         if (data.result.length) {
           date = Math.round(data.result[0].timestamp * 1000)
         }
-        commit('setDate', getFromTo(date).from)
+        let day = getFromTo(date)
+        commit('setFrom', day.from)
+        commit('setTo', day.to)
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
@@ -199,57 +195,30 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function get ({ state, commit, rootState }, preaction) {
+  async function getLogs ({ state, commit, rootState }, params) {
     commit('reqStart')
-    if (preaction) {
-      let { name: preactionName, payload: preactionPayload } = preaction
-      commit('clearMessages')
-      commit(preactionName, preactionPayload)
-    }
     if (rootState.token && state.origin) {
       try {
         Vue.set(state, 'isLoading', true)
         let currentMode = JSON.parse(JSON.stringify(state.mode))
-        let resp = await getLogs(state.origin, state.isItemDeleted)({ data: getParams(state), headers: getHeaders(state) })
+        let resp = await getLogsEntries(state.origin, state.isItemDeleted)({ data: params, headers: getHeaders(state) })
         /* if mode changed in time request */
         if (currentMode !== state.mode) { return false }
         let data = resp.data
         errorsCheck(data)
-        if (preaction) {
-          if (data.result.length) {
-            commit('setMessages', data.result)
-            commit('postaction')
-          } else {
-            commit('postaction')
-            switch (preaction.name) { // logic for empty response after pagination scroll
-              case 'paginationPrev': {
-                commit('datePrev')
-                commit('paginationPrev')
-                await get({ state, commit, rootState })
-                commit('postaction')
-                break
-              }
-              case 'paginationNext': {
-                get({ state, commit, rootState }, { name: 'dateNext' })
-                commit('postaction')
-                break
-              }
-              default: {
-                commit('setMessages', data.result)
-                commit('postaction')
-              }
-            }
-          }
-        } else {
-          commit('setMessages', data.result)
-        }
         Vue.set(state, 'isLoading', false)
+        return data.result
       } catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
         Vue.set(state, 'isLoading', false)
       }
     }
+  }
+
+  async function get ({ state, commit, rootState }) {
+    let messages = await getLogs({ state, commit, rootState }, getParams(state))
+    commit('setMessages', messages)
   }
 
   async function getHistory ({ state, commit, rootState }, count) {
@@ -262,6 +231,29 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     commit('setReverse', false)
     commit('setLimit', limit)
     commit('setFilter', filter)
+  }
+
+  async function getPrevPage ({ state, commit, rootState }) {
+    if (!state.isLoading) {
+      let to = Math.floor(_get(state, 'messages[0].timestamp', state.to) - 1)
+      let params = getParams(state)
+      params.to = to
+      params.reverse = true
+      let messages = await getLogs({ state, commit, rootState }, params)
+      commit('prependMessages', messages)
+      return messages.length
+    }
+  }
+
+  async function getNextPage ({ state, commit, rootState }) {
+    if (!state.isLoading) {
+      let from = Math.floor(_get(state, `messages[${state.messages.length - 1}].timestamp`, state.from) + 1)
+      let params = getParams(state)
+      params.from = from
+      let messages = await getLogs({ state, commit, rootState }, params)
+      commit('appendMessages', messages)
+      return messages.length
+    }
   }
 
   let messagesBuffer = [],
@@ -289,8 +281,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       if (state.mode === 1) {
         messagesBuffer.push(JSON.parse(message))
-      } else {
-        commit('setNewMessagesCount', state.newMessagesCount + 1)
       }
     }, { rh: 2, properties })
   }
@@ -319,7 +309,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (state.origin.indexOf('platform') !== -1) {
           params.data.filter = `event_origin=${state.origin}`
         }
-        let resp = await getLogs(state.origin, state.isItemDeleted)(params)
+        let resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
         let data = resp.data
         errorsCheck(data)
         commit('setMissingMessages', { data: data.result, index: lastIndexOffline })
@@ -345,7 +335,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   return {
+    getLogs,
     get,
+    getPrevPage,
+    getNextPage,
     pollingGet,
     getHistory,
     initTime,

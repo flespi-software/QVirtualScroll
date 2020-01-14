@@ -27,84 +27,25 @@
       >
         <q-icon name="tune"></q-icon>
       </q-btn>
-      <div class="pagination on-left" style="min-width: 52px"
-        v-if="!currentMode && currentViewConfig.needShowPageScroll && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-      >
-        <q-icon :color="currentTheme.color" class="cursor-pointer on-right"
-          v-if="currentViewConfig.needShowPageScroll.indexOf('left') !== -1"
-          @click.native="$emit('change:pagination-prev')" size="1.5rem" name="arrow_back"
-        >
-          <q-tooltip>{{i18n.from}}</q-tooltip>
-        </q-icon>
-        <q-icon :color="currentTheme.color" class="cursor-pointer on-right"
-          v-if="currentViewConfig.needShowPageScroll.indexOf('right') !== -1"
-          @click.native="$emit('change:pagination-next')" size="1.5rem" name="arrow_forward"
-        >
-          <q-tooltip>{{i18n.to}}</q-tooltip>
-        </q-icon>
-      </div>
-      <div class="on-left date" style="min-width: 180px" v-if="!currentMode && currentViewConfig.needShowDate && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
-        <q-icon :color="currentTheme.color"
-          v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.prev)"
-          @click.native="$emit('change:date-prev')"
-          class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_left"
+      <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker" style="min-width: 180px">
+        <q-btn :color="currentTheme.color" flat dense
+          @click="$emit('change:date-range-prev')"
+          icon="keyboard_arrow_left"
         />
-        <q-btn flat :color="currentTheme.color" style="max-width: 120px; font-size: .8rem; line-height: .8rem;" class="q-pa-sm" @click="$refs.datePickerModal.toggle()">
-          <div>{{formatDate(date)}}</div>
-        </q-btn>
-        <q-dialog ref="datePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date" :maximized="$q.platform.is.mobile">
-          <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '30vw'}">
-            <q-card-section class="q-pa-none">
-              <q-toolbar :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
-                <div class="q-toolbar-title text-h6" :class="[`text-${theme.color}`]">
-                  Date/Time
-                </div>
-              </q-toolbar>
-            </q-card-section>
-            <q-separator />
-            <q-card-section :style="{height: $q.platform.is.mobile ? 'calc(100% - 104px)' : ''}" class="scroll" :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
-              <div class="flex flex-center">
-                <vue-flat-pickr
-                  :value="dateValue"
-                  @input="dateInputHandler"
-                  :config="dateConfig"
-                  :theme="currentTheme"
-                />
-              </div>
-            </q-card-section>
-            <q-separator />
-            <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-              <q-btn flat :color="currentTheme.color" @click="datePickerModalClose">close</q-btn>
-              <q-btn flat :color="currentTheme.color" @click="datePickerModalSave">save</q-btn>
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-        <q-tooltip v-if="$q.platform.is.desktop">{{formatedDate}}</q-tooltip>
-        <q-icon :color="currentTheme.color"
-          v-if="$q.platform.is.desktop && (currentViewConfig.needShowDate === true || currentViewConfig.needShowDate.next)"
-          @click.native="$emit('change:date-next')"
-          class="cursor-pointer arrows" size="1.5rem" name="keyboard_arrow_right"
-        />
-      </div>
-      <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker">
-        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 154px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
+        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 124px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
           <div>
             <div>{{formatDate(dateRange[0])}}</div>
             <div style="font-size: .5rem">|</div>
             <div>{{formatDate(dateRange[1])}}</div>
           </div>
         </q-btn>
-        <q-dialog ref="dateRangePickerModal" :content-css="{maxWidth: '500px'}" class="modal-date-range" :maximized="$q.platform.is.mobile">
-          <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '30vw'}">
-            <q-card-section class="q-pa-none">
-              <q-toolbar :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-                <div class="q-toolbar-title text-h6" :class="[`text-${currentTheme.color}`]">
-                  Time range
-                </div>
-              </q-toolbar>
-            </q-card-section>
-            <q-separator />
-            <q-card-section :style="{height: $q.platform.is.mobile ? 'calc(100% - 104px)' : ''}" class="scroll" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
+        <q-btn :color="currentTheme.color" flat dense
+          @click="$emit('change:date-range-next')"
+          icon="keyboard_arrow_right"
+        />
+        <q-dialog ref="dateRangePickerModal" content-class="modal-date-range">
+          <q-card>
+            <q-card-section class="scroll q-pa-none" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
               <div class="flex flex-center">
                 <date-range-picker
                   class="q-ma-sm"
@@ -115,7 +56,6 @@
                 />
               </div>
             </q-card-section>
-            <q-separator />
             <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
               <q-btn flat :color="currentTheme.color" @click="dateRangeModalClose">close</q-btn>
               <q-btn flat :color="currentTheme.color" @click="dateRangeModalSave">save</q-btn>
@@ -317,29 +257,23 @@
         v-else
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
+        :totop="scrolledToTopHandler"
+        :tobottom="scrolledToBottomHandler"
         ref="scroller"
         :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: wrapperOverflowing ? '15px' : ''}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
         :debounce="10"
-        wclass="q-w-list">
-        <template v-if="loading">
+        wclass="q-w-list"
+      >
+        <template v-if="!items.length && loading">
           <table-skeleton v-for="(i, key) in new Array(itemsCount + 2).fill('')" :key="key" :rows="rowWidths"/>
         </template>
-        <slot name="items" v-else
-          v-for="(item, index) in items"
-          :item="item"
-          :index="index"
-          :actions="actions"
-          :cols="activeCols"
-          :etcVisible="etcField.display"
-          :actionsVisible="actionField.display"
-          :itemHeight="itemHeight"
-          :rowWidth="rowWidth"
-        >
-          <list-item
-            :key="index"
+        <template v-else>
+          <table-skeleton :rows="rowWidths" v-if="loading"/>
+          <slot name="items"
+            v-for="(item, index) in items"
             :item="item"
             :index="index"
             :actions="actions"
@@ -348,10 +282,23 @@
             :actionsVisible="actionField.display"
             :itemHeight="itemHeight"
             :rowWidth="rowWidth"
-            @action="clickHandler"
-            @item-click="itemClickHandler"
-          />
-        </slot>
+          >
+            <list-item
+              :key="index"
+              :item="item"
+              :index="index"
+              :actions="actions"
+              :cols="activeCols"
+              :etcVisible="etcField.display"
+              :actionsVisible="actionField.display"
+              :itemHeight="itemHeight"
+              :rowWidth="rowWidth"
+              @action="clickHandler"
+              @item-click="itemClickHandler"
+            />
+          </slot>
+          <table-skeleton :rows="rowWidths" v-if="loading"/>
+        </template>
       </VirtualList>
     </div>
   </div>
@@ -364,8 +311,7 @@ import VueDraggableResizable from 'vue-draggable-resizable'
 import ListItem from './ListItem.vue'
 import TableSkeleton from './TableSkeleton'
 import draggable from 'vuedraggable'
-import DateRangePicker, { VueFlatPickr } from 'datetimerangepicker'
-import ScrollPlugin from 'flatpickr/dist/plugins/scrollPlugin'
+import DateRangePicker from 'datetimerangepicker'
 import PerfectScrollbar from 'perfect-scrollbar'
 import get from 'lodash/get'
 import 'perfect-scrollbar/css/perfect-scrollbar.css'
@@ -418,13 +364,12 @@ export default {
     viewConfig: Object,
     loading: Boolean
   },
-  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, VueFlatPickr, TableSkeleton },
+  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, TableSkeleton },
   data () {
     let defaultConfig = {
       needShowFilter: false,
       needShowMode: false,
       needShowPageScroll: '',
-      needShowDate: false,
       needShowDateRange: false,
       needShowEtc: false
     }
@@ -433,16 +378,6 @@ export default {
       currentFilter: this.filter,
       currentMode: !!this.mode,
       dateValue: this.date,
-      dateConfig: {
-        enableTime: true,
-        time_24hr: true,
-        inline: true,
-        maxDate: (new Date()).setHours(23, 59, 59, 999),
-        mode: 'single',
-        locale: { firstDayOfWeek: 1 },
-        minuteIncrement: 1,
-        plugins: [ new ScrollPlugin() ]
-      },
       wrapperHeight: 0,
       wrapperWidth: 0,
       itemsCount: 0,
@@ -516,9 +451,6 @@ export default {
       let res = 0
       res += this.rowWidths.reduce((acc, width) => acc + width + 15, 0)
       return res + 5 // 5 is margin of container
-    },
-    formatedDate () {
-      return date.formatDate(this.dateValue, 'DD MMMM YYYY')
     },
     wrapperOverflowing () {
       return this.wrapperWidth < this.rowWidth
@@ -651,6 +583,7 @@ export default {
           this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
         }
       }
+      this.$emit('scroll', { event: e, data })
     },
     getDynamicCSS () {
       let result = ''
@@ -678,17 +611,6 @@ export default {
     },
     formatDate (timestamp) {
       return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
-    },
-    datePickerModalClose () {
-      this.dateValue = this.date
-      this.$refs.datePickerModal.hide()
-    },
-    datePickerModalSave () {
-      this.$emit('change:date', this.dateValue.valueOf())
-      this.$refs.datePickerModal.hide()
-    },
-    dateInputHandler (date) {
-      this.dateValue = date ? date.setSeconds(0) : new Date()
     },
     changeModeDateTimeRangeHandler (mode) {
       this.currentDateRangeMode = mode
@@ -721,13 +643,24 @@ export default {
     scrollInit () {
       if (this.items.length) {
         let el = get(this.$refs, 'scroller.$el', undefined)
-        this.ps ? this.ps.update() : this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15 })
+        this.ps ? this.ps.update() : this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15, minScrollbarLength: 20 })
       } else {
         if (this.ps) {
           this.ps.destroy()
           this.ps = null
         }
       }
+    },
+    scrolledToTopHandler () {
+      this.$emit('scroll:top')
+    },
+    scrolledToBottomHandler () {
+      this.$emit('scroll:bottom')
+    },
+    scrollTo (index) {
+      if (!index) { return }
+      let height = index * this.itemHeight
+      this.$refs.scroller.$el.scrollTop = height
     }
   },
   updated () {
@@ -740,6 +673,9 @@ export default {
     date (val) {
       if (val === this.dateValue.valueOf()) { return false }
       this.dateValue = new Date(val)
+    },
+    dateRange (dateRange) {
+      this.currentDateRange = dateRange
     },
     mode (val) {
       this.currentMode = !!val
@@ -855,4 +791,11 @@ export default {
   .date
     .arrows
       position relative
+  .q-v-date-range-picker
+    .q-btn__wrapper
+      padding-left 0
+      padding-right 0
+  .modal-date-range
+    .q-dialog__inner--minimized
+      padding 6px
 </style>

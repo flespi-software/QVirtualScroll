@@ -1,18 +1,12 @@
+import _get from 'lodash/get'
+
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     let params = {}
     if (state.limit) {
       params.count = state.limit
     }
-    if (state.filter && state.sysFilter) {
-      if (state.mode === 1) {
-        params.filter = `${state.sysFilter}`
-      } else {
-        params.filter = `${state.sysFilter},${state.filter}`
-      }
-    } else if (state.sysFilter && !state.filter) {
-      params.filter = `${state.sysFilter}`
-    } else if (!state.sysFilter && state.filter) {
+    if (state.filter) {
       if (state.mode === 0) {
         params.filter = `${state.filter}`
       }
@@ -66,7 +60,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[device.device_type_id].forEach((col) => {
             if (col.name === 'timestamp') {
-              let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+              let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
               col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
             }
           })
@@ -87,7 +81,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
             cols = messageParams.reduce((cols, param) => {
               let name = param.name
               if (name === 'timestamp') {
-                let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+                let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
                 cols.unshift({
                   name,
                   width: 190,
@@ -153,7 +147,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function getFromTo (val) {
     let now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
-      to = from + 86400000
+      to = from + 86399999
     return { from, to }
   }
 
@@ -173,7 +167,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (data.result.length) {
           date = Math.round(data.result[0].timestamp * 1000)
         }
-        commit('setDate', getFromTo(date).from)
+        let day = getFromTo(date)
+        commit('setFrom', day.from)
+        commit('setTo', day.to)
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
@@ -183,56 +179,52 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function get ({ state, commit, rootState }, preaction) {
+  async function getMessages ({ state, commit, rootState }, params) {
     commit('reqStart')
-    if (preaction) {
-      let { name: preactionName, payload: preactionPayload } = preaction
-      commit('clearMessages')
-      commit(preactionName, preactionPayload)
-    }
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
         let currentMode = JSON.parse(JSON.stringify(state.mode))
-        let resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(getParams(state)) })
+        let resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
         /* if mode changed in time request */
         if (currentMode !== state.mode) { return false }
         let data = resp.data
         errorsCheck(data)
-        if (preaction) {
-          if (data.result.length) {
-            commit('setMessages', data.result)
-            commit('postaction')
-          } else {
-            commit('postaction')
-            switch (preaction.name) { // logic for empty response after pagination scroll
-              case 'paginationPrev': {
-                commit('datePrev')
-                commit('paginationPrev')
-                await get({ state, commit, rootState })
-                commit('postaction')
-                break
-              }
-              case 'paginationNext': {
-                get({ state, commit, rootState }, { name: 'dateNext' })
-                commit('postaction')
-                break
-              }
-              default: {
-                commit('setMessages', data.result)
-                commit('postaction')
-              }
-            }
-          }
-        } else {
-          commit('setMessages', data.result)
-        }
         Vue.set(state, 'isLoading', false)
+        return data.result
       } catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
         Vue.set(state, 'isLoading', false)
       }
+    }
+  }
+
+  async function get ({ state, commit, rootState }) {
+    let messages = await getMessages({ state, commit, rootState }, getParams(state))
+    commit('setMessages', messages)
+  }
+
+  async function getPrevPage ({ state, commit, rootState }) {
+    if (!state.isLoading) {
+      let to = Math.floor(_get(state, 'messages[0].timestamp', state.to) - 1)
+      let params = getParams(state)
+      params.to = to
+      params.reverse = true
+      let messages = await getMessages({ state, commit, rootState }, params)
+      commit('prependMessages', messages)
+      return messages.length
+    }
+  }
+
+  async function getNextPage ({ state, commit, rootState }) {
+    if (!state.isLoading) {
+      let from = Math.floor(_get(state, `messages[${state.messages.length - 1}].timestamp`, state.from) + 1)
+      let params = getParams(state)
+      params.from = from
+      let messages = await getMessages({ state, commit, rootState }, params)
+      commit('appendMessages', messages)
+      return messages.length
     }
   }
 
@@ -266,8 +258,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     await Vue.connector.subscribeMessagesDevices(state.active, (message) => {
       if (state.mode === 1) {
         messagesBuffer.push(JSON.parse(message))
-      } else {
-        commit('setNewMessagesCount', state.newMessagesCount + 1)
       }
     }, { rh: 2 })
   }
@@ -310,7 +300,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   return {
+    getMessages,
     get,
+    getPrevPage,
+    getNextPage,
     pollingGet,
     getCols,
     getHistory,
