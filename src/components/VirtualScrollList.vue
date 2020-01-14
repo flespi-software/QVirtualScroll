@@ -257,8 +257,6 @@
         v-else
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
-        :totop="scrolledToTopHandler"
-        :tobottom="scrolledToBottomHandler"
         ref="scroller"
         :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: wrapperOverflowing ? '15px' : ''}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
@@ -572,18 +570,31 @@ export default {
         let el = this.$refs.scroller.$el || this.$refs.scroller
         this.allScrollTop = el.scrollHeight - el.clientHeight
       }
+      let verticalDirection = null
+      if (data.offset > this.currentScrollTop) {
+        verticalDirection = 'bottom'
+      } else if (data.offset < this.currentScrollTop) {
+        verticalDirection = 'top'
+      }
       if (this.items.length) {
+        /* horizontal scroll logic start */
+        if (this.$refs.wrapper) {
+          this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
+        }
+        /* horizontal scroll logic end */
         if (data.offset < this.currentScrollTop && this.needAutoScroll) {
           this.needAutoScroll = false
         } else if (!this.needAutoScroll && this.mode === 1 && data.offset >= this.allScrollTop) {
           this.needAutoScroll = true
         }
         this.currentScrollTop = data.offset
-        if (this.$refs.wrapper) {
-          this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
-        }
       }
       this.$emit('scroll', { event: e, data })
+      if (verticalDirection && verticalDirection === 'top' && data.offset === 0) {
+        this.$emit('scroll:top')
+      } else if (verticalDirection && verticalDirection === 'bottom' && data.offset >= data.offsetAll) {
+        this.$emit('scroll:bottom')
+      }
     },
     getDynamicCSS () {
       let result = ''
@@ -643,19 +654,17 @@ export default {
     scrollInit () {
       if (this.items.length) {
         let el = get(this.$refs, 'scroller.$el', undefined)
-        this.ps ? this.ps.update() : this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15, minScrollbarLength: 20 })
+        if (this.ps) {
+          this.ps.update()
+        } else {
+          this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15, minScrollbarLength: 20 })
+        }
       } else {
         if (this.ps) {
           this.ps.destroy()
           this.ps = null
         }
       }
-    },
-    scrolledToTopHandler () {
-      this.$emit('scroll:top')
-    },
-    scrolledToBottomHandler () {
-      this.$emit('scroll:bottom')
     },
     scrollTo (index) {
       if (!index) { return }
