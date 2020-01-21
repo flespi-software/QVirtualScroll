@@ -667,7 +667,7 @@ export default {
       }
     },
     scrollTo (index) {
-      if (!index) { return }
+      if (typeof index !== 'number' || index < 0 || !this.$refs.scroller) { return }
       let height = index * this.itemHeight
       this.$refs.scroller.$el.scrollTop = height
     }
