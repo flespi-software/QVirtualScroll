@@ -195,6 +195,18 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'cols', cols)
   }
 
+  function setDefaultCols (state) {
+    state.cols.forEach((col, index) => {
+      if (col.__dest) { return }
+      if (state.defaultColsNames.includes(col.name)) {
+        Vue.set(state.cols[index], 'display', true)
+      } else {
+        Vue.set(state.cols[index], 'display', false)
+      }
+    })
+    updateCols(state, state.cols)
+  }
+
   function setSettings (state, channel) {
     Vue.set(state, 'settings', channel)
   }
@@ -257,6 +269,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setActive,
     setCols,
     updateCols,
+    setDefaultCols,
     setSelected,
     clearSelected,
     setSortBy,

@@ -1,4 +1,5 @@
 [
+  {"name": "actions", "width": 100, "display": true, "__dest": "action"},
   {"name": "param#1", "width": 150, "display": true},
   {"name": "param#2", "width": 150, "display": true},
   {"name": "param#3", "width": 150, "display": true},
@@ -30,5 +31,6 @@
   {"name": "param#29", "width": 150, "display": true},
   {"name": "param#30", "width": 150, "display": true},
   {"name": "param#31", "width": 150, "display": true},
-  {"name": "timestamp", "width": 150, "display": true}
+  {"name": "timestamp", "width": 150, "display": true},
+  {"name": "etc", "width": 150, "display": true, "__dest": "etc"}
 ]

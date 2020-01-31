@@ -54,6 +54,11 @@ module.exports = function (ctx) {
         'QCardSection',
         'QCardActions',
         'QSeparator',
+        'QList',
+        'QItem',
+        'QItemSection',
+        'QItemLabel',
+        'QScrollArea',
 
         'QResizeObserver',
         'QInput',

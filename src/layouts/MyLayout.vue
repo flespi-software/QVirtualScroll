@@ -1,5 +1,8 @@
 <template>
   <q-layout view="lHh Lpr lFf">
+    <q-drawer side="right" no-swipe-open no-swipe-close v-model="sides.right" :content-class="{'bg-grey-9':true}">
+      <cols-editor :cols="cols" @cols:close="sides.right = false"/>
+    </q-drawer>
     <q-page-container>
       <q-page>
         <div class="absolute-top-left absolute-bottom-right">
@@ -26,6 +29,7 @@
             @change:mode="modeChange"
             @update:cols="updateColsHandler"
             @change:date-range="updateDateRange"
+            @edit:cols="sides.right = true"
           >
           </virtual-scroll-list>
         </div>
@@ -36,6 +40,7 @@
 
 <script>
 import VirtualScrollList from '../components/VirtualScrollList'
+import ColsEditor from '../components/ColsEditor'
 import cols from '../data/cols.json'
 
 export default {
@@ -78,7 +83,10 @@ export default {
         needShowEtc: true
       },
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
-      loading: true
+      loading: true,
+      sides: {
+        right: false
+      }
     }
   },
   computed: {
@@ -267,7 +275,7 @@ export default {
     }
   },
   components: {
-    VirtualScrollList
+    VirtualScrollList, ColsEditor
   },
   created () {
     setTimeout(() => {

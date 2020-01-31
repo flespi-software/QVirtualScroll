@@ -19,8 +19,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function getCols ({ state, commit, rootState }) {
+  async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     commit('reqStart')
+    const needActions = sysColsNeedInitFlags.actions
+    const needEtc = sysColsNeedInitFlags.etc
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
@@ -30,11 +32,16 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[state.active].forEach((col) => {
             if (col.name === 'timestamp') {
-              let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+              let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
               col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
             }
           })
           cols = colsFromStorage[state.active]
+          /* adding sys cols after migration. 30.01.20 */
+          if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
+            cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
+            cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
+          }
         } else {
           let protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
           let protocolIdData = protocolIdResp.data
@@ -47,16 +54,18 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
               let colItem = {
                 name: col.name,
                 width: 160,
-                display: true,
+                display: state.defaultColsNames.includes(col.name),
                 description: col.info
               }
               if (colItem.name === 'timestamp') {
-                let locale = new Date().toString().match(/([-\+][0-9]+)\s/)[1]
+                let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
                 colItem.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
               }
               cols.push(colItem)
             })
           }
+          cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
+          cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
         }
         commit('setCols', cols)
         Vue.set(state, 'isLoading', false)

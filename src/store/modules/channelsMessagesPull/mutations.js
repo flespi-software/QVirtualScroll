@@ -106,6 +106,18 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   let updateCols = setCols
 
+  function setDefaultCols (state) {
+    state.cols.forEach((col, index) => {
+      if (col.__dest) { return }
+      if (state.defaultColsNames.includes(col.name)) {
+        Vue.set(state.cols[index], 'display', true)
+      } else {
+        Vue.set(state.cols[index], 'display', false)
+      }
+    })
+    updateCols(state, state.cols)
+  }
+
   function setNewMessagesCount (state, count) {
     Vue.set(state, 'newMessagesCount', count)
   }
@@ -158,6 +170,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setActive,
     setCols,
     updateCols,
+    setDefaultCols,
     setNewMessagesCount,
     setSelected,
     clearSelected,

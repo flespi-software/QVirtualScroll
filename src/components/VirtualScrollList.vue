@@ -22,11 +22,9 @@
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
       </q-input>
       <q-toolbar-title/>
-      <q-btn :color="currentTheme.color" flat class="on-left" @click="colsModalOpenHandler"
+      <q-btn :color="currentTheme.color" flat dense class="on-left" @click="$emit('edit:cols')" icon="tune"
         v-if="colsConfigurator === 'toolbar' && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-      >
-        <q-icon name="tune"></q-icon>
-      </q-btn>
+      />
       <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker" style="min-width: 180px">
         <q-btn :color="currentTheme.color" flat dense
           @click="$emit('change:date-range-prev')"
@@ -70,156 +68,15 @@
         :color="currentTheme.color"
       />
     </q-toolbar>
-    <q-dialog ref="colsModal" :content-css="{minWidth: '70vw', minHeight: '50vh', maxWidth: '100vw'}" class="modal-cols-configurator" :maximized="$q.platform.is.mobile">
-      <q-card :style="{minWidth: $q.platform.is.mobile ? '100%' : '70vw'}">
-        <q-card-section class="q-pa-none">
-          <q-toolbar :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-            <div class="q-toolbar-title text-h6" :class="[`text-${currentTheme.color}`]">
-              Configure cols
-            </div>
-          </q-toolbar>
-        </q-card-section>
-        <q-separator />
-        <q-card-section :style="{ height: $q.platform.is.mobile ? 'calc(100% - 104px)' : '55vh'}" class="scroll" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-          <div class="layout-padding" :class="[`bg-${currentTheme.bgColor}`]">
-            <div class="row full-width">
-              <div class="col-md-2 col-12 ellipsis text-bold" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>Name</span></div>
-              <div class="col-md-7 col-9 text-bold" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}">Width</div>
-              <div class="col-1 flex flex-center" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}">
-                <q-icon size="1.5rem" class="cursor-pointer"
-                  name="mdi-eye-settings-outline"
-                  @click.native="toggleAllCols"
-                  :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
-                >
-                  <q-tooltip>Toggle all columns</q-tooltip>
-                </q-icon>
-              </div>
-            </div>
-            <q-separator spaced :color="currentTheme.controlsInverted ? 'white' : 'grey-9'"/>
-            <div class="row full-width q-pt-sm q-pb-sm" v-if="actions && actions.length">
-              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{actionField.name}}</span></div>
-              <div class="col-md-7 col-9">
-                <q-slider :min="50" :max="800" :step="25"
-                  :value="actionField.width"
-                  @input="(val) => { onResize(val,'actions') }" label
-                  :label-value="`${actionField.width}px`"
-                  :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? currentActionFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
-                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
-                />
-              </div>
-              <div class="col-1 flex flex-center">
-                <q-icon size="1.5rem" class="cursor-pointer"
-                  :name="currentActionFieldDisplay ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click.native="currentActionFieldDisplay = !currentActionFieldDisplay"
-                  :color="currentTheme.controlsInverted ? currentActionFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
-                />
-              </div>
-            </div>
-            <draggable :list="currentCols" handle=".handle">
-              <div class="cols-editor__col row full-width q-pt-sm q-pb-sm" v-for="(col, index) in currentCols" :key="col.name">
-                <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{col.name}}</span></div>
-                <div class="col-md-7 col-9">
-                  <q-slider :min="50" :max="800" :step="25" v-model="col.width" label
-                    :label-value="`${col.width}px`"
-                    :dark="currentTheme.controlsInverted"
-                    :color="currentTheme.controlsInverted ? actionField.display ? 'white' : 'grey-8' : currentTheme.color"
-                    :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
-                  />
-                </div>
-                <div class="col-1 flex flex-center">
-                  <q-icon size="1.5rem" class="cursor-pointer"
-                    :name="col.display ? 'mdi-eye' : 'mdi-eye-off'" @click.native="col.display = !col.display"
-                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
-                  />
-                </div>
-                <div class="col-1 flex flex-center">
-                  <q-btn flat @click="customFieldRemove(index)" icon="remove"
-                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
-                  />
-                </div>
-                <div class="col-1 flex flex-center">
-                  <q-icon size="1.5rem" class="handle" name="mdi-drag" style="cursor: move"
-                    :color="currentTheme.controlsInverted ? col.display ? 'white' : 'grey-8' : currentTheme.color"
-                  />
-                </div>
-              </div>
-            </draggable>
-            <div class="row full-width q-pt-sm q-pb-sm">
-              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>{{etcField.name}}</span></div>
-              <div class="col-md-7 col-9">
-                <q-slider class="col-8" :min="50" :max="800" :step="25" v-model="etcField.width" label
-                  :label-value="`${etcField.width}px`"
-                  :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? currentEtcFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
-                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
-                />
-              </div>
-              <div class="col-1 flex flex-center">
-                <q-icon size="1.5rem" class="cursor-pointer"
-                  :name="currentEtcFieldDisplay ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click.native="currentEtcFieldDisplay = !currentEtcFieldDisplay"
-                  :color="currentTheme.controlsInverted ? currentEtcFieldDisplay ? 'white' : 'grey-8' : currentTheme.color"
-                />
-              </div>
-            </div>
-            <q-separator spaced :color="currentTheme.controlsInverted ? 'white' : 'grey-9'"/>
-            <div class="row full-width q-pt-sm q-pb-sm">
-              <div class="col-md-2 col-12 ellipsis" style="font-size: 1.1rem;" :style="{lineHeight: $q.screen.lt.md ? '' : '40px'}"><span>add custom field</span></div>
-              <div class="col-md-3 col-4 q-pr-sm">
-                <q-input :placeholder="customField.error ? customField.errMessages : 'name'" outlined hide-bottom-space dense
-                  type="text" v-model="customField.name" :error="customField.error"
-                  :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
-                />
-              </div>
-              <div class="col-md-4 col-5">
-                <q-slider :min="50" :max="800" :step="25" v-model="customField.width" label
-                  :label-value="`${customField.width}px`" :dark="currentTheme.controlsInverted"
-                  :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
-                  :label-color="currentTheme.controlsInverted ? 'grey-9' : 'white'"
-                />
-              </div>
-              <div class="col-1 flex flex-center">
-                <q-icon size="1.5rem" class="cursor-pointer"
-                  :name="customField.display ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click.native="customField.display = !customField.display"
-                  :color="currentTheme.controlsInverted ? customField.display ? 'white' : 'grey-8' : currentTheme.color"
-                />
-              </div>
-              <div class="col-1 flex flex-center">
-                <q-btn flat @click="customFieldSave" icon="add"
-                  :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
-                />
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-          <q-btn flat :color="currentTheme.color" @click="colsModalClose">close</q-btn>
-          <q-btn flat :color="currentTheme.color" @click="colsModalSave">save</q-btn>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
       :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}"
     >
       <q-resize-observer @resize="wrapperResizeHandler"/>
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]"
         v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
-        @dblclick="colsConfigurator === 'header' ? $refs.colsModal.show() : ''"
+        @dblclick="colsConfigurator === 'header' ? $emit('edit:cols') : ''"
       >
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
-          <div class="header__item item_actions" v-if="actionField.display">
-            <q-tooltip>Actions</q-tooltip>
-            <span class="item__label">{{actionField.name}}</span>
-            <vue-draggable-resizable ref="dragActions" v-if="$q.platform.is.desktop && isNeedResizer"
-              :active="true" :z="1" :preventDeactivation="true"
-              :draggable="false" :handles="['mr']" :w="actionField.width" :h="itemHeight"
-              :minw="50" @resizestop="(left, top, width) => {onResize(width, 'actions')}"
-            />
-          </div>
           <draggable :list="cols" element="span" @end="$emit('update:cols', cols)">
             <template v-for="(prop, index) in cols">
               <div class="header__item" :key="prop.name" v-if="prop.display"
@@ -232,20 +89,11 @@
                   v-if="$q.platform.is.desktop && isNeedResizer"
                   :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
                   :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
-                  @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index])}"
+                  @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update:cols', cols)}"
                 />
               </div>
             </template>
           </draggable>
-          <div v-if="etcField.display" class="header__item item_etc">
-            <q-tooltip>Another info by message</q-tooltip>
-            <span class="item__label">{{etcField.name}}</span>
-            <vue-draggable-resizable ref="dragEtc" v-if="$q.platform.is.desktop && isNeedResizer"
-              :active="true" :z="1" :preventDeactivation="true"
-              :draggable="false" :handles="['mr']" :w="etcField.width" :h="itemHeight" :minw="50"
-              @resizestop="(left, top, width) => {onResize(width, 'etc')}"
-            />
-          </div>
         </div>
       </div>
       <slot name="empty" v-if="!items.length && !loading">
@@ -276,8 +124,6 @@
             :index="index"
             :actions="actions"
             :cols="activeCols"
-            :etcVisible="etcField.display"
-            :actionsVisible="actionField.display"
             :itemHeight="itemHeight"
             :rowWidth="rowWidth"
           >
@@ -287,8 +133,6 @@
               :index="index"
               :actions="actions"
               :cols="activeCols"
-              :etcVisible="etcField.display"
-              :actionsVisible="actionField.display"
               :itemHeight="itemHeight"
               :rowWidth="rowWidth"
               @action="clickHandler"
@@ -368,8 +212,7 @@ export default {
       needShowFilter: false,
       needShowMode: false,
       needShowPageScroll: '',
-      needShowDateRange: false,
-      needShowEtc: false
+      needShowDateRange: false
     }
     return {
       uid: 0,
@@ -383,27 +226,6 @@ export default {
       dynamicCSS: document.createElement('style'),
       showSearch: false,
       needAutoScroll: !!this.mode,
-      currentCols: [],
-      customField: {
-        name: '',
-        width: 150,
-        display: true,
-        custom: true,
-        error: false,
-        errMessages: ''
-      },
-      actionField: {
-        name: 'action',
-        width: !this.actions.length ? 150 : this.actions.length >= 2 ? this.actions.length * 28 : 50,
-        display: this.actions && !!this.actions.length
-      },
-      currentActionFieldDisplay: this.actions && !!this.actions.length,
-      etcField: {
-        name: 'etc',
-        width: 150,
-        display: this.viewConfig.needShowEtc || false
-      },
-      currentEtcFieldDisplay: this.viewConfig.needShowEtc || false,
       defaultTheme: {
         color: 'grey-9',
         bgColor: 'white',
@@ -455,15 +277,9 @@ export default {
     },
     rowWidths () {
       let widths = []
-      if (this.actionField.display) {
-        widths.push(this.actionField.width)
-      }
       this.activeCols.forEach((col) => {
         widths.push(col.width)
       })
-      if (this.etcField.display) {
-        widths.push(this.etcField.width)
-      }
       return widths
     }
   },
@@ -481,53 +297,6 @@ export default {
     },
     openSearch () {
       this.showSearch = true
-    },
-    colsModalOpenHandler () {
-      if (this.cols.length) {
-        this.currentCols = JSON.parse(JSON.stringify(this.cols))
-      }
-      this.$refs.colsModal.show()
-    },
-    colsModalSave () {
-      this.$refs.colsModal.hide()
-      this.$set(this.actionField, 'display', this.currentActionFieldDisplay)
-      this.$set(this.etcField, 'display', this.currentEtcFieldDisplay)
-      this.$emit('update:cols', this.currentCols)
-    },
-    colsModalClose () {
-      this.$refs.colsModal.hide()
-      this.currentCols = JSON.parse(JSON.stringify(this.cols))
-      this.currentActionFieldDisplay = this.actionField.display
-      this.currentEtcFieldDisplay = this.etcField.display
-      this.customField = {
-        name: '',
-        width: 150,
-        display: false
-      }
-    },
-    customFieldSave () {
-      if (!this.customField.name) {
-        this.customField.error = true
-        this.customField.errMessages = 'name is empty'
-        return false
-      }
-      if (this.currentCols.filter(col => col.name === this.customField.name).length) {
-        this.customField.error = true
-        this.customField.name = ''
-        this.customField.errMessages = 'name is duplicated'
-        return false
-      }
-      this.currentCols.push(this.customField)
-      this.customField = {
-        name: '',
-        width: 150,
-        display: false,
-        error: false,
-        errMessages: ''
-      }
-    },
-    customFieldRemove (index) {
-      this.currentCols.splice(index, 1)
     },
     clickHandler ({ index, type, content }) {
       this.$emit(`action`, { index, type, content })
@@ -551,12 +320,6 @@ export default {
       this.resetParams()
     },
     onResize (width, index) {
-      if (index === 'etc') {
-        this.etcField.width = width
-      }
-      if (index === 'actions') {
-        this.actionField.width = width
-      }
       if (typeof index === 'number') {
         this.activeCols[index].width = width
       }
@@ -598,12 +361,6 @@ export default {
     },
     getDynamicCSS () {
       let result = ''
-      if (this.actionField.display) {
-        result += `.uid${this.uid} .item_actions { width: ${this.actionField.width}px }`
-      }
-      if (this.etcField.display) {
-        result += `.uid${this.uid} .item_etc { width: ${this.etcField.width}px }`
-      }
       result += this.activeCols.reduce((acc, col, index) => {
         acc += `.uid${this.uid} .item_${index} { width: ${col.width}px }`
         return acc
@@ -636,20 +393,6 @@ export default {
     dateRangeModalClose () {
       this.currentDateRange = this.dateRange
       this.$refs.dateRangePickerModal.hide()
-    },
-    toggleAllCols () {
-      let flag = this.currentCols.reduce((flag, col) => flag || col.display, false)
-      if (this.actions && this.actions.length) {
-        flag = flag || this.currentActionFieldDisplay
-      }
-      flag = !flag
-      this.currentCols.forEach((_, index) => {
-        this.$set(this.currentCols[index], 'display', flag)
-      })
-      if (this.actions && this.actions.length) {
-        this.currentActionFieldDisplay = flag
-      }
-      if (!flag && this.viewConfig.needShowEtc) { this.currentEtcFieldDisplay = !flag }
     },
     scrollInit () {
       if (this.items.length) {
@@ -697,9 +440,12 @@ export default {
     },
     cols: {
       deep: true,
-      handler (val) {
-        if (!val.length) {
-          this.etcField.display = true
+      handler (val, prevCols) {
+        if (!(prevCols && prevCols.length) && val) {
+          let fullWidth = this.$refs.wrapper.offsetWidth
+          if (this.rowWidth < fullWidth) {
+            this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
+          }
         }
         this.updateDynamicCSS()
         this.isNeedResizer = false
@@ -711,15 +457,14 @@ export default {
     viewConfig: {
       deep: true,
       handler (config) {
-        this.etcField.display = config.needShowEtc
         this.currentViewConfig = Object.assign(this.defaultConfig, config)
       }
     }
   },
   mounted () {
     let fullWidth = this.$refs.wrapper.offsetWidth
-    if (this.rowWidth < fullWidth) {
-      this.etcField.width = fullWidth - (this.rowWidth - 150)
+    if (this.rowWidth < fullWidth && this.cols && this.cols.length) {
+      this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
     }
     this.hasItemClickHandler = !!this._events['item-click']
     this.uid = uid().split('-')[0]

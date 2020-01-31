@@ -1,3 +1,4 @@
+import defaultCols from './defaultCols'
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   function getFromTo (val) {
     let now = val || Date.now(),
@@ -167,6 +168,10 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   let updateCols = setCols
 
+  function setDefaultCols (state) {
+    setCols(state, defaultCols)
+  }
+
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
       setMessages(state, [{ __connectionStatus: 'offline', timestamp: Date.now() / 1000 }])
@@ -218,18 +223,11 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setTo,
     reqStart,
     setReverse,
-    // dateNext,
-    // datePrev,
-    // paginationPrev,
-    // paginationNext,
-    // setDate,
-    // postaction,
     clear,
     setOrigin,
-    // setSysFilter,
     setCols,
     updateCols,
-    // setNewMessagesCount,
+    setDefaultCols,
     setMissingMessages,
     setSelected,
     clearSelected,

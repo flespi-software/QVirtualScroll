@@ -31,6 +31,7 @@ col = {
     name: 'param#1',
     width: 150,
     display: true,
+    __dest: 'action', // sys destination fields. May be action or etc
     addition: '' // some addition data for col name
 }
 
@@ -64,7 +65,6 @@ config = {
     needShowMode: false, // Flag that displays need show mode control or not
     needShowFilter: false, // Flag that displays need filter input or not
     needShowPageScroll: '', // String that displays which controls scroll by limit is needed show. Example: 'right left'
-    needShowEtc: false, // Flag that displays need show field etc in list items or not
     needShowDateRange: false, // Flag that displays need show dateRange-set or not.
 }
 
@@ -74,7 +74,7 @@ config = {
 | Name  |  Description  | Payload |
 |:---|:---:|:---|
 |change:filter| Handling change of filter| 'new_filter'|
-|update:cols|Handling change settings of cols |[{col},{col}]|
+|edit:cols| Emiting on click by edit cols button | *Empty* |
 |change:mode|Handling change mode |current mode|
 |action|Handling click by icon one of action |{index, type, content}|
 |item-click|Handling click by item |{index, content}|
@@ -174,13 +174,11 @@ You can use component with scoped slot:
       @change:mode="modeChange"
       @update:cols="updateColsHandler"
     >
-      <list-item-custom slot="items" slot-scope="{item, index, actions, cols, etcVisible, actionsVisible, itemHeight, rowWidth}"
+      <list-item-custom slot="items" slot-scope="{item, index, actions, cols, itemHeight, rowWidth}"
          :item="item"
          :index="index"
          :actions="actions"
          :cols="cols"
-         :etcVisible="etcVisible"
-         :actionsVisible="actionsVisible"
          @action="actionsHandler"
       />
     </virtual-scroll-list>
@@ -197,14 +195,64 @@ Component for scoped slot need design based on ListItem.vue. You can just expand
 ```html
  <list-item-custom
    slot="items"
-   slot-scope="{item, index, actions, cols, etcVisible, actionsVisible, itemHeight, rowWidth}"
+   slot-scope="{item, index, actions, cols, etcVisible, rowWidth}"
    :item="item"
    :index="index"
    :actions="actions"
    :cols="cols"
-   :etcVisible="etcVisible"
-   :actionsVisible="actionsVisible"
    @action="actionsHandler"
  />
 
+```
+
+# Columns Editor Component API
+
+## Props
+| Name  | Type | Description  | Default |
+|---|---|---|---|
+| cols  | Array  | A array of columns. Structure written upster. | *required* |
+
+## Events
+| Name  |  Description  | Payload |
+|:---|:---:|:---|
+|cols:close| Close button clicked | *empty* |
+|cols:update| Columns updated | cols |
+|cols:default| Default button clicked | *empty* |
+
+## Example
+
+In quasar.conf.js
+```javascript
+framework: {
+  components: [
+    'QInput',
+    'QBtn',
+    'QIcon',
+    'QTooltip',
+    'QDialog',
+    'QSlider',
+    'QList',
+    'QItem',
+    'QItemSection',
+    'QItemLabel',
+    'QScrollArea'
+  ]
+}
+```
+In App.vue (You can use component without of Vuex modules):
+```javascript
+import { ColsEditor } from 'qvirtualscroll'
+
+ components: {
+   ColsEditor
+ }
+```
+Simple example of template:
+```html
+<cols-editor
+  :cols="colsForEditing"
+  @cols:close="hideHandler"
+  @cols:update="updateColsHandler"
+  @cols:default="setDefaultColsHandler"
+/>
 ```

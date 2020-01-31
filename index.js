@@ -4,9 +4,11 @@ import channelsMessagesModuleSerial from './lib/channelsMessagesSerial.js'
 import devicesMessagesModule from './lib/devicesMessages.js'
 import intervalsModule from './lib/intervals.js'
 import VirtualScrollList from './src/components/VirtualScrollList.vue'
+import ColsEditor from './src/components/ColsEditor.vue'
 
 export {
   VirtualScrollList,
+  ColsEditor,
   logsModule,
   channelsMessagesModulePull,
   channelsMessagesModuleSerial,

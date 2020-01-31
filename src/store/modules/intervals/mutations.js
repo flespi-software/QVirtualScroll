@@ -1,3 +1,4 @@
+const defaultCols = ['begin', 'end', 'duration', 'timestamp', 'id']
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   function setMessages (state, data) {
     if (data && data.length) {
@@ -125,6 +126,18 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'cols', cols)
   }
 
+  function setDefaultCols (state) {
+    state.cols.forEach((col, index) => {
+      if (col.__dest) { return }
+      if (defaultCols.includes(col.name)) {
+        Vue.set(state.cols[index], 'display', true)
+      } else {
+        Vue.set(state.cols[index], 'display', false)
+      }
+    })
+    updateCols(state, state.cols)
+  }
+
   function setSelected (state, indexes) {
     Vue.set(state, 'selected', indexes)
   }
@@ -158,6 +171,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setActive,
     setCols,
     updateCols,
+    setDefaultCols,
     setSelected,
     clearSelected,
     setSortBy,
