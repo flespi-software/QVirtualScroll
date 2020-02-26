@@ -28,6 +28,6 @@
 
 <script>
 export default {
-  props: [ 'col' ]
+  props: ['col']
 }
 </script>

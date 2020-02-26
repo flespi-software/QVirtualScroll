@@ -40,7 +40,7 @@
 import { date } from 'quasar'
 import DateRangePicker from 'datetimerangepicker'
 export default {
-  props: [ 'theme', 'date' ],
+  props: ['theme', 'date'],
   data () {
     return {
       dateModel: this.date,
@@ -65,14 +65,14 @@ export default {
       return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
     },
     prevHandler () {
-      let delta = this.dateModel[1] - this.dateModel[0],
+      const delta = this.dateModel[1] - this.dateModel[0],
         newTo = this.dateModel[0] - 1,
         newFrom = newTo - delta
       this.dateModel = [newFrom, newTo]
       this.$emit('save', this.dateModel)
     },
     nextHandler () {
-      let delta = this.dateModel[1] - this.dateModel[0],
+      const delta = this.dateModel[1] - this.dateModel[0],
         newFrom = this.dateModel[1] + 1,
         newTo = newFrom + delta
       this.dateModel = [newFrom, newTo]

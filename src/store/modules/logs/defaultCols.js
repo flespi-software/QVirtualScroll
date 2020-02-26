@@ -1,4 +1,4 @@
-let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
 export default [
   {
     name: 'timestamp',

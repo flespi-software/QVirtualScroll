@@ -1,6 +1,6 @@
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
-    let params = {}
+    const params = {}
     if (state.limit) {
       params.count = state.limit
     }
@@ -26,12 +26,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   function getCols ({ state, commit }, counters) {
-    let cols = [],
-      colsFromStorage = LocalStorage.getItem(state.name)
+    let cols = []
+    const colsFromStorage = LocalStorage.getItem(state.name)
     if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
       cols = colsFromStorage[state.active]
       /* adding sys cols after migration. 30.01.20 */
-      cols = cols.map(col => !col.__dest)
+      cols = cols.filter(col => !col.__dest)
       if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
         cols.unshift({ name: 'actions', width: 70, display: true, __dest: 'action' })
         cols.push({ name: 'etc', width: 150, display: true, __dest: 'etc' })
@@ -47,7 +47,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function errorsCheck (data) {
     if (data.errors) {
       data.errors.forEach((error) => {
-        let errObject = new Error(error.reason)
+        const errObject = new Error(error.reason)
         errorHandler && errorHandler(errObject)
       })
     }
@@ -57,21 +57,21 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active && state.activeDevice) {
       try {
         Vue.set(state, 'isLoading', true)
-        let params = {
+        const params = {
           reverse: true,
           count: 1,
           fields: 'end'
         }
-        let resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
-        let data = resp.data
+        const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
+        const data = resp.data
         errorsCheck(data)
         let date = Date.now()
         if (data.result.length) {
           date = Math.round(data.result[0].end * 1000)
         }
-        let dateBegin = new Date(date)
+        const dateBegin = new Date(date)
         dateBegin.setHours(0, 0, 0, 0)
-        let dateEnd = new Date(date)
+        const dateEnd = new Date(date)
         dateEnd.setHours(23, 59, 59, 999)
         commit('setBegin', dateBegin.valueOf())
         commit('setEnd', dateEnd.valueOf())
@@ -89,8 +89,8 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active && state.activeDevice) {
       try {
         Vue.set(state, 'isLoading', true)
-        let resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(getParams(state)) })
-        let data = resp.data
+        const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(getParams(state)) })
+        const data = resp.data
         errorsCheck(data)
         commit('setMessages', data.result)
         Vue.set(state, 'isLoading', false)
@@ -102,13 +102,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  let messageProcessing = (state, packet) => {
-    let message = JSON.parse(packet.payload)
-    let topic = packet.topic
-    let event = topic.split('/').slice(-1)[0]
+  const messageProcessing = (state, packet) => {
+    const message = JSON.parse(packet.payload)
+    const topic = packet.topic
+    const event = topic.split('/').slice(-1)[0]
     switch (event) {
       case 'created': {
-        let begin = state.begin,
+        const begin = state.begin,
           end = state.end,
           endDate = new Date(end),
           intervalBegin = message.begin * 1000,

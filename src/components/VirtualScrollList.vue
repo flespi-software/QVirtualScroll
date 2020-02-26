@@ -169,7 +169,7 @@ export default {
   },
   components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal },
   data () {
-    let defaultConfig = {
+    const defaultConfig = {
       needShowFilter: false,
       needShowDateRange: false
     }
@@ -231,7 +231,7 @@ export default {
       return this.wrapperWidth < this.rowWidth
     },
     rowWidths () {
-      let widths = []
+      const widths = []
       this.activeCols.forEach((col) => {
         widths.push(col.width)
       })
@@ -240,7 +240,7 @@ export default {
   },
   methods: {
     getItemProps (index) {
-      let props = {
+      const props = {
         key: index,
         props: {
           item: this.items[index],
@@ -269,20 +269,20 @@ export default {
       this.showSearch = true
     },
     clickHandler ({ index, type, content }) {
-      this.$emit(`action`, { index, type, content })
+      this.$emit('action', { index, type, content })
     },
     itemClickHandler ({ index, content }) {
-      this.$emit(`item-click`, { index, content })
+      this.$emit('item-click', { index, content })
     },
     resetParams () {
-      let wrapper = this.$refs.wrapper
+      const wrapper = this.$refs.wrapper
       if (!wrapper) {
         return false
       }
       this.wrapperHeight = wrapper.offsetHeight - this.itemHeight // - header
       this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
-      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (scrollerElement) {
         setScrollPosition(scrollerElement, scrollerElement.scrollTop + 1)
       }
@@ -297,16 +297,16 @@ export default {
       this.updateDynamicCSS()
     },
     scrollNormalize () {
-      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (!scrollerElement) { return }
-      let offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight,
+      const offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight,
         offset = scrollerElement.scrollTop
       if (offsetAll < this.allScrollTop) {
         if (this.needAutoScroll) {
           this.currentScrollTop = offset
           this.allScrollTop = offsetAll
         } else {
-          let prevScrollPosition = offsetAll - (this.allScrollTop - offsetAll) - (this.allScrollTop - this.currentScrollTop)
+          const prevScrollPosition = offsetAll - (this.allScrollTop - offsetAll) - (this.allScrollTop - this.currentScrollTop)
           this.currentScrollTop = prevScrollPosition >= 0 ? prevScrollPosition : 0
           this.allScrollTop = offsetAll
           scrollerElement.scrollTop = this.currentScrollTop
@@ -327,19 +327,19 @@ export default {
       return verticalDirection
     },
     listScroll: function (e, data) {
-      let { offset } = data
-      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
-      let offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
+      const { offset } = data
+      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      const offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
       this.scrollNormalize()
       if (!this.currentScrollTop) {
         this.currentScrollTop = offset
       }
-      let verticalDirection = this.getScrollDirection(offset)
+      const verticalDirection = this.getScrollDirection(offset)
       let scrollOffset = this.scrollOffset ? typeof this.scrollOffset === 'number' ? this.scrollOffset : (offsetAll * this.scrollOffset.replace('%', '') / 100) : 0
       if (scrollOffset && scrollOffset < 36) { scrollOffset = 0 }
       if (this.items.length) {
         /* horizontal scroll logic start */
-        let wrapper = this.$refs.wrapper
+        const wrapper = this.$refs.wrapper
         if (wrapper) {
           wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - wrapper.getBoundingClientRect().left) + 'px'
         }
@@ -384,7 +384,7 @@ export default {
     },
     updateDynamicCSS () {
       this.dynamicCSS.type = 'text/css'
-      let head = document.head || document.getElementsByTagName('head')[0]
+      const head = document.head || document.getElementsByTagName('head')[0]
       if (this.dynamicCSS.styleSheet) {
         this.dynamicCSS.styleSheet.cssText = this.getDynamicCSS()
       } else {
@@ -396,24 +396,24 @@ export default {
       this.$emit('change:date-range', dateRange)
     },
     scrollTo (index) {
-      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
       let height = index * this.itemHeight
       if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
       setScrollPosition(scrollerElement, height)
     },
     scrollToWithSavePadding (index) {
-      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
       if (index > this.items.length - this.itemsCount) { index = this.items.length - this.itemsCount }
-      let height = index * this.itemHeight
+      const height = index * this.itemHeight
       setScrollPosition(scrollerElement, height + this.currentScrollTop)
     },
     updateScrollState () {
       if (!this.items.length) {
         this.currentScrollTop = 0
       } else {
-        let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+        const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
         if (this.needAutoScroll && scrollerElement) {
           setScrollPosition(scrollerElement, scrollerElement.scrollHeight)
         }
@@ -422,7 +422,7 @@ export default {
     }
   },
   beforeUpdate () {
-    let scrollerElement = get(this.$refs, 'scroller', undefined)
+    const scrollerElement = get(this.$refs, 'scroller', undefined)
     scrollerElement && scrollerElement.forceRender()
   },
   updated () {
@@ -438,7 +438,7 @@ export default {
       deep: true,
       handler (val, prevCols) {
         if (!(prevCols && prevCols.length) && val) {
-          let fullWidth = this.$refs.wrapper.offsetWidth
+          const fullWidth = this.$refs.wrapper.offsetWidth
           if (this.rowWidth < fullWidth) {
             this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
           }
@@ -463,7 +463,7 @@ export default {
     }
   },
   mounted () {
-    let fullWidth = this.$refs.wrapper.offsetWidth
+    const fullWidth = this.$refs.wrapper.offsetWidth
     if (this.rowWidth < fullWidth && this.cols && this.cols.length) {
       this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
     }
@@ -474,7 +474,7 @@ export default {
     this.updateScrollState()
   },
   destroyed () {
-    let head = document.head || document.getElementsByTagName('head')[0]
+    const head = document.head || document.getElementsByTagName('head')[0]
     head.removeChild(this.dynamicCSS)
   },
   directives: {

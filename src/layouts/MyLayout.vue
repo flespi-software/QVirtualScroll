@@ -101,9 +101,9 @@ export default {
       this.dateRange = range
     },
     generateItems () {
-      let limit = this.defaultLimit
-      let randVal = () => {
-        let types = ['String', 'Number', 'Boolean'],
+      const limit = this.defaultLimit
+      const randVal = () => {
+        const types = ['String', 'Number', 'Boolean'],
           currentType = types[Math.round(Math.random() * 2)]
         switch (currentType) {
           case 'String': {
@@ -118,7 +118,7 @@ export default {
         }
       }
       for (let i = 0; i < limit; i++) {
-        let item = this.cols.reduce((res, col) => {
+        const item = this.cols.reduce((res, col) => {
           res[col.name] = randVal()
           return res
         }, {})
@@ -129,7 +129,7 @@ export default {
     },
     filterItems (filter) {
       function getPartsOfFilter (filterString) {
-        let filtersStringArr = filterString.split(',')
+        const filtersStringArr = filterString.split(',')
 
         return filtersStringArr.reduce((acc, filter) => {
           let parts = [],
@@ -167,7 +167,7 @@ export default {
         }, [])
       }
       if (filter) {
-        let filters = getPartsOfFilter(filter)
+        const filters = getPartsOfFilter(filter)
         return this.items.filter(message => {
           return filters.reduce((flag, filter) => {
             /* eslint-disable */

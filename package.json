@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Quasar component for displaing messages",
   "productName": "QVirtualScroll",
   "cordovaId": "org.cordova.quasar.app",
@@ -37,13 +37,17 @@
   },
   "devDependencies": {
     "@quasar/app": "^1.5.8",
-    "@vue/eslint-config-standard": "^4.0.0",
-    "babel-eslint": "^10.0.1",
-    "eslint": "^5.10.0",
-    "eslint-loader": "^2.1.1",
-    "eslint-plugin-vue": "^5.0.0",
+    "@vue/eslint-config-standard": "^5.1.2",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0",
+    "eslint-loader": "^3.0.3",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "eslint-plugin-vue": "^6.2.1",
     "git-directory-deploy": "^1.5.1",
-    "rollup": "^1.27.13",
+    "rollup": "^1.31.1",
     "rollup-plugin-auto-external": "^2.0.0",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.1.0",
@@ -53,7 +57,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-uglify": "^6.0.4",
-    "rollup-plugin-vue": "^5.1.4"
+    "rollup-plugin-vue": "^5.1.6"
   },
   "engines": {
     "node": ">= 8.9.0",

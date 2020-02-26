@@ -2,7 +2,7 @@ import _get from 'lodash/get'
 
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
-    let params = {}
+    const params = {}
     if (state.limit) {
       params.count = state.limit
     }
@@ -24,7 +24,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function errorsCheck (data) {
     if (data.errors) {
       data.errors.forEach((error) => {
-        let errObject = new Error(error.reason)
+        const errObject = new Error(error.reason)
         errorHandler && errorHandler(errObject)
       })
     }
@@ -37,13 +37,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let cols = [],
-          colsFromStorage = LocalStorage.getItem(state.name)
+        let cols = []
+        const colsFromStorage = LocalStorage.getItem(state.name)
         if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[state.active].forEach((col) => {
             if (col.name === 'timestamp') {
-              let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+              const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
               col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
             }
           })
@@ -54,22 +54,22 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
             cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
           }
         } else {
-          let protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
-          let protocolIdData = protocolIdResp.data
+          const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
+          const protocolIdData = protocolIdResp.data
           errorsCheck(protocolIdData)
           if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-            let colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
-            let colsData = colsResp.data
+            const colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
+            const colsData = colsResp.data
             errorsCheck(colsData)
             colsData.result[0].message_parameters.forEach(col => {
-              let colItem = {
+              const colItem = {
                 name: col.name,
                 width: 160,
                 display: state.defaultColsNames.includes(col.name),
                 description: col.info
               }
               if (colItem.name === 'timestamp') {
-                let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+                const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
                 colItem.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
               }
               cols.push(colItem)
@@ -89,7 +89,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   function getFromTo (val) {
-    let now = val || Date.now(),
+    const now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
       to = from + 86399999
     return { from, to }
@@ -99,18 +99,18 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let params = {
+        const params = {
           reverse: true,
           count: 1
         }
-        let resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
-        let data = resp.data
+        const resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
+        const data = resp.data
         errorsCheck(data)
         let date = Date.now()
         if (data.result.length) {
           date = Math.round(data.result[0]['server.timestamp'] * 1000)
         }
-        let day = getFromTo(date)
+        const day = getFromTo(date)
         commit('setFrom', day.from)
         commit('setTo', day.to)
         Vue.set(state, 'isLoading', false)
@@ -125,11 +125,11 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function getMessages ({ state, commit, rootState }, params) {
     commit('reqStart')
     if (rootState.token && state.active) {
-      let isLoadingActive = state.isLoading
+      const isLoadingActive = state.isLoading
       try {
         !isLoadingActive && Vue.set(state, 'isLoading', true)
-        let resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
-        let data = resp.data
+        const resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
+        const data = resp.data
         errorsCheck(data)
         !isLoadingActive && Vue.set(state, 'isLoading', false)
         return data.result || []
@@ -144,21 +144,21 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function get ({ state, commit, rootState }) {
     if (!state.isLoading) {
       Vue.set(state, 'isLoading', true)
-      let start = Math.floor(Date.now() / 1000)
-      let params = getParams(state)
+      const start = Math.floor(Date.now() / 1000)
+      const params = getParams(state)
       let messagesCount = 0
-      let messages = await getMessages({ state, commit, rootState }, params)
+      const messages = await getMessages({ state, commit, rootState }, params)
       messagesCount += messages.length
-      let now = Math.floor(Date.now() / 1000)
-      let needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
+      const now = Math.floor(Date.now() / 1000)
+      const needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })
-        let stop = Math.floor(Date.now() / 1000)
-        let params = getParams(state)
+        const stop = Math.floor(Date.now() / 1000)
+        const params = getParams(state)
         params.from = start
         params.to = stop
-        let missedMessages = await getMessages({ state, commit, rootState }, params)
+        const missedMessages = await getMessages({ state, commit, rootState }, params)
         messagesCount += missedMessages.length
         messages.splice(messages.length, 0, ...missedMessages)
       } else if ((params.to < now || (state.limit && messages.length >= state.limit)) && loopId) {
@@ -177,15 +177,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function getPrevPage ({ state, commit, rootState }) {
     if (!state.isLoading) {
       Vue.set(state, 'isLoading', true)
-      let to = Math.floor(_get(state, `messages[0]['server.timestamp']`, state.to) - 1)
-      let params = getParams(state)
+      const to = Math.floor(_get(state, 'messages[0]["server.timestamp"]', state.to) - 1)
+      const params = getParams(state)
       params.to = to
       params.reverse = true
       if (loopId && state.messages.length > state.limit * 2) {
         await unsubscribePooling({ state, commit, rootState })
         commit('limiting', { type: 'rt_deinit' })
       }
-      let messages = await getMessages({ state, commit, rootState }, params)
+      const messages = await getMessages({ state, commit, rootState }, params)
       if (!messages.length) {
         Vue.set(state, 'isLoading', false)
         return 0
@@ -201,22 +201,22 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (!state.isLoading) {
       if (state.realtimeEnabled) { return }
       Vue.set(state, 'isLoading', true)
-      let start = Date.now()
-      let from = Math.floor(_get(state, `messages[${state.messages.length - 1}]['server.timestamp']`, state.from) + 1)
-      let params = getParams(state)
+      const start = Date.now()
+      const from = Math.floor(_get(state, `messages[${state.messages.length - 1}]['server.timestamp']`, state.from) + 1)
+      const params = getParams(state)
       let messagesCount = 0
       params.from = from
-      let messages = await getMessages({ state, commit, rootState }, params)
+      const messages = await getMessages({ state, commit, rootState }, params)
       messagesCount += messages.length
-      let needRT = (params.to > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
+      const needRT = (params.to > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })
-        let stop = Date.now()
-        let params = getParams(state)
+        const stop = Date.now()
+        const params = getParams(state)
         params.from = Math.floor(start / 1000)
         params.to = Math.floor(stop / 1000)
-        let missedMessages = await getMessages({ state, commit, rootState }, params)
+        const missedMessages = await getMessages({ state, commit, rootState }, params)
         messagesCount += missedMessages.length
         messages.splice(messages.length, 0, ...missedMessages)
       }
@@ -232,7 +232,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   async function getHistory ({ state, commit, rootState }, count) {
-    let limit = state.limit,
+    const limit = state.limit,
       filter = state.filter
     commit('clearMessages')
     commit('setReverse', true)
@@ -281,7 +281,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let lastIndexOffline = state.messages.reduceRight((result, value, index) => {
+        const lastIndexOffline = state.messages.reduceRight((result, value, index) => {
           if (result) {
             return result
           }
@@ -290,12 +290,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           }
           return result
         }, 0)
-        let params = {
+        const params = {
           from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1]['server.timestamp']) + 1,
           to: Math.floor(state.messages[lastIndexOffline + 1]['server.timestamp'])
         }
-        let resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
-        let data = resp.data
+        const resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
+        const data = resp.data
         errorsCheck(data)
         commit('setMissingMessages', { data: data.result, index: lastIndexOffline })
         Vue.set(state, 'isLoading', false)

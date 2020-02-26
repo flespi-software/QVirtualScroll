@@ -12,7 +12,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       newMessagesInterseptor && newMessagesInterseptor(data)
       let messages = state.messages.concat(data)
       if (state.limit && state.mode === 1 && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
-        let count = (messages.length - 1) - (state.limit - 1)
+        const count = (messages.length - 1) - (state.limit - 1)
         messages = messages.slice(count)
         Vue.set(state, 'selected', state.selected.map((index) => index - count))
       }
@@ -52,7 +52,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         break
       }
       case 1: {
-        let now = Date.now()
+        const now = Date.now()
         state.from = Math.ceil((now - 4000 - 1000) / 1000)
         state.to = state.from
         clearMessages(state)
@@ -104,7 +104,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'cols', cols)
   }
 
-  let updateCols = setCols
+  const updateCols = setCols
 
   function setDefaultCols (state) {
     state.cols.forEach((col, index) => {

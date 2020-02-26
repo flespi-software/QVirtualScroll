@@ -9,10 +9,10 @@
 <script>
 export default {
   name: 'TableSkeleton',
-  props: [ 'rows' ],
+  props: ['rows'],
   computed: {
     rowsWidths () {
-      let rows = this.rows ? this.rows : new Array(12)
+      const rows = this.rows ? this.rows : new Array(12)
       return rows
     }
   }

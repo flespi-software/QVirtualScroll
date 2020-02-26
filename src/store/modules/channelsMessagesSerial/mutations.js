@@ -12,13 +12,13 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         data = filterHandler(state.filter, data)
       }
       messagesIndexing(data)
-      let messages = state.messages
+      const messages = state.messages
       if (state.sortBy) {
         /* write by sorted field */
-        let message = data[0],
+        const message = data[0],
           fieldName = state.sortBy,
-          length = state.messages.length - 1,
-          index = null,
+          length = state.messages.length - 1
+        let index = null,
           escapeFlag = true
         if (length > 0) {
           for (let i = length; i !== 0 || escapeFlag; i--) {
@@ -49,7 +49,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   function prependMessages (state, data) {
     if (data && data.length) {
       data.reverse()
-      let messages = state.messages
+      const messages = state.messages
       messagesIndexing(data)
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(0, 0, ...data)
@@ -58,7 +58,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   function appendMessages (state, data) {
     if (data && data.length) {
-      let messages = state.messages
+      const messages = state.messages
       messagesIndexing(data)
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(messages.length, 0, ...data)
@@ -70,7 +70,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       data.reverse()
     }
     messagesIndexing(data)
-    let messages = state.messages
+    const messages = state.messages
     newMessagesInterseptor && newMessagesInterseptor(data)
     messages.splice(0, messages.length, ...data)
   }
@@ -87,8 +87,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   function limiting (state, { type, count }) {
     if (!state.limit) { return false }
-    let messages = state.messages
-    let pages = state.pages
+    const messages = state.messages
+    const pages = state.pages
     switch (type) {
       case 'init': {
         state.pages = count ? [count] : []
@@ -96,9 +96,9 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       }
       case 'prev': {
         if (!count) { break }
-        let pagesCount = pages.length
+        const pagesCount = pages.length
         if (pagesCount === 3) {
-          let removeMessagesCount = pages[2]
+          const removeMessagesCount = pages[2]
           state.pages = [count, ...pages.slice(0, -1)]
           messages.splice(messages.length - removeMessagesCount, removeMessagesCount)
         } else {
@@ -108,9 +108,9 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       }
       case 'next': {
         if (!count) { break }
-        let pagesCount = pages.length
+        const pagesCount = pages.length
         if (pagesCount === 3) {
-          let removeMessagesCount = pages[0]
+          const removeMessagesCount = pages[0]
           state.pages = [...pages.slice(1, 3), count]
           messages.splice(0, removeMessagesCount)
         } else if (pagesCount < 3) {
@@ -123,16 +123,16 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         break
       }
       case 'rt_deinit': {
-        let removeMessagesCount = pages.pop()
+        const removeMessagesCount = pages.pop()
         messages.splice(messages.length - removeMessagesCount, removeMessagesCount)
         break
       }
       case 'rt': {
-        let pagesCount = pages.length
-        let rtCount = pages[pagesCount - 1] || 0
+        const pagesCount = pages.length
+        const rtCount = pages[pagesCount - 1] || 0
         if (rtCount + count > state.limit) {
           if (pagesCount > 3) {
-            let removeMessagesCount = pages[0]
+            const removeMessagesCount = pages[0]
             state.pages = [...pages.slice(1, -1), rtCount + count, 0]
             messages.splice(0, removeMessagesCount)
           } else {
@@ -209,7 +209,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'settings', channel)
   }
 
-  let updateCols = setCols
+  const updateCols = setCols
 
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {

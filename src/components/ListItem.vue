@@ -25,7 +25,7 @@ export default {
   ],
   computed: {
     etc () {
-      let etcKeys = Object.keys(this.item).filter(key => !this.hasInCols(key))
+      const etcKeys = Object.keys(this.item).filter(key => !this.hasInCols(key))
       return etcKeys.reduce((acc, key) => {
         acc += `${key}: ${JSON.stringify(this.item[key])}; `
         return acc
@@ -37,10 +37,10 @@ export default {
       return !!this.cols.filter(col => prop === col.name).length
     },
     clickHandler (index, type, content) {
-      this.$emit(`action`, { index, type, content })
+      this.$emit('action', { index, type, content })
     },
     itemClickHandler (index, content) {
-      this.$emit(`item-click`, { index, content })
+      this.$emit('item-click', { index, content })
     }
   }
 }
