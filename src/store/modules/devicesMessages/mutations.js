@@ -144,7 +144,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         }
       }
     }
-    console.log([...state.pages], type, count, state.messages.length)
   }
 
   function setFilter (state, value) {
