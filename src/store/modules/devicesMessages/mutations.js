@@ -1,63 +1,49 @@
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
-  function getFromTo (val) {
-    let now = val || Date.now(),
-      from = new Date(now).setHours(0, 0, 0, 0),
-      to = from + 86400000
-    return { from, to }
+  let messagesKeyPointer = 0
+  function messagesIndexing (messages) {
+    if (!messages.length) { return }
+    messages.forEach((message, index) => {
+      messages[index]['x-flespi-message-key'] = messagesKeyPointer++
+    })
   }
 
   function setRTMessages (state, data) {
     if (data && data.length) {
-      if (state.reverse) {
-        data.reverse()
-        data[data.length - 1].delimiter = true
-      }
-      Vue.set(state, 'from', Math.floor((data[data.length - 1].timestamp + 1) * 1000))
       if (state.filter && filterHandler) {
         data = filterHandler(state.filter, data)
       }
+      messagesIndexing(data)
       let messages = state.messages
       if (state.sortBy) {
-        if (data.length > 1) {
-          /* write history for rt mode */
-          messages = messages.concat(data)
-        } else {
-          /* write by sorted field */
-          let message = data[0],
-            fieldName = state.sortBy,
-            length = state.messages.length - 1,
-            index = null,
-            escapeFlag = true
-          if (length > 0) {
-            for (let i = length; i !== 0 || escapeFlag; i--) {
-              if (messages[i][fieldName] > message[fieldName]) {
-                index = i
-                if (i === 0) {
-                  escapeFlag = false
-                }
-              } else {
+        /* write by sorted field */
+        let message = data[0],
+          fieldName = state.sortBy,
+          length = state.messages.length - 1,
+          index = null,
+          escapeFlag = true
+        if (length > 0) {
+          for (let i = length; i !== 0 || escapeFlag; i--) {
+            if (messages[i][fieldName] > message[fieldName]) {
+              index = i
+              if (i === 0) {
                 escapeFlag = false
               }
+            } else {
+              escapeFlag = false
             }
           }
-          if (index) {
-            messages.splice(index, 0, message)
-          } else {
-            messages.push(message)
-          }
+        }
+        newMessagesInterseptor && newMessagesInterseptor(data)
+        if (index) {
+          messages.splice(index, 0, ...data)
+        } else {
+          messages.splice(messages.length, 0, ...data)
         }
       } else {
-        messages = messages.concat(data)
+        newMessagesInterseptor && newMessagesInterseptor(data)
+        messages.splice(messages.length, 0, ...data)
       }
-      newMessagesInterseptor && newMessagesInterseptor(data)
-      if (state.limit && messages.length >= state.limit + (state.limit * 0.1)) { // rt limiting
-        let count = (messages.length - 1) - (state.limit - 1)
-        messages = messages.slice(count)
-        Vue.set(state, 'selected', state.selected.map((index) => index - count))
-      }
-      Vue.set(state, 'messages', messages)
-    } else {
-      Vue.set(state, 'from', state.to + 1000)
+      limiting(state, { type: 'rt', count: data.length })
     }
   }
 
@@ -65,52 +51,33 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     if (data && data.length) {
       data.reverse()
       let messages = state.messages
+      messagesIndexing(data)
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(0, 0, ...data)
-      if (state.limit && (state.limit * 3) < messages.length) {
-        let limit = state.limit * 3 // 3 pages in memory
-        let overCount = messages.length - limit
-        messages.splice(messages.length - overCount, overCount)
-      }
     }
   }
 
   function appendMessages (state, data) {
     if (data && data.length) {
       let messages = state.messages
+      messagesIndexing(data)
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(messages.length, 0, ...data)
-      if (state.limit && (state.limit * 3) < messages.length) {
-        let limit = state.limit * 3 // 3 pages in memory
-        messages.splice(0, messages.length - limit)
-      }
     }
   }
 
   function setHistoryMessages (state, data) {
-    if (data && data.length) {
-      if (state.reverse) {
-        data.reverse()
-      }
-      let messages = state.messages
-      messages = messages.concat(data)
-      newMessagesInterseptor && newMessagesInterseptor(data)
-      Vue.set(state, 'messages', messages)
-    } else {
-      Vue.set(state, 'messages', [])
+    if (state.reverse) {
+      data.reverse()
     }
-  }
-
-  function setMessages (state, data) {
-    if (state.mode === 1) {
-      setRTMessages(state, data)
-    } else {
-      setHistoryMessages(state, data)
-    }
+    messagesIndexing(data)
+    let messages = state.messages
+    newMessagesInterseptor && newMessagesInterseptor(data)
+    messages.splice(0, messages.length, ...data)
   }
 
   function clearMessages (state) {
-    Vue.set(state, 'messages', [])
+    state.messages.splice(0, state.messages.length)
     newMessagesInterseptor && newMessagesInterseptor([])
     clearSelected(state)
   }
@@ -119,37 +86,71 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     Vue.set(state, 'limit', count)
   }
 
-  function setFilter (state, value) {
-    if (state.filter !== value) {
-      if (state.mode === 1) {
-        if (state.filter) {
-          state.messages.push({ 'x-flespi-filter-prev': state.filter })
+  function limiting (state, { type, count }) {
+    if (!state.limit) { return false }
+    let messages = state.messages
+    let pages = state.pages
+    switch (type) {
+      case 'init': {
+        state.pages = count ? [count] : []
+        break
+      }
+      case 'prev': {
+        if (!count) { break }
+        let pagesCount = pages.length
+        if (pagesCount === 3) {
+          let removeMessagesCount = pages[2]
+          state.pages = [count, ...pages.slice(0, -1)]
+          messages.splice(messages.length - removeMessagesCount, removeMessagesCount)
+        } else {
+          state.pages = [count, ...pages]
         }
-        if (value) {
-          state.messages.push({ 'x-flespi-filter-next': value })
+        break
+      }
+      case 'next': {
+        if (!count) { break }
+        let pagesCount = pages.length
+        if (pagesCount === 3) {
+          let removeMessagesCount = pages[0]
+          state.pages = [...pages.slice(1, 3), count]
+          messages.splice(0, removeMessagesCount)
+        } else if (pagesCount < 3) {
+          pages.push(count)
+        }
+        break
+      }
+      case 'rt_init': {
+        pages.push(0)
+        break
+      }
+      case 'rt_deinit': {
+        let removeMessagesCount = pages.pop()
+        messages.splice(messages.length - removeMessagesCount, removeMessagesCount)
+        break
+      }
+      case 'rt': {
+        let pagesCount = pages.length
+        let rtCount = pages[pagesCount - 1] || 0
+        if (rtCount + count > state.limit) {
+          if (pagesCount > 3) {
+            let removeMessagesCount = pages[0]
+            state.pages = [...pages.slice(1, -1), rtCount + count, 0]
+            messages.splice(0, removeMessagesCount)
+          } else {
+            state.pages = [...pages.slice(0, -1), rtCount + count, 0]
+          }
+        } else {
+          state.pages[pagesCount - 1] = rtCount + count
         }
       }
-      Vue.set(state, 'filter', value)
     }
+    console.log([...state.pages], type, count, state.messages.length)
   }
 
-  function setMode (state, mode) {
-    switch (mode) {
-      case 0: {
-        let timeObj = state.from ? getFromTo(state.from) : getFromTo()
-        state.from = timeObj.from
-        state.to = timeObj.to
-        clearMessages(state)
-        break
-      }
-      case 1: {
-        let now = Date.now() - 4000
-        state.from = now - 1000
-        state.to = now
-        break
-      }
+  function setFilter (state, value) {
+    if (state.filter !== value) {
+      Vue.set(state, 'filter', value)
     }
-    Vue.set(state, 'mode', mode)
   }
 
   function setFrom (state, from) {
@@ -177,7 +178,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   async function clear (state) {
     clearMessages(state)
     state.filter = ''
-    state.mode = null
     state.from = 0
     state.to = 0
     state.limit = 1000
@@ -215,21 +215,21 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
-      setMessages(state, [{ __connectionStatus: 'offline', timestamp: Date.now() / 1000 }])
+      state.messages.push({ __connectionStatus: 'offline', timestamp: Date.now() / 1000 })
     }
     state.offline = true
   }
 
   function setReconnected (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
-      setMessages(state, [{ __connectionStatus: 'reconnected', timestamp: Date.now() / 1000 }])
+      state.messages.push({ __connectionStatus: 'reconnected', timestamp: Date.now() / 1000 })
     }
     state.offline = false
   }
 
   function setMissingMessages (state, { data, index }) {
     data.forEach((val) => {
-      val.__status = 'missed'
+      val['x-flespi-status'] = 'missed'
     })
     state.messages.splice(index + 1, 0, ...data)
   }
@@ -254,13 +254,14 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setOffline,
     setReconnected,
     setMissingMessages,
-    setMessages,
+    setHistoryMessages,
+    setRTMessages,
     prependMessages,
     appendMessages,
     clearMessages,
     setLimit,
+    limiting,
     setFilter,
-    setMode,
     setFrom,
     setTo,
     reqStart,

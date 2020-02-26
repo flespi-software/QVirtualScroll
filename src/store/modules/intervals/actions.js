@@ -31,13 +31,14 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
       cols = colsFromStorage[state.active]
       /* adding sys cols after migration. 30.01.20 */
+      cols = cols.map(col => !col.__dest)
       if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
-        cols.unshift({ name: 'actions', width: 50, display: true, __dest: 'action' })
+        cols.unshift({ name: 'actions', width: 70, display: true, __dest: 'action' })
         cols.push({ name: 'etc', width: 150, display: true, __dest: 'etc' })
       }
       commit('updateCols', cols)
     } else {
-      counters.unshift({ name: 'actions', width: 50, display: true, __dest: 'action' })
+      counters.unshift({ name: 'actions', width: 70, display: true, __dest: 'action' })
       counters.push({ name: 'etc', width: 150, display: true, __dest: 'etc' })
       commit('setCols', counters)
     }

@@ -22,50 +22,15 @@
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
       </q-input>
       <q-toolbar-title/>
-      <q-btn :color="currentTheme.color" flat dense class="on-left" @click="$emit('edit:cols')" icon="tune"
-        v-if="colsConfigurator === 'toolbar' && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-      />
-      <div v-if="!currentMode && currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)" class="on-left q-v-date-range-picker" style="min-width: 180px">
-        <q-btn :color="currentTheme.color" flat dense
-          @click="$emit('change:date-range-prev')"
-          icon="keyboard_arrow_left"
-        />
-        <q-btn @click="dateRangeToggle" flat :color="currentTheme.color" style="min-width: 124px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
-          <div>
-            <div>{{formatDate(dateRange[0])}}</div>
-            <div style="font-size: .5rem">|</div>
-            <div>{{formatDate(dateRange[1])}}</div>
-          </div>
-        </q-btn>
-        <q-btn :color="currentTheme.color" flat dense
-          @click="$emit('change:date-range-next')"
-          icon="keyboard_arrow_right"
-        />
-        <q-dialog ref="dateRangePickerModal" content-class="modal-date-range">
-          <q-card>
-            <q-card-section class="scroll q-pa-none" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-              <div class="flex flex-center">
-                <date-range-picker
-                  class="q-ma-sm"
-                  v-model="currentDateRange"
-                  :mode="currentDateRangeMode"
-                  @change:mode="changeModeDateTimeRangeHandler"
-                  :theme="currentTheme"
-                />
-              </div>
-            </q-card-section>
-            <q-card-actions align="right" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
-              <q-btn flat :color="currentTheme.color" @click="dateRangeModalClose">close</q-btn>
-              <q-btn flat :color="currentTheme.color" @click="dateRangeModalSave">save</q-btn>
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-      </div>
-      <q-btn
-        :icon="currentMode ? 'playlist_play' : 'history'" flat dense
-        v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-        @click="currentMode = !currentMode, $emit('change:mode', Number(currentMode))"
-        :color="currentTheme.color"
+      <q-btn :color="currentTheme.color" flat dense class="on-left" @click="$emit('edit:cols')" icon="tune" v-if="colsConfigurator === 'toolbar' && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
+        <q-tooltip>Edit columns</q-tooltip>
+      </q-btn>
+      <date-range-modal
+        v-if="currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
+        class="on-left"
+        :date="dateRange"
+        :theme="currentTheme"
+        @save="dateRangeModalSave"
       />
     </q-toolbar>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
@@ -77,7 +42,7 @@
         @dblclick="colsConfigurator === 'header' ? $emit('edit:cols') : ''"
       >
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
-          <draggable :list="cols" element="span" @end="$emit('update:cols', cols)">
+          <draggable :list="cols" tag="span" @end="$emit('update:cols', cols)">
             <template v-for="(prop, index) in cols">
               <div class="header__item" :key="prop.name" v-if="prop.display"
                   :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move">
@@ -86,7 +51,7 @@
                 </q-tooltip>
                 <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span></span>
                 <vue-draggable-resizable :ref="`drag${activeColsIndexes[index]}`"
-                  v-if="$q.platform.is.desktop && isNeedResizer"
+                  v-if="$q.platform.is.desktop && needResizeControl"
                   :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
                   :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
                   @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update:cols', cols)}"
@@ -96,74 +61,72 @@
           </draggable>
         </div>
       </div>
+      <q-btn
+        v-if="currentScrollTop < allScrollTop && items.length"
+        fab-mini flat dense icon="mdi-chevron-down"
+        @click="$emit('action:to-bottom')"
+        class="absolute-bottom-right action__to-bottom"
+        :class="{ 'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted }"
+      >
+        <q-tooltip>To bottom</q-tooltip>
+      </q-btn>
       <slot name="empty" v-if="!items.length && !loading">
         <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}" style="font-size: 3rem; padding-top: 40px;">
-          {{i18n['Messages not found'] || 'Messages not found'}}
+          {{(i18n && i18n['Messages not found']) || 'Messages not found'}}
         </div>
       </slot>
+      <div
+        v-else-if="!items.length && loading && itemsCount > 0"
+        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: 'auto'}"
+        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+      >
+        <table-skeleton v-for="(i, key) in new Array(itemsCount - 1).fill('')" :key="key" :rows="rowWidths"/>
+      </div>
       <VirtualList
         v-else
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
         ref="scroller"
-        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: loading ? 'hidden' : 'auto', paddingBottom: wrapperOverflowing ? '15px' : ''}"
+        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: 'auto'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
-        :debounce="10"
         wclass="q-w-list"
-      >
-        <template v-if="!items.length && loading">
-          <table-skeleton v-for="(i, key) in new Array(itemsCount + 2).fill('')" :key="key" :rows="rowWidths"/>
-        </template>
-        <template v-else>
-          <table-skeleton :rows="rowWidths" v-if="loading"/>
-          <slot name="items"
-            v-for="(item, index) in items"
-            :item="item"
-            :index="index"
-            :actions="actions"
-            :cols="activeCols"
-            :itemHeight="itemHeight"
-            :rowWidth="rowWidth"
-          >
-            <list-item
-              :key="index"
-              :item="item"
-              :index="index"
-              :actions="actions"
-              :cols="activeCols"
-              :itemHeight="itemHeight"
-              :rowWidth="rowWidth"
-              @action="clickHandler"
-              @item-click="itemClickHandler"
-            />
-          </slot>
-          <table-skeleton :rows="rowWidths" v-if="loading"/>
-        </template>
-      </VirtualList>
+        :item="item"
+        :itemcount="items.length"
+        :itemprops="getItemProps"
+      />
     </div>
   </div>
 </template>
 
 <script>
 import VirtualList from 'vue-virtual-scroll-list'
-import { uid, date, debounce } from 'quasar'
+import { uid, scroll } from 'quasar'
 import VueDraggableResizable from 'vue-draggable-resizable'
+import DateRangeModal from './DateRangeModal'
 import ListItem from './ListItem.vue'
 import TableSkeleton from './TableSkeleton'
 import draggable from 'vuedraggable'
-import DateRangePicker from 'datetimerangepicker'
-import PerfectScrollbar from 'perfect-scrollbar'
 import get from 'lodash/get'
-import 'perfect-scrollbar/css/perfect-scrollbar.css'
+
+const { setScrollPosition } = scroll
 
 export default {
   name: 'VirtualScrollList',
   props: {
+    item: {
+      type: Object,
+      default: () => ListItem
+    },
+    itemprops: {
+      type: Function,
+      default: () => () => {}
+    },
     items: {
       type: Array,
-      required: true
+      required: true,
+      default () { return [] }
     },
     i18n: {
       type: Object
@@ -176,9 +139,6 @@ export default {
       type: Array,
       required: true
     },
-    date: {
-      type: Number
-    },
     dateRange: {
       type: Array
     },
@@ -190,9 +150,9 @@ export default {
       type: String,
       default: ''
     },
-    mode: {
-      type: Number,
-      default: 0
+    autoscroll: {
+      type: Boolean,
+      default: false
     },
     colsConfigurator: {
       type: String,
@@ -204,28 +164,26 @@ export default {
     },
     theme: Object,
     viewConfig: Object,
-    loading: Boolean
+    loading: Boolean,
+    scrollOffset: [Number, String]
   },
-  components: { draggable, VirtualList, VueDraggableResizable, ListItem, DateRangePicker, TableSkeleton },
+  components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal },
   data () {
     let defaultConfig = {
       needShowFilter: false,
-      needShowMode: false,
-      needShowPageScroll: '',
       needShowDateRange: false
     }
     return {
       uid: 0,
       currentFilter: this.filter,
-      currentMode: !!this.mode,
-      dateValue: this.date,
       wrapperHeight: 0,
       wrapperWidth: 0,
       itemsCount: 0,
       defaultItemWidth: 150,
       dynamicCSS: document.createElement('style'),
       showSearch: false,
-      needAutoScroll: !!this.mode,
+      needAutoScroll: false,
+      autoscrollEnabled: this.autoscroll,
       defaultTheme: {
         color: 'grey-9',
         bgColor: 'white',
@@ -237,16 +195,13 @@ export default {
       hasItemClickHandler: false,
       currentScrollTop: 0,
       currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
-      isNeedResizer: true,
-      allScrollTop: 0,
-      currentDateRange: this.dateRange,
-      currentDateRangeMode: 0,
-      ps: null
+      needResizeControl: true,
+      allScrollTop: 0
     }
   },
   computed: {
     needShowToolbar () {
-      return this.currentViewConfig.needShowMode || this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDate || this.currentViewConfig.needShowPageScroll
+      return this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDateRange
     },
     activeCols () {
       return this.cols.filter(col => col.display)
@@ -284,6 +239,21 @@ export default {
     }
   },
   methods: {
+    getItemProps (index) {
+      let props = {
+        key: index,
+        props: {
+          item: this.items[index],
+          index: index,
+          actions: this.actions,
+          cols: this.activeCols,
+          itemHeight: this.itemHeight,
+          rowWidth: this.rowWidth
+        }
+      }
+      this.itemprops(index, props)
+      return props
+    },
     searchSubmitHandler () {
       this.$emit('change:filter', this.currentFilter)
     },
@@ -305,15 +275,16 @@ export default {
       this.$emit(`item-click`, { index, content })
     },
     resetParams () {
-      if (!this.$refs.wrapper) {
+      let wrapper = this.$refs.wrapper
+      if (!wrapper) {
         return false
       }
-      this.wrapperHeight = this.$refs.wrapper.offsetHeight - this.itemHeight // - header
-      this.wrapperWidth = this.$refs.wrapper.offsetWidth
+      this.wrapperHeight = wrapper.offsetHeight - this.itemHeight // - header
+      this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
-      if (this.$refs.scroller) {
-        let element = this.$refs.scroller.$el
-        element.scrollTop += 1
+      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      if (scrollerElement) {
+        setScrollPosition(scrollerElement, scrollerElement.scrollTop + 1)
       }
     },
     wrapperResizeHandler () {
@@ -325,39 +296,83 @@ export default {
       }
       this.updateDynamicCSS()
     },
-    listScroll: function (e, data) {
-      if (!this.currentScrollTop) {
-        this.currentScrollTop = data.offset
+    scrollNormalize () {
+      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      if (!scrollerElement) { return }
+      let offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight,
+        offset = scrollerElement.scrollTop
+      if (offsetAll < this.allScrollTop) {
+        if (this.needAutoScroll) {
+          this.currentScrollTop = offset
+          this.allScrollTop = offsetAll
+        } else {
+          let prevScrollPosition = offsetAll - (this.allScrollTop - offsetAll) - (this.allScrollTop - this.currentScrollTop)
+          this.currentScrollTop = prevScrollPosition >= 0 ? prevScrollPosition : 0
+          this.allScrollTop = offsetAll
+          scrollerElement.scrollTop = this.currentScrollTop
+        }
+      } else {
+        this.allScrollTop = offsetAll
       }
-      if (this.$refs.scroller) {
-        let el = this.$refs.scroller.$el || this.$refs.scroller
-        this.allScrollTop = el.scrollHeight - el.clientHeight
-      }
+    },
+    getScrollDirection (offset) {
       let verticalDirection = null
-      if (data.offset > this.currentScrollTop) {
+      if (offset > this.currentScrollTop) {
         verticalDirection = 'bottom'
-      } else if (data.offset < this.currentScrollTop) {
+      } else if (offset < this.currentScrollTop) {
         verticalDirection = 'top'
+      } else {
+        verticalDirection = 'none'
       }
+      return verticalDirection
+    },
+    listScroll: function (e, data) {
+      let { offset } = data
+      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      let offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
+      this.scrollNormalize()
+      if (!this.currentScrollTop) {
+        this.currentScrollTop = offset
+      }
+      let verticalDirection = this.getScrollDirection(offset)
+      let scrollOffset = this.scrollOffset ? typeof this.scrollOffset === 'number' ? this.scrollOffset : (offsetAll * this.scrollOffset.replace('%', '') / 100) : 0
+      if (scrollOffset && scrollOffset < 36) { scrollOffset = 0 }
       if (this.items.length) {
         /* horizontal scroll logic start */
-        if (this.$refs.wrapper) {
-          this.$refs.wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - this.$refs.wrapper.getBoundingClientRect().left) + 'px'
+        let wrapper = this.$refs.wrapper
+        if (wrapper) {
+          wrapper.querySelector('.list__header .header__inner').style.left = (e.target.querySelector('.q-w-list').getBoundingClientRect().left - wrapper.getBoundingClientRect().left) + 'px'
         }
         /* horizontal scroll logic end */
-        if (data.offset < this.currentScrollTop && this.needAutoScroll) {
+        if (offset < this.currentScrollTop && this.needAutoScroll) {
           this.needAutoScroll = false
-        } else if (!this.needAutoScroll && this.mode === 1 && data.offset >= this.allScrollTop) {
+        } else if (!this.needAutoScroll && this.autoscrollEnabled && offset >= this.allScrollTop) {
           this.needAutoScroll = true
         }
-        this.currentScrollTop = data.offset
       }
       this.$emit('scroll', { event: e, data })
-      if (verticalDirection && verticalDirection === 'top' && data.offset === 0) {
-        this.$emit('scroll:top')
-      } else if (verticalDirection && verticalDirection === 'bottom' && data.offset >= data.offsetAll) {
-        this.$emit('scroll:bottom')
+      if (scrollOffset) {
+        if (verticalDirection && (verticalDirection === 'top' || verticalDirection === 'none') && offset < scrollOffset) {
+          this.$emit('scroll:top')
+        } else if (verticalDirection && (verticalDirection === 'bottom' || verticalDirection === 'none') && offset + scrollOffset >= offsetAll) {
+          this.$emit('scroll:bottom')
+        }
+      } else {
+        if (verticalDirection && verticalDirection === 'top' && offset === 0) {
+          this.$emit('scroll:top')
+        } else if (verticalDirection && verticalDirection === 'bottom' && offset >= offsetAll) {
+          this.$emit('scroll:bottom')
+        }
       }
+      this.currentScrollTop = offset
+    },
+    enableAutoscroll () {
+      this.autoscrollEnabled = true
+      this.needAutoScroll = true
+    },
+    disableAutoscroll () {
+      this.autoscrollEnabled = false
+      this.needAutoScroll = false
     },
     getDynamicCSS () {
       let result = ''
@@ -377,62 +392,43 @@ export default {
       }
       head.appendChild(this.dynamicCSS)
     },
-    formatDate (timestamp) {
-      return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
-    },
-    changeModeDateTimeRangeHandler (mode) {
-      this.currentDateRangeMode = mode
-    },
-    dateRangeToggle () {
-      this.$refs.dateRangePickerModal.toggle()
-    },
-    dateRangeModalSave () {
-      this.$emit('change:date-range', this.currentDateRange)
-      this.$refs.dateRangePickerModal.hide()
-    },
-    dateRangeModalClose () {
-      this.currentDateRange = this.dateRange
-      this.$refs.dateRangePickerModal.hide()
-    },
-    scrollInit () {
-      if (this.items.length) {
-        let el = get(this.$refs, 'scroller.$el', undefined)
-        if (this.ps) {
-          this.ps.update()
-        } else {
-          this.ps = new PerfectScrollbar(el, { scrollXMarginOffset: 15, scrollYMarginOffset: 15, minScrollbarLength: 20 })
-        }
-      } else {
-        if (this.ps) {
-          this.ps.destroy()
-          this.ps = null
-        }
-      }
+    dateRangeModalSave (dateRange) {
+      this.$emit('change:date-range', dateRange)
     },
     scrollTo (index) {
-      if (typeof index !== 'number' || index < 0 || !this.$refs.scroller) { return }
+      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
       let height = index * this.itemHeight
-      this.$refs.scroller.$el.scrollTop = height
+      if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
+      setScrollPosition(scrollerElement, height)
+    },
+    scrollToWithSavePadding (index) {
+      let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
+      if (index > this.items.length - this.itemsCount) { index = this.items.length - this.itemsCount }
+      let height = index * this.itemHeight
+      setScrollPosition(scrollerElement, height + this.currentScrollTop)
+    },
+    updateScrollState () {
+      if (!this.items.length) {
+        this.currentScrollTop = 0
+      } else {
+        let scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+        if (this.needAutoScroll && scrollerElement) {
+          setScrollPosition(scrollerElement, scrollerElement.scrollHeight)
+        }
+      }
+      this.scrollNormalize()
     }
+  },
+  beforeUpdate () {
+    let scrollerElement = get(this.$refs, 'scroller', undefined)
+    scrollerElement && scrollerElement.forceRender()
   },
   updated () {
-    if (!this.items.length) { this.currentScrollTop = 0 } else {
-      if (this.needAutoScroll && this.$refs.scroller) { this.$refs.scroller.$el.scrollTop = this.$refs.scroller.$el.scrollHeight }
-    }
-    this.scrollInit()
+    this.updateScrollState()
   },
   watch: {
-    date (val) {
-      if (val === this.dateValue.valueOf()) { return false }
-      this.dateValue = new Date(val)
-    },
-    dateRange (dateRange) {
-      this.currentDateRange = dateRange
-    },
-    mode (val) {
-      this.currentMode = !!val
-      this.needAutoScroll = !!val
-    },
     filter (val) {
       if (this.currentFilter !== val) {
         this.currentFilter = val
@@ -448,9 +444,9 @@ export default {
           }
         }
         this.updateDynamicCSS()
-        this.isNeedResizer = false
+        this.needResizeControl = false
         this.$nextTick(() => {
-          this.isNeedResizer = true
+          this.needResizeControl = true
         })
       }
     },
@@ -458,6 +454,11 @@ export default {
       deep: true,
       handler (config) {
         this.currentViewConfig = Object.assign(this.defaultConfig, config)
+      }
+    },
+    autoscroll (flag, prev) {
+      if (flag !== prev) {
+        flag ? this.enableAutoscroll() : this.disableAutoscroll()
       }
     }
   },
@@ -470,7 +471,7 @@ export default {
     this.uid = uid().split('-')[0]
     this.resetParams()
     this.updateDynamicCSS()
-    this.scrollInit()
+    this.updateScrollState()
   },
   destroyed () {
     let head = document.head || document.getElementsByTagName('head')[0]
@@ -478,14 +479,14 @@ export default {
   },
   directives: {
     'auto-bottom': {
-      inserted: debounce((el, { value }) => {
+      inserted: (el, { value }) => {
         if (value) {
-          el.scrollTop = el.scrollHeight
+          setScrollPosition(el, el.scrollHeight)
         }
-      }, 100),
+      },
       componentUpdated: (el, { value }) => {
         if (value) {
-          el.scrollTop = el.scrollHeight
+          setScrollPosition(el, el.scrollHeight)
         }
       }
     }
@@ -542,14 +543,11 @@ export default {
           background-color rgba(0, 0, 0, .2)
   .cols-editor__col[draggable="true"]
     background-color #9e9e9e
-  .date
-    .arrows
-      position relative
-  .q-v-date-range-picker
-    .q-btn__wrapper
-      padding-left 0
-      padding-right 0
-  .modal-date-range
-    .q-dialog__inner--minimized
-      padding 6px
+  .action__to-bottom
+    &:hover
+      opacity 1
+    opacity .7
+    bottom 15px
+    right 15px
+    z-index 1
 </style>

@@ -7,19 +7,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       params.count = state.limit
     }
     if (state.filter) {
-      if (state.mode === 0) {
-        params.filter = `${state.filter}`
-      }
+      params.filter = `${state.filter}`
     }
-    if (state.from && (!state.reverse || state.mode === 1)) {
-      if (!state.reverse) {
-        params.from = Math.floor(state.from / 1000)
-      }
+    if (state.from && !state.reverse) {
+      params.from = Math.floor(state.from / 1000)
     }
     if (state.to) {
-      if (state.mode === 1) {
-        state.to = Date.now()
-      }
       params.to = Math.floor(state.to / 1000)
     }
     if (state.reverse) {
@@ -251,55 +244,116 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function getMessages ({ state, commit, rootState }, params) {
     commit('reqStart')
     if (rootState.token && state.active) {
+      let isLoadingActive = state.isLoading
       try {
-        Vue.set(state, 'isLoading', true)
-        let currentMode = JSON.parse(JSON.stringify(state.mode))
+        !isLoadingActive && Vue.set(state, 'isLoading', true)
         let resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
-        /* if mode changed in time request */
-        if (currentMode !== state.mode) { return false }
         let data = resp.data
         errorsCheck(data)
-        Vue.set(state, 'isLoading', false)
-        return data.result
+        !isLoadingActive && Vue.set(state, 'isLoading', false)
+        return data.result || []
       } catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
-        Vue.set(state, 'isLoading', false)
+        !isLoadingActive && Vue.set(state, 'isLoading', false)
       }
     }
   }
 
   async function get ({ state, commit, rootState }) {
-    let messages = await getMessages({ state, commit, rootState }, getParams(state))
-    commit('setMessages', messages)
+    if (!state.isLoading) {
+      Vue.set(state, 'isLoading', true)
+      let start = Math.floor(Date.now() / 1000)
+      let params = getParams(state)
+      let messagesCount = 0
+      let messages = await getMessages({ state, commit, rootState }, params)
+      messagesCount += messages.length
+      let now = Math.floor(Date.now() / 1000)
+      let needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
+      let startRTRender = () => {}
+      if (needRT) {
+        startRTRender = await pollingGet({ state, commit, rootState })
+        let stop = Math.floor(Date.now() / 1000)
+        let params = getParams(state)
+        params.from = start
+        params.to = stop
+        let missedMessages = await getMessages({ state, commit, rootState }, params)
+        messagesCount += missedMessages.length
+        messages.splice(messages.length, 0, ...missedMessages)
+      } else if ((params.to < now || (state.limit && messages.length >= state.limit)) && loopId) {
+        await unsubscribePooling({ state, commit, rootState })
+      }
+      commit('limiting', { type: 'init', count: messagesCount })
+      commit('setHistoryMessages', messages)
+      if (needRT || state.realtimeEnabled) {
+        startRTRender()
+        commit('limiting', { type: 'rt_init' })
+      }
+      Vue.set(state, 'isLoading', false)
+    }
   }
 
   async function getPrevPage ({ state, commit, rootState }) {
     if (!state.isLoading) {
-      let to = Math.floor(_get(state, 'messages[0].timestamp', state.to) - 1)
+      Vue.set(state, 'isLoading', true)
+      let to = Math.floor(_get(state, `messages[0].timestamp`, state.to) - 1)
       let params = getParams(state)
       params.to = to
       params.reverse = true
+      if (loopId && state.messages.length > state.limit * 2) {
+        await unsubscribePooling({ state, commit, rootState })
+        commit('limiting', { type: 'rt_deinit' })
+      }
       let messages = await getMessages({ state, commit, rootState }, params)
+      if (!messages.length) {
+        Vue.set(state, 'isLoading', false)
+        return 0
+      }
+      commit('limiting', { type: 'prev', count: messages.length })
       commit('prependMessages', messages)
+      Vue.set(state, 'isLoading', false)
       return messages.length
     }
   }
 
   async function getNextPage ({ state, commit, rootState }) {
     if (!state.isLoading) {
+      if (state.realtimeEnabled) { return }
+      Vue.set(state, 'isLoading', true)
+      let start = Date.now()
       let from = Math.floor(_get(state, `messages[${state.messages.length - 1}].timestamp`, state.from) + 1)
       let params = getParams(state)
+      let messagesCount = 0
       params.from = from
       let messages = await getMessages({ state, commit, rootState }, params)
+      messagesCount += messages.length
+      let needRT = (params.to > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
+      let startRTRender = () => {}
+      if (needRT) {
+        startRTRender = await pollingGet({ state, commit, rootState })
+        let stop = Date.now()
+        let params = getParams(state)
+        params.from = Math.floor(start / 1000)
+        params.to = Math.floor(stop / 1000)
+        let missedMessages = await getMessages({ state, commit, rootState }, params)
+        messagesCount += missedMessages.length
+        messages.splice(messages.length, 0, ...missedMessages)
+      }
+      commit('limiting', { type: 'next', count: messagesCount })
       commit('appendMessages', messages)
-      return messages.length
+      if (needRT) {
+        startRTRender()
+        commit('limiting', { type: 'rt_init' })
+      }
+      Vue.set(state, 'isLoading', false)
+      return messagesCount
     }
   }
 
   async function getHistory ({ state, commit, rootState }, count) {
     let limit = state.limit,
       filter = state.filter
+    commit('clearMessages')
     commit('setReverse', true)
     commit('setLimit', count)
     commit('setFilter', '')
@@ -314,27 +368,31 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function initRenderLoop (state, commit) {
     return setInterval(() => {
       if (messagesBuffer.length) {
-        if (state.mode === 1) {
-          commit('setMessages', [...messagesBuffer])
-        }
+        commit('setRTMessages', [...messagesBuffer])
         messagesBuffer = []
       }
     }, 500)
   }
 
   async function pollingGet ({ state, commit, rootState }) {
-    loopId = initRenderLoop(state, commit)
     await Vue.connector.subscribeMessagesDevices(state.active, (message) => {
-      if (state.mode === 1) {
-        messagesBuffer.push(JSON.parse(message))
-      }
+      messagesBuffer.push(JSON.parse(message))
     }, { rh: 2 })
+    state.realtimeEnabled = true
+    return () => {
+      loopId = initRenderLoop(state, commit)
+    }
   }
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling ({ state }) {
-    if (loopId) { clearInterval(loopId) }
+    if (loopId) {
+      clearInterval(loopId)
+      messagesBuffer = []
+      loopId = 0
+    }
     await Vue.connector.unsubscribeMessagesDevices(state.active)
+    state.realtimeEnabled = false
   }
 
   /* getting missed messages after offline */

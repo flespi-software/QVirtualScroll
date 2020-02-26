@@ -9,11 +9,11 @@
 |  dateRange | Number  | The timestamps range for dataset component  |0|
 |  filter | String  |  Init text for filter input |''|
 |  title | String  |  Title dataset section  |''|
-| mode |  Number |  Inverted mode. Color is applied to background instead. |0|
-| viewConfig |  Object |  Config for view of component |{ needShowFilter: false,needShowMode: false,needShowPageScroll: '',needShowEtc: false}|
+| viewConfig |  Object |  Config for view of component |{ needShowFilter: false }|
 | colsConfigurator |  String |  String that displays where need show control of configurator of cols. Can be a 'header', 'toolbar' and 'none' |'none'|
 | theme |  Object |  Object of params that modifies view of component |{color: 'dark', bgColor: 'white', controlsInverted: false, contentInverted: false}|
 | itemHeight |  Number |  Height of list item |19|
+| autoscroll |  Boolean |  Need autoscroll flag |false|
 
 ## Action
 ````javascript
@@ -62,9 +62,7 @@ theme = {
 ## viewConfig
 ````javascript
 config = {
-    needShowMode: false, // Flag that displays need show mode control or not
     needShowFilter: false, // Flag that displays need filter input or not
-    needShowPageScroll: '', // String that displays which controls scroll by limit is needed show. Example: 'right left'
     needShowDateRange: false, // Flag that displays need show dateRange-set or not.
 }
 
@@ -75,17 +73,21 @@ config = {
 |:---|:---:|:---|
 |change:filter| Handling change of filter| 'new_filter'|
 |edit:cols| Emiting on click by edit cols button | *Empty* |
-|change:mode|Handling change mode |current mode|
 |action|Handling click by icon one of action |{index, type, content}|
 |item-click|Handling click by item |{index, content}|
 |change:pagination-prev|Handling click by control for scroll by limit (previous *limit* items)  |*Empty*|
 |change:pagination-next|Handling click by control for scroll by limit (next *limit* items)  |*Empty*|
 |change:date-range|Handling click by control for change current in datesetRange-component  |timestamps array|
-|change:date-range-prev|Handling click by control for change current date range for previous day  |*Empty*|
-|change:date-range-next|Handling click by control for change current date range for next day  |*Empty*|
 |scroll| Scroll event  |{ event, data: { offset, offsetAll, start, end } }|
-|scroll:top| Scroll event to top  |*Empty*|
-|scroll:bottom| Scroll event to bottom  |*Empty*|
+|scroll:top| Scroll event to top |*Empty*|
+|scroll:bottom| Scroll event to bottom |*Empty*|
+|action:to-bottom| Action event on to-bottom button |*Empty*|
+
+## Methods
+| Name  |  Description  | Params |
+|:---|:---:|:---|
+|enableAutoscroll| Enable autoscroll of wrapper | *Empty* |
+|disableAutoscroll| Enable autoscroll of wrapper | *Empty* |
 
 ## Example
 In quasar.conf.js
@@ -124,12 +126,7 @@ Simple example of template:
       :cols="cols"
       :items="messages"
       :actions="actions"
-      :date="from"
-      :mode="mode"
-      :needShowMode="true"
-      :needShowPageScroll="true"
-      :needShowDate="true"
-      :needShowFilter="true"
+      :date-range="[old, now]"
       :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
@@ -137,11 +134,10 @@ Simple example of template:
       @change:filter="filterChangeHandler"
       @change:pagination-prev="paginationPrevChangeHandler"
       @change:pagination-next="paginationNextChangeHandler"
-      @change:date="dateChangeHandler"
-      @change:date-prev="datePrevChangeHandler"
-      @change:date-next="dateNextChangeHandler"
+      @change:date-range="dateChangeHandler"
+      @change:date-range-prev="datePrevChangeHandler"
+      @change:date-range-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @change:mode="modeChange"
       @update:cols="updateColsHandler"
     >
 </virtual-scroll-list>
@@ -154,12 +150,7 @@ You can use component with scoped slot:
       :cols="cols"
       :items="messages"
       :actions="actions"
-      :date="from"
-      :mode="mode"
-      :needShowMode="true"
-      :needShowPageScroll="true"
-      :needShowDate="true"
-      :needShowFilter="true"
+      :date-range="[old, now]"
       :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
@@ -167,11 +158,10 @@ You can use component with scoped slot:
       @change:filter="filterChangeHandler"
       @change:pagination-prev="paginationPrevChangeHandler"
       @change:pagination-next="paginationNextChangeHandler"
-      @change:date="dateChangeHandler"
-      @change:date-prev="datePrevChangeHandler"
-      @change:date-next="dateNextChangeHandler"
+      @change:date-range="dateChangeHandler"
+      @change:date-range-prev="datePrevChangeHandler"
+      @change:date-range-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @change:mode="modeChange"
       @update:cols="updateColsHandler"
     >
       <list-item-custom slot="items" slot-scope="{item, index, actions, cols, itemHeight, rowWidth}"

@@ -100,13 +100,15 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
         description: 'ID of interval'
       }
     ]
+    let actionsCol = counters.shift()
+    let etcCol = counters.pop()
     let colsFromCounters = counters.map(counter => {
       counter.width = 100
       counter.display = true
       counter.description = `${counter.name}[${counter.type}]`
       return counter
     })
-    cols = [...cols, ...colsFromCounters]
+    cols = [actionsCol, ...cols, ...colsFromCounters, etcCol]
     let colsFromStorage = LocalStorage.getItem(state.name)
     if (!colsFromStorage) {
       colsFromStorage = {}
