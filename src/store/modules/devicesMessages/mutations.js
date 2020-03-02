@@ -71,9 +71,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       data.reverse()
     }
     messagesIndexing(data)
-    const messages = state.messages
     newMessagesInterseptor && newMessagesInterseptor(data)
-    messages.splice(0, messages.length, ...data)
+    state.messages = data
   }
 
   function clearMessages (state) {
