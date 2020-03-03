@@ -232,16 +232,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   async function getHistory ({ state, commit, rootState }, count) {
-    const limit = state.limit,
-      filter = state.filter
+    const limit = state.limit
     commit('clearMessages')
     commit('setReverse', true)
     commit('setLimit', count)
-    commit('setFilter', '')
     await get({ state, commit, rootState })
     commit('setReverse', false)
     commit('setLimit', limit)
-    commit('setFilter', filter)
   }
 
   let messagesBuffer = [],
