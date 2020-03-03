@@ -10,7 +10,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       params.count = state.limit
     }
     if (state.filter) {
-      params.filter = `${state.filter}`
+      params.filter.push(`${state.filter}`)
     }
     if (state.from && !state.reverse) {
       params.from = Math.floor(state.from / 1000)
