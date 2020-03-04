@@ -12,7 +12,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (state.filter) {
       params.filter.push(`${state.filter}`)
     }
-    if (state.from && !state.reverse) {
+    if (state.from) {
       params.from = Math.floor(state.from / 1000)
     }
     if (state.to) {
