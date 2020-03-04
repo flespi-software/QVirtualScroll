@@ -63,10 +63,10 @@
       </div>
       <q-btn
         v-if="currentScrollTop < allScrollTop && items.length"
-        fab-mini flat dense icon="mdi-chevron-down"
+        fab-mini flat icon="mdi-chevron-down"
         @click="$emit('action:to-bottom')"
         class="absolute-bottom-right action__to-bottom"
-        :class="{ 'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted }"
+        :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
       >
         <q-tooltip>To bottom</q-tooltip>
       </q-btn>
@@ -546,8 +546,8 @@ export default {
   .action__to-bottom
     &:hover
       opacity 1
-    opacity .7
-    bottom 15px
-    right 15px
+    opacity .8
+    bottom 18px
+    right 18px
     z-index 1
 </style>
