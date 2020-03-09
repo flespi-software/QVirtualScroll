@@ -102,13 +102,13 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     ]
     const actionsCol = counters.shift()
     const etcCol = counters.pop()
-    const colsFromCounters = counters.map(counter => {
-      counter.width = 100
-      counter.display = true
-      counter.description = `${counter.name}[${counter.type}]`
-      return counter
+    counters.forEach(counter => {
+      Vue.set(counter, 'width', 100)
+      Vue.set(counter, 'display', true)
+      Vue.set(counter, 'description', `${counter.name}[${counter.type}]`)
+      cols.push(counter)
     })
-    cols = [actionsCol, ...cols, ...colsFromCounters, etcCol]
+    cols = [actionsCol, ...cols, etcCol]
     let colsFromStorage = LocalStorage.getItem(state.name)
     if (!colsFromStorage) {
       colsFromStorage = {}

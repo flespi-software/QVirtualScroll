@@ -124,6 +124,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
 
   async function getMessages ({ state, commit, rootState }, params) {
     commit('reqStart')
+    let result = []
     if (rootState.token && state.active) {
       const isLoadingActive = state.isLoading
       try {
@@ -132,13 +133,14 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const data = resp.data
         errorsCheck(data)
         !isLoadingActive && Vue.set(state, 'isLoading', false)
-        return data.result || []
+        result = data.result || []
       } catch (e) {
         errorHandler && errorHandler(e)
         if (DEV) { console.log(e) }
         !isLoadingActive && Vue.set(state, 'isLoading', false)
       }
     }
+    return result
   }
 
   async function get ({ state, commit, rootState }) {
