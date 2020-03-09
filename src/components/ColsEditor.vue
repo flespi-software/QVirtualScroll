@@ -32,7 +32,7 @@
         </q-btn>
       </q-item-section>
     </q-item>
-    <q-scroll-area style="height: calc(100% - 96px);" :thumb-style="{ background: '#757575', opacity: 1, borderRadius: '5px' }" :bar-style="{ background: 'white', opacity: 1 }" v-if="cols.length">
+    <div style="height: calc(100% - 96px); overflow: auto;" v-if="cols.length">
       <q-list separator dark>
         <col-item
           :col="cols[0]"
@@ -59,7 +59,7 @@
           @width="updateCols()"
         />
       </q-list>
-    </q-scroll-area>
+    </div>
     <custom-field-dialog ref="dialog" @ok="addCustomColumnHandler"/>
   </div>
 </template>
