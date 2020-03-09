@@ -60,18 +60,20 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const params = {
           reverse: true,
           count: 1,
-          fields: 'end'
+          fields: 'end,begin'
         }
         const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
         const data = resp.data
         errorsCheck(data)
-        let date = Date.now()
+        let dateBegin = Date.now(),
+          dateEnd = Date.now()
         if (data.result.length) {
-          date = Math.round(data.result[0].end * 1000)
+          dateBegin = Math.round(data.result[0].begin * 1000)
+          dateEnd = Math.round(data.result[0].end * 1000)
         }
-        const dateBegin = new Date(date)
+        dateBegin = new Date(dateBegin)
         dateBegin.setHours(0, 0, 0, 0)
-        const dateEnd = new Date(date)
+        dateEnd = new Date(dateEnd)
         dateEnd.setHours(23, 59, 59, 999)
         commit('setBegin', dateBegin.valueOf())
         commit('setEnd', dateEnd.valueOf())
