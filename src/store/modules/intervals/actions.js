@@ -1,3 +1,4 @@
+import _get from 'lodash/get'
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = {}
@@ -25,9 +26,29 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return params
   }
 
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      /* removing old store 12.03.20 */
+      const oldStore = LocalStorage.getItem(state.name)
+      if (oldStore) {
+        colsFromStorage = oldStore
+        LocalStorage.remove(state.name)
+      }
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+    }
+    return colsFromStorage
+  }
+
   function getCols ({ state, commit }, counters) {
     let cols = []
-    const colsFromStorage = LocalStorage.getItem(state.name)
+    const colsFromStorage = getColsFromLS(state)
     if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
       cols = colsFromStorage[state.active]
       /* adding sys cols after migration. 30.01.20 */

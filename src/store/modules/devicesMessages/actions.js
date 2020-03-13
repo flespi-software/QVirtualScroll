@@ -30,6 +30,26 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      /* removing old store 12.03.20 */
+      const oldStore = LocalStorage.getItem(state.name)
+      if (oldStore) {
+        colsFromStorage = oldStore
+        LocalStorage.remove(state.name)
+      }
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+    }
+    return colsFromStorage
+  }
+
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     const DEFAULT_COL_NAMES = state.defaultColsNames
     const needActions = sysColsNeedInitFlags.actions
@@ -45,7 +65,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
         let cols = []
-        const colsFromStorage = LocalStorage.getItem(state.name)
+        const colsFromStorage = getColsFromLS(state)
         if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
           cols = colsFromStorage[device.device_type_id]
           /* adding sys cols after migration. 30.01.20 */
@@ -98,113 +118,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       }
     }
   }
-
-  // async function getCols ({ state, commit, rootState }) {
-  //   const DEFAULT_COL_NAMES = state.defaultColsNames
-  //   commit('reqStart')
-  //   if (rootState.token && state.active) {
-  //     try {
-  //       Vue.set(state, 'isLoading', true)
-  //       /* getting telemetry */
-  //       let deviceTelemetryResp = await Vue.connector.gw.getDevicesTelemetry(state.active)
-  //       let deviceTelemetryData = deviceTelemetryResp.data
-  //       errorsCheck(deviceTelemetryData)
-  //       let telemetry = deviceTelemetryData.result && deviceTelemetryData.result[0] && deviceTelemetryData.result[0].telemetry
-  //       /* getting device info */
-  //       let deviceResp = await Vue.connector.gw.getDevices(state.active)
-  //       let deviceData = deviceResp.data
-  //       errorsCheck(deviceData)
-  //       let device = deviceData.result && deviceData.result[0]
-  //       commit('setSettings', device)
-  //       let cols = [],
-  //         colsFromStorage = LocalStorage.getItem(state.name)
-  //       if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
-  //         /* remove after sometime 12.07.19 */
-  //         colsFromStorage[device.device_type_id].forEach((col) => {
-  //           if (col.name === 'timestamp') {
-  //             let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-  //             col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-  //           }
-  //         })
-  //         cols = colsFromStorage[device.device_type_id]
-  //       } else {
-  //         if (device.device_type_id) {
-  //           /* getting protocol id */
-  //           let protocolResp = await Vue.connector.gw.getProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
-  //           let protocolData = protocolResp.data
-  //           errorsCheck(protocolData)
-  //           let protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
-  //           /* gettings messages parameters */
-  //           let messageParamsResp = await Vue.connector.gw.getProtocols(protocolId, { fields: 'message_parameters' })
-  //           let messageParamsData = messageParamsResp.data
-  //           errorsCheck(messageParamsData)
-  //           let messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters
-  //           /* initing columns by message parameters */
-  //           cols = messageParams.reduce((cols, param) => {
-  //             let name = param.name
-  //             if (name === 'timestamp') {
-  //               let locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-  //               cols.unshift({
-  //                 name,
-  //                 width: 190,
-  //                 display: false,
-  //                 addition: `${locale.slice(0, 3)}:${locale.slice(3)}`
-  //               })
-  //               return cols
-  //             }
-  //             cols.push({
-  //               name,
-  //               width: 150,
-  //               display: false
-  //             })
-  //             return cols
-  //           }, [])
-  //           /* enable cols by active telemetry */
-  //           if (telemetry) {
-  //             /* remove position object */
-  //             if (telemetry.position) {
-  //               delete telemetry.position
-  //             }
-  //             let colNames = Object.keys(telemetry)
-  //             if (cols.length && colNames) {
-  //               /* merging existed columns with telemetry for creating actual columns */
-  //               cols.forEach(col => {
-  //                 if (telemetry[col.name]) {
-  //                   col.display = true
-  //                 }
-  //               })
-  //             }
-  //           } else { /* enable default cols w/o saving */
-  //             cols = DEFAULT_COL_NAMES.reduce((cols, name) => {
-  //               let index = cols.findIndex((col) => col.name === name)
-  //               if (index === -1) {
-  //                 cols.push({
-  //                   name,
-  //                   width: 150,
-  //                   display: true
-  //                 })
-  //               } else {
-  //                 cols[index].display = true
-  //               }
-  //               return cols
-  //             }, cols)
-  //           }
-  //         }
-  //       }
-
-  //       if (telemetry) {
-  //         commit('setCols', cols)
-  //       } else {
-  //         Vue.set(state, 'cols', cols)
-  //       }
-  //       Vue.set(state, 'isLoading', false)
-  //     } catch (e) {
-  //       errorHandler && errorHandler(e)
-  //       if (DEV) { console.log(e) }
-  //       Vue.set(state, 'isLoading', false)
-  //     }
-  //   }
-  // }
 
   function getFromTo (val) {
     const now = val || Date.now(),

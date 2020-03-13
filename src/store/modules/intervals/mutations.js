@@ -1,3 +1,5 @@
+import get from 'lodash/get'
+import set from 'lodash/set'
 const defaultCols = ['begin', 'end', 'duration', 'timestamp', 'id']
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   function setMessages (state, data) {
@@ -66,6 +68,35 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     await Vue.connector.unsubscribeIntervals(state.active)
   }
 
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+    }
+    return colsFromStorage
+  }
+
+  function setColsToLS (state, cols) {
+    const colsFromStorage = getColsFromLS(state)
+    colsFromStorage[state.active] = cols
+    if (state.lsNamespace) {
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      set(appStorage, lsRouteToItem, colsFromStorage)
+      LocalStorage.set(lsItemName, appStorage)
+    } else {
+      LocalStorage.set(state.name, colsFromStorage)
+    }
+  }
+
   function setCols (state, counters) {
     let cols = [
       {
@@ -109,22 +140,12 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
       cols.push(counter)
     })
     cols = [actionsCol, ...cols, etcCol]
-    let colsFromStorage = LocalStorage.getItem(state.name)
-    if (!colsFromStorage) {
-      colsFromStorage = {}
-    }
-    colsFromStorage[state.active] = cols
-    LocalStorage.set(state.name, colsFromStorage)
+    setColsToLS(state, cols)
     Vue.set(state, 'cols', cols)
   }
 
   function updateCols (state, cols) {
-    let colsFromStorage = LocalStorage.getItem(state.name)
-    if (!colsFromStorage) {
-      colsFromStorage = {}
-    }
-    colsFromStorage[state.active] = cols
-    LocalStorage.set(state.name, colsFromStorage)
+    setColsToLS(state, cols)
     Vue.set(state, 'cols', cols)
   }
 

@@ -30,6 +30,26 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      /* removing old store 12.03.20 */
+      const oldStore = LocalStorage.getItem(state.name)
+      if (oldStore) {
+        colsFromStorage = oldStore
+        LocalStorage.remove(state.name)
+      }
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+    }
+    return colsFromStorage
+  }
+
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     commit('reqStart')
     const needActions = sysColsNeedInitFlags.actions
@@ -38,7 +58,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       try {
         Vue.set(state, 'isLoading', true)
         let cols = []
-        const colsFromStorage = LocalStorage.getItem(state.name)
+        const colsFromStorage = getColsFromLS(state)
         if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[state.active].forEach((col) => {

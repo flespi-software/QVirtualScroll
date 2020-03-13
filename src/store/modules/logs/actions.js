@@ -37,9 +37,30 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return headers
   }
 
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      /* removing old store 12.03.20 */
+      const oldStore = LocalStorage.getItem(state.name)
+      if (oldStore) {
+        colsFromStorage = oldStore
+        LocalStorage.remove(state.name)
+      }
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+    }
+    return colsFromStorage
+  }
+
   function getCols ({ state, commit, rootState }, initCols) {
     let cols = initCols || defaultCols
-    const colsFromStorage = LocalStorage.getItem(state.name)
+    /* LS processing */
+    const colsFromStorage = getColsFromLS(state)
     if (colsFromStorage && colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
       /* remove after sometime 12.07.19 */
       colsFromStorage[state.origin].forEach((col) => {

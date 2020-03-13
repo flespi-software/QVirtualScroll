@@ -5,7 +5,7 @@ Module for processing and storing messages poll from the channel
 | :-- | :---: | :-- |
 |Vue| Vue instance | *required* |
 |LocalStorage| Quasar LocalStorage instance | *required* |
-|name| Vuex module name | *required* |
+|name| Vuex module name or { name: module_name, lsNamespace: 'path.to.root' } | *required* |
 |errorHandler| Custom error handler | function |
 |filterHandler| Custom filter handler | function |
 |newMessagesInterseptor| Custom modifiing messages handler | function |

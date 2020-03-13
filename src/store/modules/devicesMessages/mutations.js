@@ -1,3 +1,5 @@
+import get from 'lodash/get'
+import set from 'lodash/set'
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   let messagesKeyPointer = 0
   function messagesIndexing (messages) {
@@ -183,13 +185,37 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     await Vue.connector.unsubscribeMessagesDevices(state.active)
   }
 
-  function setCols (state, cols) {
-    let colsFromStorage = LocalStorage.getItem(state.name)
-    if (!colsFromStorage) {
-      colsFromStorage = {}
+  function getColsFromLS (state) {
+    let colsFromStorage = {}
+    if (state.lsNamespace) {
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      colsFromStorage = get(appStorage, lsRouteToItem, colsFromStorage)
+    } else {
+      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
     }
+    return colsFromStorage
+  }
+
+  function setColsToLS (state, cols) {
+    const colsFromStorage = getColsFromLS(state)
     colsFromStorage[state.settings.device_type_id] = cols
-    LocalStorage.set(state.name, colsFromStorage)
+    if (state.lsNamespace) {
+      const lsPath = state.lsNamespace.split('.'),
+        lsItemName = lsPath.shift(),
+        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
+        appStorage = LocalStorage.getItem(lsItemName)
+      set(appStorage, lsRouteToItem, colsFromStorage)
+      LocalStorage.set(lsItemName, appStorage)
+    } else {
+      LocalStorage.set(state.name, colsFromStorage)
+    }
+  }
+
+  function setCols (state, cols) {
+    setColsToLS(state, cols)
     Vue.set(state, 'cols', cols)
   }
 
