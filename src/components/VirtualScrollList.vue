@@ -37,7 +37,7 @@
       :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}"
     >
       <q-resize-observer @resize="wrapperResizeHandler"/>
-      <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.bgColor}`]"
+      <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
         v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
         @dblclick="colsConfigurator === 'header' ? $emit('edit:cols') : ''"
       >
@@ -220,7 +220,9 @@ export default {
       return this.cols.filter(col => !col.display)
     },
     currentTheme () {
-      return Object.assign(this.defaultTheme, this.theme)
+      const theme = Object.assign(this.defaultTheme, this.theme)
+      theme.header = `${theme.bgColor.split('-')[0]}-8`
+      return theme
     },
     rowWidth () {
       let res = 0
@@ -524,14 +526,14 @@ export default {
               position: absolute
               width: 5px
               font-size: 1px
-              background: #EEE
+              background: $grey-3
               right: -10px
               cursor: e-resize
               top 0
               height 100%
               margin-top 0
               border none
-              border-right 2px solid #616161
+              border-right 2px solid $grey-5
               background-color inherit
     .collapsed
       max-width 40px
@@ -542,7 +544,7 @@ export default {
         &:nth-child(odd)
           background-color rgba(0, 0, 0, .2)
   .cols-editor__col[draggable="true"]
-    background-color #9e9e9e
+    background-color $grey-5
   .action__to-bottom
     &:hover
       opacity 1

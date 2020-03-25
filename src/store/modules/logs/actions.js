@@ -3,7 +3,7 @@ import defaultCols from './defaultCols'
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = { filter: [] }
-    if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
+    if (state.origin.indexOf('platform') !== -1) {
       params.filter.push(`event_origin=${state.origin}`)
     }
     if (state.limit) {
@@ -89,18 +89,24 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function getLogsEntries (origin, deletedStatus) {
     const parts = origin.split('/'),
       id = parts.pop(),
-      namespace = deletedStatus || origin === '*'
+      namespace = origin === '*'
         ? Vue.connector.http.platform.customer
-        : parts.reduce((result, part) => {
-          return result[part]
-        }, Vue.connector.http)
-    if (id !== '*' && !deletedStatus) {
+        : deletedStatus
+          ? Vue.connector.http.platform.deleted
+          : parts.reduce((result, part) => {
+            return result[part]
+          }, Vue.connector.http)
+    if (id === '*') {
       return function (params) {
-        return namespace.logs.get(id, { data: JSON.stringify(params.data) }, { headers: params.headers })
+        return namespace.logs.get({ data: JSON.stringify(params.data) }, { headers: params.headers })
+      }
+    } else if (deletedStatus) {
+      return function (params) {
+        return namespace.logs.get(encodeURIComponent(`origin=${origin}`), { data: JSON.stringify(params.data) }, { headers: params.headers })
       }
     } else {
       return function (params) {
-        return namespace.logs.get({ data: JSON.stringify(params.data) }, { headers: params.headers })
+        return namespace.logs.get(id, { data: JSON.stringify(params.data) }, { headers: params.headers })
       }
     }
   }
@@ -124,7 +130,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           },
           headers: getHeaders(state)
         }
-        if (state.origin.indexOf('platform') !== -1 || state.isItemDeleted) {
+        if (state.origin.indexOf('platform') !== -1) {
           params.data.filter = `event_origin=${state.origin}`
         }
         const resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
