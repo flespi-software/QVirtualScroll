@@ -14,6 +14,7 @@
 | theme |  Object |  Object of params that modifies view of component |{color: 'dark', bgColor: 'white', controlsInverted: false, contentInverted: false}|
 | itemHeight |  Number |  Height of list item |19|
 | autoscroll |  Boolean |  Need autoscroll flag |false|
+| hasNewMessages |  Boolean or null |  Need show new messages indicator |undefined|
 
 ## Action
 ````javascript
@@ -82,6 +83,8 @@ config = {
 |scroll:top| Scroll event to top |*Empty*|
 |scroll:bottom| Scroll event to bottom |*Empty*|
 |action:to-bottom| Action event on to-bottom button |*Empty*|
+|action:to-new-messages| Action event on to-new-messages indicator |*Empty*|
+|action:to-new-messages-hide| Action event on to-new-messages hide button |*Empty*|
 
 ## Methods
 | Name  |  Description  | Params |

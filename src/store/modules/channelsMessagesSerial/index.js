@@ -26,7 +26,8 @@ export default function ({ Vue, LocalStorage, name, errorHandler, filterHandler,
     defaultColsNames: ['timestamp', 'server.timestamp', 'ident', 'position.latitude', 'position.longitude', 'position.altitude', 'position.speed'],
     offline: false,
     selected: [],
-    sortBy: null
+    sortBy: null,
+    hasNewMessages: null
   }
 
   return {

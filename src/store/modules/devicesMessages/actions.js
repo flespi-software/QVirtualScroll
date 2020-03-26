@@ -145,6 +145,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const day = getFromTo(date)
         commit('setFrom', day.from)
         commit('setTo', day.to)
+        if (day.to < Date.now()) {
+          await newMessagesCheck({ state })
+        }
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
@@ -336,6 +339,14 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         Vue.set(state, 'isLoading', false)
       }
     }
+  }
+
+  async function newMessagesCheck ({ state }) {
+    state.hasNewMessages = false
+    await Vue.connector.subscribeMessagesDevices(state.active, () => {
+      state.hasNewMessages = true
+      unsubscribePooling({ state })
+    }, { rh: 2 })
   }
 
   return {

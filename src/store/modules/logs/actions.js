@@ -143,6 +143,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const day = getFromTo(date)
         commit('setFrom', day.from)
         commit('setTo', day.to)
+        if (day.to < Date.now()) {
+          await newMessagesCheck({ state })
+        }
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
@@ -351,6 +354,20 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
     await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { properties })
     state.realtimeEnabled = false
+  }
+
+  async function newMessagesCheck ({ state }) {
+    const api = state.origin.split('/')[0].replace(/\*/g, '+'),
+      origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
+    let properties = {}
+    if (state.cid) {
+      properties = { userProperties: { cid: state.cid } }
+    }
+    state.hasNewMessages = false
+    await Vue.connector.subscribeLogs(api, origin, '#', () => {
+      state.hasNewMessages = true
+      unsubscribePooling({ state })
+    }, { rh: 2, properties })
   }
 
   return {

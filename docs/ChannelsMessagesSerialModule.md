@@ -25,6 +25,7 @@ Module for processing and storing messages from the device
 |selected| Selected messages array | [] |
 |offline| Socket status flag | false |
 |sortBy| Message field name filtering by | '' |
+|hasNewMessages| Flag shown new messages status on time initialization | null - disabled, false - have no new messages, true - have messages |
 #### Actions
 | Name  |  Description  | Payload |
 |---|---|---|

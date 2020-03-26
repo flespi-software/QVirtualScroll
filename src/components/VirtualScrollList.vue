@@ -65,11 +65,23 @@
         v-if="currentScrollTop < allScrollTop && items.length"
         fab-mini flat icon="mdi-chevron-down"
         @click="$emit('action:to-bottom')"
-        class="absolute-bottom-right action__to-bottom"
+        class="absolute-bottom-right action action__to-bottom"
         :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
       >
         <q-tooltip>To bottom</q-tooltip>
       </q-btn>
+      <q-chip
+        v-if="hasNewMessages"
+        removable clickable
+        @remove="$emit('action:to-new-messages-hide')"
+        @click="$emit('action:to-new-messages')"
+        icon="mdi-bell-outline"
+        class="absolute-bottom-right action action__to-new-messages"
+        color="amber-8"
+        text-color="grey-2"
+      >
+        new messages
+      </q-chip>
       <slot name="empty" v-if="!items.length && !loading">
         <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}" style="font-size: 3rem; padding-top: 40px;">
           {{(i18n && i18n['Messages not found']) || 'Messages not found'}}
@@ -165,7 +177,8 @@ export default {
     theme: Object,
     viewConfig: Object,
     loading: Boolean,
-    scrollOffset: [Number, String]
+    scrollOffset: [Number, String],
+    hasNewMessages: [Object, Boolean]
   },
   components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal },
   data () {
@@ -545,11 +558,15 @@ export default {
           background-color rgba(0, 0, 0, .2)
   .cols-editor__col[draggable="true"]
     background-color $grey-5
-  .action__to-bottom
+  .action
     &:hover
       opacity 1
     opacity .8
-    bottom 18px
-    right 18px
     z-index 1
+    &__to-bottom
+      right 18px
+      bottom 18px
+    &__to-new-messages
+      right calc(50% - 76px)
+      bottom 18px
 </style>

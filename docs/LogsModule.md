@@ -26,6 +26,7 @@ Module for processing and storing log messages from the channel
 |selected| Selected messages array | [] |
 |isItemDeleted| Delete status flag of item | false |
 |offline| Socket status flag | false |
+|hasNewMessages| Flag shown new messages status on time initialization | null - disabled, false - have no new messages, true - have messages |
 ## Actions
 | Name  |  Description  | Payload |
 |---|---|---|

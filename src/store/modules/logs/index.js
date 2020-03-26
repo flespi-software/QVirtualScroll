@@ -25,7 +25,8 @@ export default function ({ Vue, LocalStorage, name, errorHandler, filterHandler,
     cols: [],
     offline: false,
     selected: [],
-    isItemDeleted: false
+    isItemDeleted: false,
+    hasNewMessages: null
   }
 
   return {
