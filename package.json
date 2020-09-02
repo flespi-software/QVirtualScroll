@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "Quasar component for displaing messages",
   "productName": "QVirtualScroll",
   "cordovaId": "org.cordova.quasar.app",
@@ -25,7 +25,7 @@
     "@quasar/extras": "^1.5.2",
     "datetimerangepicker": "git+https://github.com/flespi-software/DateTimeRangePicker.git",
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "quasar": "^1.9.4",
     "vue-draggable-resizable": "^2.1.0",
     "vue-virtual-scroll-list": "^1.4.6",

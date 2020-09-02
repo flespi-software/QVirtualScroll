@@ -64,10 +64,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         errorsCheck(deviceData)
         const device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
-        let cols = []
         const colsFromStorage = getColsFromLS(state)
-        if (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length) {
-          cols = colsFromStorage[device.device_type_id]
+        let cols = (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length)
+          ? colsFromStorage[device.device_type_id] : []
+        const needntMigration = cols.length &&
+          (colsFromStorage[device.device_type_id][1] && colsFromStorage[device.device_type_id][1].unit !== undefined) // type and unit adding 02.09.20
+
+        if (needntMigration) {
           /* adding sys cols after migration. 30.01.20 */
           if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
             cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
@@ -88,21 +91,30 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
             /* initing columns by message parameters */
             cols = messageParams.reduce((cols, param) => {
               const name = param.name
+              const col = {
+                name,
+                width: 150,
+                display: DEFAULT_COL_NAMES.includes(name),
+                type: param.type || '',
+                unit: param.unit || ''
+              }
               if (name === 'timestamp') {
                 const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
                 cols.unshift({
                   name,
                   width: 190,
                   display: true,
-                  addition: `${locale.slice(0, 3)}:${locale.slice(3)}`
+                  addition: `${locale.slice(0, 3)}:${locale.slice(3)}`,
+                  type: '',
+                  unit: ''
                 })
                 return cols
               }
-              cols.push({
-                name,
-                width: 150,
-                display: DEFAULT_COL_NAMES.includes(name)
-              })
+              if (name === 'server.timestamp') {
+                col.type = ''
+                col.unit = ''
+              }
+              cols.push(col)
               return cols
             }, [])
           }

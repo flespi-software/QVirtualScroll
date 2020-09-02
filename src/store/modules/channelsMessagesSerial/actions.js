@@ -57,9 +57,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let cols = []
         const colsFromStorage = getColsFromLS(state)
-        if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
+        let cols = []
+        const needntMigration = (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) &&
+          (colsFromStorage[state.active][1] && colsFromStorage[state.active][1].unit !== undefined) // type and unit adding 02.09.20
+
+        if (needntMigration) {
           /* remove after sometime 12.07.19 */
           colsFromStorage[state.active].forEach((col) => {
             if (col.name === 'timestamp') {
@@ -86,11 +89,19 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
                 name: col.name,
                 width: 160,
                 display: state.defaultColsNames.includes(col.name),
-                description: col.info
+                description: col.info,
+                type: col.type || '',
+                unit: col.unit || ''
               }
               if (colItem.name === 'timestamp') {
                 const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
                 colItem.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+                colItem.type = ''
+                colItem.unit = ''
+              }
+              if (colItem.name === 'server.timestamp') {
+                colItem.type = ''
+                colItem.unit = ''
               }
               cols.push(colItem)
             })

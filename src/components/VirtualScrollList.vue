@@ -49,7 +49,7 @@
                 <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
                   ''}`}}
                 </q-tooltip>
-                <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span></span>
+                <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
                 <vue-draggable-resizable :ref="`drag${activeColsIndexes[index]}`"
                   v-if="$q.platform.is.desktop && needResizeControl"
                   :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
