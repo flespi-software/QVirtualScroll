@@ -79,12 +79,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         } else {
           if (device.device_type_id) {
             /* getting protocol id */
-            const protocolResp = await Vue.connector.gw.getProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
+            const protocolResp = await Vue.connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
             const protocolData = protocolResp.data
             errorsCheck(protocolData)
             const protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
             /* gettings messages parameters */
-            const messageParamsResp = await Vue.connector.gw.getProtocols(protocolId, { fields: 'message_parameters' })
+            const messageParamsResp = await Vue.connector.gw.getChannelProtocols(protocolId, { fields: 'message_parameters' })
             const messageParamsData = messageParamsResp.data
             errorsCheck(messageParamsData)
             const messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters

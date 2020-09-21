@@ -81,7 +81,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           const protocolIdData = protocolIdResp.data
           errorsCheck(protocolIdData)
           if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-            const colsResp = await Vue.connector.gw.getProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
+            const colsResp = await Vue.connector.gw.getChannelProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
             const colsData = colsResp.data
             errorsCheck(colsData)
             colsData.result[0].message_parameters.forEach(col => {
