@@ -24,12 +24,13 @@
               :mode="mode"
               :theme="theme"
               @change:mode="changeModeDateTimeRangeHandler"
+              @error="flag => saveDisabled = flag"
             />
           </div>
         </q-card-section>
         <q-card-actions align="right" :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
           <q-btn flat :color="theme.color" @click="dateRangeModalClose">close</q-btn>
-          <q-btn flat :color="theme.color" @click="dateRangeModalSave" :disable="dateModel[0] >= dateModel[1]">save</q-btn>
+          <q-btn flat :color="theme.color" @click="dateRangeModalSave" :disable="saveDisabled">save</q-btn>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -44,7 +45,8 @@ export default {
   data () {
     return {
       dateModel: this.date,
-      mode: 0
+      mode: 0,
+      saveDisabled: false
     }
   },
   methods: {
