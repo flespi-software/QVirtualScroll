@@ -59,13 +59,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     /* LS processing */
     const colsFromStorage = getColsFromLS(state)
     if (colsFromStorage && colsFromStorage[state.origin] && colsFromStorage[state.origin].length) {
-      /* remove after sometime 12.07.19 */
-      colsFromStorage[state.origin].forEach((col) => {
-        if (col.name === 'timestamp') {
-          const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-          col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-        }
-      })
       cols = colsFromStorage[state.origin]
     }
     if (!cols[cols.length - 1].__dest) {

@@ -1,8 +1,5 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-drawer side="right" no-swipe-open no-swipe-close v-model="sides.right" :content-class="{'bg-grey-9':true}">
-      <cols-editor :cols="cols" @cols:close="sides.right = false"/>
-    </q-drawer>
     <q-page-container>
       <q-page>
         <div class="absolute-top-left absolute-bottom-right">
@@ -15,21 +12,17 @@
             :mode="mode"
             :theme="theme"
             :viewConfig="viewConfig"
-            :colsConfigurator="'toolbar'"
             :i18n="{from: 'FROM', to: 'TO'}"
             :filter="filter"
             :loading="loading"
-            @change:filter="filterChangeHandler"
-            @change:pagination-prev="paginationPrevChangeHandler"
-            @change:pagination-next="paginationNextChangeHandler"
-            @change:date="dateChangeHandler"
-            @change:date-prev="datePrevChangeHandler"
-            @change:date-next="dateNextChangeHandler"
+            @change-filter="filterChangeHandler"
+            @change-date="dateChangeHandler"
+            @change-date-prev="datePrevChangeHandler"
+            @change-date-next="dateNextChangeHandler"
             @action="actionHandler"
-            @change:mode="modeChange"
-            @update:cols="updateColsHandler"
-            @change:date-range="updateDateRange"
-            @edit:cols="sides.right = true"
+            @update-cols="updateColsHandler"
+            @to-default-cols="stdColsHandler"
+            @change-date-range="updateDateRange"
           >
           </virtual-scroll-list>
         </div>
@@ -40,7 +33,6 @@
 
 <script>
 import VirtualScrollList from '../components/VirtualScrollList'
-import ColsEditor from '../components/ColsEditor'
 import cols from '../data/cols.json'
 
 export default {
@@ -83,10 +75,7 @@ export default {
         needShowEtc: true
       },
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
-      loading: true,
-      sides: {
-        right: false
-      }
+      loading: true
     }
   },
   computed: {
@@ -272,10 +261,11 @@ export default {
     },
     updateColsHandler (newCols) {
       this.cols = newCols
-    }
+    },
+    stdColsHandler () { console.log('std-cols') }
   },
   components: {
-    VirtualScrollList, ColsEditor
+    VirtualScrollList
   },
   created () {
     setTimeout(() => {

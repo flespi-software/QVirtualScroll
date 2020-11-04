@@ -63,13 +63,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           (colsFromStorage[state.active][1] && colsFromStorage[state.active][1].unit !== undefined) // type and unit adding 02.09.20
 
         if (needntMigration) {
-          /* remove after sometime 12.07.19 */
-          colsFromStorage[state.active].forEach((col) => {
-            if (col.name === 'timestamp') {
-              const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-              col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-            }
-          })
           cols = colsFromStorage[state.active]
           /* adding sys cols after migration. 30.01.20 */
           if (!cols[0].__dest && !cols[cols.length - 1].__dest) {

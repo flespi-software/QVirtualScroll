@@ -20,11 +20,9 @@
         :debounce="0"
       >
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
+        <slot name="filter-append" slot="append"/>
       </q-input>
       <q-toolbar-title/>
-      <q-btn :color="currentTheme.color" flat dense class="on-left" @click="$emit('edit:cols')" icon="tune" v-if="colsConfigurator === 'toolbar' && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)">
-        <q-tooltip>Edit columns</q-tooltip>
-      </q-btn>
       <date-range-modal
         v-if="currentViewConfig.needShowDateRange && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
         class="on-left"
@@ -36,36 +34,61 @@
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
       :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}"
     >
+      <q-menu
+        ref="menu" v-if="items.length && !loading"
+        context-menu touch-position
+        @before-show="menuShow"
+        @before-hide="menuHide"
+        :value="contextMenuModel"
+      >
+        <slot name="context-menu" :col="editableCol" :row="editableRow">
+          <cols-menu
+            :col="editableCol"
+            :row="editableRow"
+            @add="addCustomColumnHandler"
+            @to-std="$emit('to-default-cols')"
+            @toggle-all="toggleAllColumnsHandler"
+            @remove="toggleCol"
+            @action="(type) => clickHandler({ index: this.editableRow.index, type, content: this.editableRow.data })"
+            @done="$refs.menu.hide()"
+          />
+        </slot>
+      </q-menu>
       <q-resize-observer @resize="wrapperResizeHandler"/>
       <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
-        v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${itemHeight}px`}" ref="header"
-        @dblclick="colsConfigurator === 'header' ? $emit('edit:cols') : ''"
+        v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: '100%'}" ref="header"
       >
         <div class="header__inner" :style="{width: `${rowWidth}px` }">
-          <draggable :list="cols" tag="span" @end="$emit('update:cols', cols)">
-            <template v-for="(prop, index) in cols">
-              <div class="header__item" :key="prop.name" v-if="prop.display"
-                  :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move">
-                <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
-                  ''}`}}
-                </q-tooltip>
-                <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
-                <vue-draggable-resizable :ref="`drag${activeColsIndexes[index]}`"
-                  v-if="$q.platform.is.desktop && needResizeControl"
-                  :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
-                  :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
-                  @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update:cols', cols)}"
-                />
-              </div>
-            </template>
+          <draggable :list="cols" ghostClass="ghost" tag="span" @end="$emit('update-cols', cols)" :move="moveDragHandler">
+            <transition-group type="transition" name="flip-list">
+              <template v-for="(prop, index) in cols">
+                <div class="header__item" :key="prop.name" v-if="prop.display"
+                  :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move"
+                >
+                  <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
+                    ''}`}}
+                  </q-tooltip>
+                  <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
+                  <vue-draggable-resizable
+                    :ref="`drag${activeColsIndexes[index]}`"
+                    class="absolute-top-left"
+                    v-if="$q.platform.is.desktop && needResizeControl"
+                    :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
+                    :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
+                    @resizing="() => { resizing = true }"
+                    @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update-cols', cols), resizing = false}"
+                  />
+                </div>
+              </template>
+            </transition-group>
           </draggable>
         </div>
       </div>
       <q-btn
         v-if="currentScrollTop < allScrollTop && items.length"
         fab-mini flat icon="mdi-chevron-down"
-        @click="$emit('action:to-bottom')"
-        class="absolute-bottom-right action action__to-bottom"
+        @click="$emit('action-to-bottom')"
+        class="absolute-bottom-right action action__to-bottom" style="z-index: 2"
         :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
       >
         <q-tooltip>To bottom</q-tooltip>
@@ -73,12 +96,12 @@
       <q-chip
         v-if="hasNewMessages"
         removable clickable
-        @remove="$emit('action:to-new-messages-hide')"
-        @click="$emit('action:to-new-messages')"
+        @remove="$emit('action-to-new-messages-hide')"
+        @click="$emit('action-to-new-messages')"
         icon="mdi-bell-outline"
         class="absolute-bottom-right action action__to-new-messages"
         color="amber-8"
-        text-color="grey-2"
+        text-color="grey-2" style="z-index: 2"
       >
         new messages
       </q-chip>
@@ -89,8 +112,9 @@
       </slot>
       <div
         v-else-if="!items.length && loading && itemsCount > 0"
-        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: 'auto'}"
+        :style="{height: `${wrapperHeight - 1}px`, overflow: 'auto', top: `${itemHeight}px`}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+        class="absolute-top-left absolute-bottom-right"
       >
         <table-skeleton v-for="(i, key) in new Array(itemsCount - 1).fill('')" :key="key" :rows="rowWidths"/>
       </div>
@@ -99,7 +123,8 @@
         v-auto-bottom="needAutoScroll"
         :onscroll="listScroll"
         ref="scroller"
-        :style="{position: 'relative', height: `${wrapperHeight - 1}px`, overflow: 'auto'}"
+        :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${itemHeight}px`, zIndex: resizing ? '' : 1}"
+        class="list__content absolute-top-left absolute-bottom-right"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         :size="itemHeight"
         :remain="itemsCount"
@@ -119,8 +144,10 @@ import VueDraggableResizable from 'vue-draggable-resizable'
 import DateRangeModal from './DateRangeModal'
 import ListItem from './ListItem.vue'
 import TableSkeleton from './TableSkeleton'
+import ColsMenu from './ColsMenu'
 import draggable from 'vuedraggable'
 import get from 'lodash/get'
+import debounce from 'lodash/debounce'
 
 const { setScrollPosition } = scroll
 
@@ -166,10 +193,6 @@ export default {
       type: Boolean,
       default: false
     },
-    colsConfigurator: {
-      type: String,
-      default: 'none'
-    },
     itemHeight: {
       type: Number,
       default: 19
@@ -180,7 +203,7 @@ export default {
     scrollOffset: [Number, String],
     hasNewMessages: [Object, Boolean]
   },
-  components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal },
+  components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal, ColsMenu },
   data () {
     const defaultConfig = {
       needShowFilter: false,
@@ -209,7 +232,11 @@ export default {
       currentScrollTop: 0,
       currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
       needResizeControl: true,
-      allScrollTop: 0
+      allScrollTop: 0,
+      resizing: false,
+      contextMenuModel: false,
+      editableCol: null,
+      editableRow: null
     }
   },
   computed: {
@@ -229,9 +256,6 @@ export default {
         return result
       }, {})
     },
-    notActiveCols () {
-      return this.cols.filter(col => !col.display)
-    },
     currentTheme () {
       const theme = Object.assign(this.defaultTheme, this.theme)
       theme.header = `${theme.bgColor.split('-')[0]}-8`
@@ -239,8 +263,8 @@ export default {
     },
     rowWidth () {
       let res = 0
-      res += this.rowWidths.reduce((acc, width) => acc + width + 15, 0)
-      return res + 5 // 5 is margin of container
+      res += this.rowWidths.reduce((acc, width) => acc + width, 0)
+      return res
     },
     wrapperOverflowing () {
       return this.wrapperWidth < this.rowWidth
@@ -255,6 +279,7 @@ export default {
   },
   methods: {
     getItemProps (index) {
+      const active = this.editableRow && this.editableCol ? { col: this.editableCol.index, row: this.editableRow.index } : null
       const props = {
         key: index,
         props: {
@@ -263,14 +288,18 @@ export default {
           actions: this.actions,
           cols: this.activeCols,
           itemHeight: this.itemHeight,
-          rowWidth: this.rowWidth
+          rowWidth: this.rowWidth,
+          menuCellActive: active
+        },
+        attrs: {
+          'data-index': index
         }
       }
       this.itemprops(index, props)
       return props
     },
     searchSubmitHandler () {
-      this.$emit('change:filter', this.currentFilter)
+      this.$emit('change-filter', this.currentFilter)
     },
     searchClearHandler () {
       this.currentFilter = ''
@@ -368,15 +397,15 @@ export default {
       this.$emit('scroll', { event: e, data })
       if (scrollOffset) {
         if (verticalDirection && (verticalDirection === 'top' || verticalDirection === 'none') && offset < scrollOffset) {
-          this.$emit('scroll:top')
+          this.$emit('scroll-top')
         } else if (verticalDirection && (verticalDirection === 'bottom' || verticalDirection === 'none') && offset + scrollOffset >= offsetAll) {
-          this.$emit('scroll:bottom')
+          this.$emit('scroll-bottom')
         }
       } else {
         if (verticalDirection && verticalDirection === 'top' && offset === 0) {
-          this.$emit('scroll:top')
+          this.$emit('scroll-top')
         } else if (verticalDirection && verticalDirection === 'bottom' && offset >= offsetAll) {
-          this.$emit('scroll:bottom')
+          this.$emit('scroll-bottom')
         }
       }
       this.currentScrollTop = offset
@@ -408,7 +437,7 @@ export default {
       head.appendChild(this.dynamicCSS)
     },
     dateRangeModalSave (dateRange) {
-      this.$emit('change:date-range', dateRange)
+      this.$emit('change-date-range', dateRange)
     },
     scrollTo (index) {
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
@@ -434,7 +463,83 @@ export default {
         }
       }
       this.scrollNormalize()
-    }
+    },
+    menuShow (evt) {
+      const el = evt.target.closest('[class*="item_"]')
+      const colIndex = el ? el.className.replace(/.*item_(\d+).*/, '$1') : ''
+      this.editableCol = colIndex ? {
+        index: Number(colIndex),
+        data: this.activeCols[colIndex]
+      } : null
+      const rowEl = el ? el.closest('[data-index]') : null
+      if (rowEl) {
+        const rowIndex = Number(rowEl.getAttribute('data-index'))
+        const rowData = this.getItemProps(rowIndex)
+        this.editableRow = {
+          index: rowIndex,
+          data: rowData.props.item,
+          actions: rowData.props.actions,
+          dataHandler: rowData.dataHandler
+        }
+      }
+    },
+    menuHide (evt) {
+      this.editableCol = null
+      this.editableRow = null
+    },
+    toggleAllColumnsHandler () {
+      let flag = this.cols.reduce((flag, col) => {
+        if (col.__dest === 'etc') { return flag }
+        return flag || col.display
+      }, false)
+      flag = !flag
+      this.cols.forEach((_, index) => {
+        this.$set(this.cols[index], 'display', flag)
+      })
+      if (!flag && this.cols[this.cols.length - 1].__dest === 'etc') {
+        this.$set(this.cols[this.cols.length - 1], 'display', !flag)
+      }
+      this.updateCols()
+    },
+    addCustomColumnHandler (col) {
+      col = { ...col }
+      const existingCol = this.cols.filter(existingCol => existingCol.name === col.name)
+      if (existingCol.length) {
+        existingCol[0].display = true
+      } else if (this.cols[this.cols.length - 1].__dest === 'etc') {
+        this.cols.splice(this.cols.length - 2, 0, col)
+      } else {
+        this.cols.push(col)
+      }
+      this.updateCols()
+    },
+    removeCol () {
+      this.cols.splice(this.editableCol.index, 1)
+      this.updateCols()
+    },
+    toggleCol () {
+      this.$set(this.activeCols[this.editableCol.index], 'display', !this.activeCols[this.editableCol.index].display)
+      this.updateCols()
+    },
+    updateCols () {
+      this.$emit('update-cols', this.cols)
+    },
+    moveDragHandler: debounce(function (evt, oevt) {
+      const wrapperWidth = this.wrapperWidth
+      const { left, right } = evt.relatedRect
+      const borderValue = 50
+      let changeWidthPerTick = 0
+      if (right - wrapperWidth + borderValue > 0) { changeWidthPerTick = (wrapperWidth / 2) / 20 }
+      if (left < borderValue) { changeWidthPerTick = -((wrapperWidth / 2) / 20) }
+      if (changeWidthPerTick) {
+        let counter = 0
+        this.scrollHorizontalInterval = setInterval(() => {
+          this.$refs.scroller.$el.scrollLeft += changeWidthPerTick
+          counter++
+          if (counter === 10) { clearInterval(this.scrollHorizontalInterval) }
+        }, 15)
+      }
+    }, 300)
   },
   beforeUpdate () {
     const scrollerElement = get(this.$refs, 'scroller', undefined)
@@ -527,27 +632,30 @@ export default {
           .header__item
             display inline-block
             white-space nowrap
-            margin 0 10px 0 5px
             position: relative
+            border-right 2px solid $grey-6
             .item__label
               text-overflow ellipsis
               overflow hidden
               display block
+              padding-left 5px
               line-height 19px
             .handle-mr
-              box-sizing: border-box
               position: absolute
               width: 5px
               font-size: 1px
               background: $grey-3
-              right: -10px
+              right: 0px
               cursor: e-resize
               top 0
               height 100%
               margin-top 0
               border none
-              border-right 2px solid $grey-5
+              border-right 2px solid $grey-6
               background-color inherit
+            .resizing .handle-mr
+              border-right 2px solid $yellow-6
+              z-index 2
     .collapsed
       max-width 40px
     .q-w-list
@@ -569,4 +677,10 @@ export default {
     &__to-new-messages
       right calc(50% - 76px)
       bottom 18px
+  .flip-list-move
+    transition transform 0.5s
+  .ghost
+    opacity 0.5
+    color $grey-7
+    background $grey-3
 </style>

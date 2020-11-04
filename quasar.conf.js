@@ -65,7 +65,9 @@ module.exports = function (ctx) {
         'QTooltip',
         'QDialog',
         'QSlider',
-        'QBtnToggle'
+        'QBtnToggle',
+        'QChip',
+        'QMenu'
       ],
 
       directives: [

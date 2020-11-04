@@ -10,7 +10,6 @@
 |  filter | String  |  Init text for filter input |''|
 |  title | String  |  Title dataset section  |''|
 | viewConfig |  Object |  Config for view of component |{ needShowFilter: false }|
-| colsConfigurator |  String |  String that displays where need show control of configurator of cols. Can be a 'header', 'toolbar' and 'none' |'none'|
 | theme |  Object |  Object of params that modifies view of component |{color: 'dark', bgColor: 'white', controlsInverted: false, contentInverted: false}|
 | itemHeight |  Number |  Height of list item |19|
 | autoscroll |  Boolean |  Need autoscroll flag |false|
@@ -72,19 +71,16 @@ config = {
 ## Events
 | Name  |  Description  | Payload |
 |:---|:---:|:---|
-|change:filter| Handling change of filter| 'new_filter'|
-|edit:cols| Emiting on click by edit cols button | *Empty* |
+|change-filter| Handling change of filter| 'new_filter'|
 |action|Handling click by icon one of action |{index, type, content}|
 |item-click|Handling click by item |{index, content}|
-|change:pagination-prev|Handling click by control for scroll by limit (previous *limit* items)  |*Empty*|
-|change:pagination-next|Handling click by control for scroll by limit (next *limit* items)  |*Empty*|
-|change:date-range|Handling click by control for change current in datesetRange-component  |timestamps array|
+|change-date-range|Handling click by control for change current in datesetRange-component  |timestamps array|
 |scroll| Scroll event  |{ event, data: { offset, offsetAll, start, end } }|
-|scroll:top| Scroll event to top |*Empty*|
-|scroll:bottom| Scroll event to bottom |*Empty*|
-|action:to-bottom| Action event on to-bottom button |*Empty*|
-|action:to-new-messages| Action event on to-new-messages indicator |*Empty*|
-|action:to-new-messages-hide| Action event on to-new-messages hide button |*Empty*|
+|scroll-top| Scroll event to top |*Empty*|
+|scroll-bottom| Scroll event to bottom |*Empty*|
+|action-to-bottom| Action event on to-bottom button |*Empty*|
+|action-to-new-messages| Action event on to-new-messages indicator |*Empty*|
+|action-to-new-messages-hide| Action event on to-new-messages hide button |*Empty*|
 
 ## Methods
 | Name  |  Description  | Params |
@@ -97,20 +93,23 @@ In quasar.conf.js
 ```javascript
 framework: {
   components: [
-    'QResizeObserver',
-    'QInput',
     'QToolbar',
     'QToolbarTitle',
     'QBtn',
-    'QCard',
-    'QCardSection',
-    'QCardActions',
-    'QSeparator',
+    'QResizeObserver',
+    'QInput',
     'QIcon',
     'QTooltip',
     'QDialog',
     'QSlider',
-    'QBtnToggle'
+    'QBtnToggle',
+    'QChip',
+    'QMenu',
+    'QSeparator',
+    'QList',
+    'QItem',
+    'QItemSection',
+    'QItemLabel'
   ]
 }
 ```
@@ -130,18 +129,15 @@ Simple example of template:
       :items="messages"
       :actions="actions"
       :date-range="[old, now]"
-      :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
       :theme="theme"
-      @change:filter="filterChangeHandler"
-      @change:pagination-prev="paginationPrevChangeHandler"
-      @change:pagination-next="paginationNextChangeHandler"
-      @change:date-range="dateChangeHandler"
-      @change:date-range-prev="datePrevChangeHandler"
-      @change:date-range-next="dateNextChangeHandler"
+      @change-filter="filterChangeHandler"
+      @change-date-range="dateChangeHandler"
+      @change-date-range-prev="datePrevChangeHandler"
+      @change-date-range-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @update:cols="updateColsHandler"
+      @update-cols="updateColsHandler"
     >
 </virtual-scroll-list>
 ```
@@ -154,18 +150,15 @@ You can use component with scoped slot:
       :items="messages"
       :actions="actions"
       :date-range="[old, now]"
-      :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
       :theme="theme"
-      @change:filter="filterChangeHandler"
-      @change:pagination-prev="paginationPrevChangeHandler"
-      @change:pagination-next="paginationNextChangeHandler"
-      @change:date-range="dateChangeHandler"
-      @change:date-range-prev="datePrevChangeHandler"
-      @change:date-range-next="dateNextChangeHandler"
+      @change-filter="filterChangeHandler"
+      @change-date-range="dateChangeHandler"
+      @change-date-range-prev="datePrevChangeHandler"
+      @change-date-range-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @update:cols="updateColsHandler"
+      @update-cols="updateColsHandler"
     >
       <list-item-custom slot="items" slot-scope="{item, index, actions, cols, itemHeight, rowWidth}"
          :item="item"
@@ -208,9 +201,9 @@ Component for scoped slot need design based on ListItem.vue. You can just expand
 ## Events
 | Name  |  Description  | Payload |
 |:---|:---:|:---|
-|cols:close| Close button clicked | *empty* |
-|cols:update| Columns updated | cols |
-|cols:default| Default button clicked | *empty* |
+|cols-close| Close button clicked | *empty* |
+|cols-update| Columns updated | cols |
+|cols-default| Default button clicked | *empty* |
 
 ## Example
 
@@ -244,8 +237,8 @@ Simple example of template:
 ```html
 <cols-editor
   :cols="colsForEditing"
-  @cols:close="hideHandler"
-  @cols:update="updateColsHandler"
-  @cols:default="setDefaultColsHandler"
+  @cols-close="hideHandler"
+  @cols-update="updateColsHandler"
+  @cols-default="setDefaultColsHandler"
 />
 ```

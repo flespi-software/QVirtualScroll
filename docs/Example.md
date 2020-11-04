@@ -2,24 +2,23 @@ In quasar.conf.js
 ```javascript
 framework: {
   components: [
-    'QResizeObservable',
-    'QWindowResizeObservable',
-    'QInput',
-    'QToggle',
     'QToolbar',
     'QToolbarTitle',
-    'QDatetime',
     'QBtn',
+    'QResizeObserver',
+    'QInput',
     'QIcon',
-    'QSearch',
     'QTooltip',
-    'QModal',
-    'QModalLayout',
+    'QDialog',
     'QSlider',
-    'QField',
-    'QCheckbox',
-    'QPopover',
-    'QBtnToggle'
+    'QBtnToggle',
+    'QChip',
+    'QMenu',
+    'QSeparator',
+    'QList',
+    'QItem',
+    'QItemSection',
+    'QItemLabel'
   ]
 }
 ```
@@ -123,19 +122,15 @@ Simple example of template:
       :needShowPageScroll="true"
       :needShowDate="true"
       :needShowFilter="true"
-      :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
       :theme="theme"
-      @change:filter="filterChangeHandler"
-      @change:pagination-prev="paginationPrevChangeHandler"
-      @change:pagination-next="paginationNextChangeHandler"
-      @change:date="dateChangeHandler"
-      @change:date-prev="datePrevChangeHandler"
-      @change:date-next="dateNextChangeHandler"
+      @change-filter="filterChangeHandler"
+      @change-date="dateChangeHandler"
+      @change-date-prev="datePrevChangeHandler"
+      @change-date-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @change:mode="modeChange"
-      @update:cols="updateColsHandler"
+      @update-cols="updateColsHandler"
     >
 </virtual-scroll-list>
 ````
@@ -153,19 +148,15 @@ You can use component with scoped slot:
       :needShowPageScroll="true"
       :needShowDate="true"
       :needShowFilter="true"
-      :colsConfigurator="'toolbar'"
       :i18n="i18n"
       :filter="filter"
       :theme="theme"
-      @change:filter="filterChangeHandler"
-      @change:pagination-prev="paginationPrevChangeHandler"
-      @change:pagination-next="paginationNextChangeHandler"
-      @change:date="dateChangeHandler"
-      @change:date-prev="datePrevChangeHandler"
-      @change:date-next="dateNextChangeHandler"
+      @change-filter="filterChangeHandler"
+      @change-date="dateChangeHandler"
+      @change-date-prev="datePrevChangeHandler"
+      @change-date-next="dateNextChangeHandler"
       @action="actionsHandler"
-      @change:mode="modeChange"
-      @update:cols="updateColsHandler"
+      @update-cols="updateColsHandler"
     >
       <list-item-custom slot="items" slot-scope="{item, index, actions, cols, etcVisible, actionsVisible, itemHeight, rowWidth}"
          :item="item"
