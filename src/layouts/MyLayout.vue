@@ -15,13 +15,13 @@
             :i18n="{from: 'FROM', to: 'TO'}"
             :filter="filter"
             :loading="loading"
+            :toDefaultCols="stdColsHandler"
             @change-filter="filterChangeHandler"
             @change-date="dateChangeHandler"
             @change-date-prev="datePrevChangeHandler"
             @change-date-next="dateNextChangeHandler"
             @action="actionHandler"
             @update-cols="updateColsHandler"
-            @to-default-cols="stdColsHandler"
             @change-date-range="updateDateRange"
           >
           </virtual-scroll-list>

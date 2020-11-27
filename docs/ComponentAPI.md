@@ -14,6 +14,7 @@
 | itemHeight |  Number |  Height of list item |19|
 | autoscroll |  Boolean |  Need autoscroll flag |false|
 | hasNewMessages |  Boolean or null |  Need show new messages indicator |undefined|
+| toDefaultCols |  Function |  Reset default columns handler |undefined|
 
 ## Action
 ````javascript
@@ -31,7 +32,7 @@ col = {
     name: 'param#1',
     width: 150,
     display: true,
-    __dest: 'action', // sys destination fields. May be action or etc
+    __dest: 'etc', // sys destination fields. May be only etc
     addition: '' // some addition data for col name
 }
 
@@ -59,6 +60,16 @@ theme = {
 
 ````
 
+## i18n
+````javascript
+i18n = {
+  'Columns by schema': 'Columns by schema',
+  'Default columns': 'Default columns',
+  'Messages not found': 'Messages not found'
+}
+
+````
+
 ## viewConfig
 ````javascript
 config = {
@@ -72,7 +83,7 @@ config = {
 | Name  |  Description  | Payload |
 |:---|:---:|:---|
 |change-filter| Handling change of filter| 'new_filter'|
-|action|Handling click by icon one of action |{index, type, content}|
+|action|Handling click context menu action |{index, type, content}|
 |item-click|Handling click by item |{index, content}|
 |change-date-range|Handling click by control for change current in datesetRange-component  |timestamps array|
 |scroll| Scroll event  |{ event, data: { offset, offsetAll, start, end } }|
@@ -189,56 +200,4 @@ Component for scoped slot need design based on ListItem.vue. You can just expand
    @action="actionsHandler"
  />
 
-```
-
-# Columns Editor Component API
-
-## Props
-| Name  | Type | Description  | Default |
-|---|---|---|---|
-| cols  | Array  | A array of columns. Structure written upster. | *required* |
-
-## Events
-| Name  |  Description  | Payload |
-|:---|:---:|:---|
-|cols-close| Close button clicked | *empty* |
-|cols-update| Columns updated | cols |
-|cols-default| Default button clicked | *empty* |
-
-## Example
-
-In quasar.conf.js
-```javascript
-framework: {
-  components: [
-    'QInput',
-    'QBtn',
-    'QIcon',
-    'QTooltip',
-    'QDialog',
-    'QSlider',
-    'QList',
-    'QItem',
-    'QItemSection',
-    'QItemLabel',
-    'QScrollArea'
-  ]
-}
-```
-In App.vue (You can use component without of Vuex modules):
-```javascript
-import { ColsEditor } from 'qvirtualscroll'
-
- components: {
-   ColsEditor
- }
-```
-Simple example of template:
-```html
-<cols-editor
-  :cols="colsForEditing"
-  @cols-close="hideHandler"
-  @cols-update="updateColsHandler"
-  @cols-default="setDefaultColsHandler"
-/>
 ```

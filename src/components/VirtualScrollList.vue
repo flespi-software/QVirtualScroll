@@ -1,5 +1,5 @@
 <template>
-  <div class="message-viewer full-height" :class="{[`uid${uid}`]: true}">
+  <div class="message-viewer full-height" :class="{[`uid${uid}`]: true}" @contextmenu.prevent.stop @select.prevent.stop>
     <q-toolbar class="viewer__toolbar" v-if="needShowToolbar" :class="{[`bg-${currentTheme.bgColor}`]: true, 'text-white': !!currentTheme.bgColor}">
       <span v-if="title && $q.platform.is.desktop" style="margin-right: 10px">{{title}}</span>
       <q-icon :color="currentTheme.color" name="search" @click.native="showSearch = true"
@@ -30,66 +30,40 @@
         :theme="currentTheme"
         @save="dateRangeModalSave"
       />
+      <q-btn icon="mdi-dots-vertical" flat dense>
+        <q-menu>
+          <q-list dark class="bg-grey-7 q-py-sm" style="min-width: 180px">
+            <q-item clickable dense v-ripple @click="colsAddition = true" class="q-px-sm" v-close-popup>
+              <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
+                <q-icon name="mdi-playlist-plus " />
+              </q-item-section>
+              <q-item-section>Add column</q-item-section>
+            </q-item>
+            <q-item clickable v-ripple dense class="q-px-sm" v-close-popup @click="toDefaultCols" v-if="toDefaultCols">
+              <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
+                <q-icon name="mdi-playlist-star" />
+              </q-item-section>
+              <q-item-section>{{(i18n && i18n['Default columns']) || 'Default columns'}}</q-item-section>
+            </q-item>
+            <q-item clickable v-ripple dense class="q-px-sm" v-close-popup @click="toProtocolSchemaCols">
+              <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
+                <q-icon name="mdi-playlist-check" />
+              </q-item-section>
+              <q-item-section>{{(i18n && i18n['Columns by schema']) || 'Columns by schema'}}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </q-toolbar>
-    <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}"
-      :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}"
-    >
-      <q-menu
-        ref="menu" v-if="items.length && !loading"
-        context-menu touch-position
-        @before-show="menuShow"
-        @before-hide="menuHide"
-        :value="contextMenuModel"
-      >
-        <slot name="context-menu" :col="editableCol" :row="editableRow">
-          <cols-menu
-            :col="editableCol"
-            :row="editableRow"
-            @add="addCustomColumnHandler"
-            @to-std="$emit('to-default-cols')"
-            @toggle-all="toggleAllColumnsHandler"
-            @remove="toggleCol"
-            @action="(type) => clickHandler({ index: this.editableRow.index, type, content: this.editableRow.data })"
-            @done="$refs.menu.hide()"
-          />
-        </slot>
-      </q-menu>
+    <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}" :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}">
       <q-resize-observer @resize="wrapperResizeHandler"/>
-      <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
-        v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: '100%'}" ref="header"
-      >
-        <div class="header__inner" :style="{width: `${rowWidth}px` }">
-          <draggable :list="cols" ghostClass="ghost" tag="span" @end="$emit('update-cols', cols)" :move="moveDragHandler">
-            <transition-group type="transition" name="flip-list">
-              <template v-for="(prop, index) in cols">
-                <div class="header__item" :key="prop.name" v-if="prop.display"
-                  :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move"
-                >
-                  <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
-                    ''}`}}
-                  </q-tooltip>
-                  <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
-                  <vue-draggable-resizable
-                    :ref="`drag${activeColsIndexes[index]}`"
-                    class="absolute-top-left"
-                    v-if="$q.platform.is.desktop && needResizeControl"
-                    :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
-                    :h="itemHeight * (itemsCount + 1)" :minw="50" :z='1'
-                    @resizing="() => { resizing = true }"
-                    @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update-cols', cols), resizing = false}"
-                  />
-                </div>
-              </template>
-            </transition-group>
-          </draggable>
-        </div>
-      </div>
       <q-btn
         v-if="currentScrollTop < allScrollTop && items.length"
         fab-mini flat icon="mdi-chevron-down"
         @click="$emit('action-to-bottom')"
         class="absolute-bottom-right action action__to-bottom" style="z-index: 2"
         :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
+        :style="{right: colsAddition ? '270px' : ''}"
       >
         <q-tooltip>To bottom</q-tooltip>
       </q-btn>
@@ -110,29 +84,97 @@
           {{(i18n && i18n['Messages not found']) || 'Messages not found'}}
         </div>
       </slot>
-      <div
-        v-else-if="!items.length && loading && itemsCount > 0"
-        :style="{height: `${wrapperHeight - 1}px`, overflow: 'auto', top: `${itemHeight}px`}"
-        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+      <div v-else-if="!items.length && loading && itemsCount > 0"
+        :style="{height: `${wrapperHeight + headerHeight - 0.5}px`, overflow: 'auto'}"
+        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted}"
         class="absolute-top-left absolute-bottom-right"
       >
+        <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
+          v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${headerHeight}px`, width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+        >
+          <div class="header__inner" :style="{ width: `${rowWidth}px` }">
+            <template v-for="(prop, index) in cols">
+              <div class="header__item" :key="prop.name" v-if="prop.display" :class="{[`item_${activeColsIndexes[index]}`]: true}">
+                <span class="item__label">
+                  {{prop.title || prop.name}}
+                  <span v-if="prop.addition">({{prop.addition}})</span>
+                  <span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span>
+                </span>
+              </div>
+            </template>
+          </div>
+        </div>
         <table-skeleton v-for="(i, key) in new Array(itemsCount - 1).fill('')" :key="key" :rows="rowWidths"/>
       </div>
-      <VirtualList
-        v-else
-        v-auto-bottom="needAutoScroll"
-        :onscroll="listScroll"
-        ref="scroller"
-        :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${itemHeight}px`, zIndex: resizing ? '' : 1}"
-        class="list__content absolute-top-left absolute-bottom-right"
-        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
-        :size="itemHeight"
-        :remain="itemsCount"
-        wclass="q-w-list"
-        :item="item"
-        :itemcount="items.length"
-        :itemprops="getItemProps"
-      />
+      <div v-else class="full-height">
+        <q-menu
+          ref="menu" v-if="items.length && !loading"
+          context-menu touch-position
+          @before-show="menuShow"
+          @before-hide="menuHide"
+        >
+          <slot name="context-menu" :col="editableCol" :row="editableRow">
+            <cols-menu
+              :col="editableCol"
+              :row="editableRow"
+              @add="colsAddition = true, addingRow = editableRow"
+              @remove="toggleCol"
+              @action="(type) => clickHandler({ index: this.editableRow.index, type, content: this.editableRow.data })"
+            />
+          </slot>
+        </q-menu>
+        <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
+          v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+        >
+          <div class="header__inner" :style="{width: `${rowWidth}px` }">
+            <draggable :list="cols" ghostClass="ghost" tag="span" @end="$emit('update-cols', cols)" :move="moveDragHandler">
+              <transition-group type="transition" name="flip-list">
+                <template v-for="(prop, index) in cols">
+                  <div class="header__item" :key="prop.name" v-if="prop.display"
+                    :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move"
+                  >
+                    <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
+                      ''}`}}
+                    </q-tooltip>
+                    <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
+                    <vue-draggable-resizable
+                      :ref="`drag${activeColsIndexes[index]}`"
+                      class="absolute-top-left"
+                      v-if="$q.platform.is.desktop && needResizeControl"
+                      :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
+                      :h="(itemHeight * itemsCount) + headerHeight" :minw="50" :z='1'
+                      @resizing="() => { resizing = true }"
+                      @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update-cols', cols), resizing = false}"
+                    />
+                  </div>
+                </template>
+              </transition-group>
+            </draggable>
+          </div>
+        </div>
+        <virtual-list
+          ref="scroller"
+          :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
+          class="list__content absolute-top-left absolute-bottom-right"
+          :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+          wclass="q-w-list"
+          v-auto-bottom="needAutoScroll"
+          :onscroll="listScroll"
+          :size="itemHeight"
+          :remain="itemsCount"
+          :item="item"
+          :itemcount="items.length"
+          :itemprops="getItemProps"
+        />
+        <cols-additing
+          v-if="colsAddition"
+          style="width: 250px"
+          class="absolute-bottom-right absolute-top-right"
+          :cols="additionCols"
+          @add="addCustomColumnHandler"
+          @done="colsAddition = false, addingRow = undefined"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -145,6 +187,7 @@ import DateRangeModal from './DateRangeModal'
 import ListItem from './ListItem.vue'
 import TableSkeleton from './TableSkeleton'
 import ColsMenu from './ColsMenu'
+import ColsAdditing from './ColsAdditing'
 import draggable from 'vuedraggable'
 import get from 'lodash/get'
 import debounce from 'lodash/debounce'
@@ -201,9 +244,10 @@ export default {
     viewConfig: Object,
     loading: Boolean,
     scrollOffset: [Number, String],
-    hasNewMessages: [Object, Boolean]
+    hasNewMessages: [Object, Boolean],
+    toDefaultCols: Function
   },
-  components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal, ColsMenu },
+  components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal, ColsMenu, ColsAdditing },
   data () {
     const defaultConfig = {
       needShowFilter: false,
@@ -216,6 +260,7 @@ export default {
       wrapperWidth: 0,
       itemsCount: 0,
       defaultItemWidth: 150,
+      headerHeight: this.itemHeight + 5,
       dynamicCSS: document.createElement('style'),
       showSearch: false,
       needAutoScroll: false,
@@ -234,9 +279,11 @@ export default {
       needResizeControl: true,
       allScrollTop: 0,
       resizing: false,
-      contextMenuModel: false,
       editableCol: null,
-      editableRow: null
+      addingRow: undefined,
+      editableRow: null,
+      colsAddition: false,
+      menuModel: false
     }
   },
   computed: {
@@ -275,6 +322,26 @@ export default {
         widths.push(col.width)
       })
       return widths
+    },
+    additionCols () {
+      let cols = this.cols.reduce((res, col) => {
+        if (col.display) {
+          res.existed[col.name] = true
+        } else {
+          res.notExisted[col.name] = true
+        }
+        return res
+      }, { existed: {}, notExisted: {} })
+      if (this.addingRow) {
+        const params = Object.keys(this.addingRow.data)
+        params.forEach((param) => {
+          if (!cols.existed[param] && !cols.notExisted[param] && param.indexOf('x-flespi') === -1) {
+            cols.notExisted[param] = true
+          }
+        })
+      }
+      cols = Object.keys(cols.notExisted)
+      return cols
     }
   },
   methods: {
@@ -323,7 +390,7 @@ export default {
       if (!wrapper) {
         return false
       }
-      this.wrapperHeight = wrapper.offsetHeight - this.itemHeight // - header
+      this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
       this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
@@ -475,9 +542,16 @@ export default {
       if (rowEl) {
         const rowIndex = Number(rowEl.getAttribute('data-index'))
         const rowData = this.getItemProps(rowIndex)
+        const rowContent = Object.keys(rowData.props.item).reduce((result, key) => {
+          if (key.indexOf('x-flespi') === 0) {
+            return result
+          }
+          result[key] = rowData.props.item[key]
+          return result
+        }, {})
         this.editableRow = {
           index: rowIndex,
-          data: rowData.props.item,
+          data: rowContent,
           actions: rowData.props.actions,
           dataHandler: rowData.dataHandler
         }
@@ -487,29 +561,31 @@ export default {
       this.editableCol = null
       this.editableRow = null
     },
-    toggleAllColumnsHandler () {
-      let flag = this.cols.reduce((flag, col) => {
-        if (col.__dest === 'etc') { return flag }
-        return flag || col.display
-      }, false)
-      flag = !flag
-      this.cols.forEach((_, index) => {
-        this.$set(this.cols[index], 'display', flag)
+    addCustomColumnHandler (colName) {
+      let existingIndex = -1
+      const existingCol = this.cols.filter((existingCol, index) => {
+        const flag = existingCol.name === colName
+        if (flag) { existingIndex = index }
+        return flag
       })
-      if (!flag && this.cols[this.cols.length - 1].__dest === 'etc') {
-        this.$set(this.cols[this.cols.length - 1], 'display', !flag)
-      }
-      this.updateCols()
-    },
-    addCustomColumnHandler (col) {
-      col = { ...col }
-      const existingCol = this.cols.filter(existingCol => existingCol.name === col.name)
+      let scrollWidth = 0
+      const lastCol = this.cols[this.cols.length - 1]
       if (existingCol.length) {
         existingCol[0].display = true
-      } else if (this.cols[this.cols.length - 1].__dest === 'etc') {
-        this.cols.splice(this.cols.length - 2, 0, col)
+        for (let i = 0; i < this.cols.length; i++) {
+          if (i === existingIndex) { break }
+          const col = this.cols[i]
+          if (col.display) { scrollWidth += this.cols[i].width }
+        }
+      } else if (lastCol.__dest === 'etc') {
+        this.cols.splice(this.cols.length - 1, 0, { name: colName, width: 150, display: true, custom: true })
+        scrollWidth = this.$refs.scroller.$el.scrollWidth - (lastCol.display ? lastCol.width : 0)
       } else {
-        this.cols.push(col)
+        this.cols.push({ name: colName, width: 150, display: true, custom: true })
+        scrollWidth = this.$refs.scroller.$el.scrollWidth
+      }
+      if (scrollWidth) {
+        this.$nextTick(() => { this.$refs.scroller.$el.scrollLeft = scrollWidth - (this.wrapperWidth / 2) })
       }
       this.updateCols()
     },
@@ -518,7 +594,22 @@ export default {
       this.updateCols()
     },
     toggleCol () {
-      this.$set(this.activeCols[this.editableCol.index], 'display', !this.activeCols[this.editableCol.index].display)
+      const col = this.activeCols[this.editableCol.index]
+      if (col.custom) {
+        this.removeCol()
+      } else {
+        this.$set(this.activeCols[this.editableCol.index], 'display', !this.activeCols[this.editableCol.index].display)
+        this.updateCols()
+      }
+    },
+    toProtocolSchemaCols () {
+      this.cols.forEach((col, index, cols) => {
+        if (col.custom) {
+          cols.splice(index, 1)
+        } else if (!col.display) {
+          this.$set(col, 'display', true)
+        }
+      })
       this.updateCols()
     },
     updateCols () {
@@ -526,18 +617,22 @@ export default {
     },
     moveDragHandler: debounce(function (evt, oevt) {
       const wrapperWidth = this.wrapperWidth
+      const el = this.$refs.scroller.$el
       const { left, right } = evt.relatedRect
       const borderValue = 50
       let changeWidthPerTick = 0
-      if (right - wrapperWidth + borderValue > 0) { changeWidthPerTick = (wrapperWidth / 2) / 20 }
-      if (left < borderValue) { changeWidthPerTick = -((wrapperWidth / 2) / 20) }
+      if (right - wrapperWidth + borderValue > 0) {
+        changeWidthPerTick = (wrapperWidth / 2) / 20
+      } else if (el.scrollLeft - left < borderValue) {
+        changeWidthPerTick = -((wrapperWidth / 2) / 20)
+      }
       if (changeWidthPerTick) {
         let counter = 0
         this.scrollHorizontalInterval = setInterval(() => {
-          this.$refs.scroller.$el.scrollLeft += changeWidthPerTick
+          el.scrollLeft += changeWidthPerTick
           counter++
           if (counter === 10) { clearInterval(this.scrollHorizontalInterval) }
-        }, 15)
+        }, 10)
       }
     }, 300)
   },
@@ -615,6 +710,9 @@ export default {
 </script>
 
 <style lang="stylus">
+  body.mobile
+    -webkit-touch-callout none
+    -webkit-user-select none
   .message-viewer
     .viewer__toolbar
       .on-right
@@ -639,7 +737,7 @@ export default {
               overflow hidden
               display block
               padding-left 5px
-              line-height 19px
+              line-height 24px
             .handle-mr
               position: absolute
               width: 5px

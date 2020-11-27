@@ -1,13 +1,7 @@
 <template>
   <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" @click="itemClickHandler">
     <template v-for="(prop, k) in cols" >
-      <span class="list__item item_actions" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}" v-if="prop.__dest === 'action'" :key="k">
-        <q-icon v-for="(action, i) in actions" :key="i" @click.stop.native="clickHandler(index, action.type, item)"
-                :class="action.classes" class="cursor-pointer on-left" :name="action.icon">
-          <q-tooltip>{{action.label}}</q-tooltip>
-        </q-icon>
-      </span>
-      <span v-else-if="prop.__dest === 'etc'" class="list__item item_etc" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}" :key="k">{{etc}}</span>
+      <span v-if="prop.__dest === 'etc'" class="list__item item_etc" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}" :key="k">{{etc}}</span>
       <span v-else :key="k" class="list__item" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}">{{prop.custom ? JSON.stringify(item[prop.name]) : item[prop.name]}}</span>
     </template>
   </div>

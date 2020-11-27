@@ -52,7 +52,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
 
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     const DEFAULT_COL_NAMES = state.defaultColsNames
-    const needActions = sysColsNeedInitFlags.actions
     const needEtc = sysColsNeedInitFlags.etc
     commit('reqStart')
     if (rootState.token && state.active) {
@@ -67,16 +66,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const colsFromStorage = getColsFromLS(state)
         let cols = (colsFromStorage && colsFromStorage[device.device_type_id] && colsFromStorage[device.device_type_id].length)
           ? colsFromStorage[device.device_type_id] : []
-        const needntMigration = cols.length &&
-          (colsFromStorage[device.device_type_id][1] && colsFromStorage[device.device_type_id][1].unit !== undefined) // type and unit adding 02.09.20
+        const needMigration = !cols.length || (
+          cols.length && (colsFromStorage[device.device_type_id][1] && colsFromStorage[device.device_type_id][1].unit === undefined)
+        ) // type and unit adding 02.09.20
 
-        if (needntMigration) {
-          /* adding sys cols after migration. 30.01.20 */
-          if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
-            cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
-            cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
-          }
-        } else {
+        /* adding sys cols after migration. 12.11.20 */
+        if (cols && cols[0] && cols[0].__dest === 'action') {
+          cols.shift()
+        }
+        if (needMigration) {
           if (device.device_type_id) {
             /* getting protocol id */
             const protocolResp = await Vue.connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
@@ -118,7 +116,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
               return cols
             }, [])
           }
-          cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
           cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
         }
         Vue.set(state, 'cols', cols)

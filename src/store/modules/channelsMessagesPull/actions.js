@@ -42,7 +42,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
 
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     commit('reqStart')
-    const needActions = sysColsNeedInitFlags.actions
     const needEtc = sysColsNeedInitFlags.etc
     if (rootState.token && state.active) {
       try {
@@ -51,10 +50,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const colsFromStorage = getColsFromLS(state)
         if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active]) {
           cols = colsFromStorage[state.active]
-          /* adding sys cols after migration. 30.01.20 */
-          if (!cols[0].__dest && !cols[cols.length - 1].__dest) {
-            cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
-            cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
+          /* adding sys cols after migration. 12.11.20 */
+          if (cols[0].__dest === 'action') {
+            cols.shift()
           }
         } else {
           const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
@@ -78,7 +76,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
               cols.push(colItem)
             })
           }
-          cols.unshift({ name: 'actions', width: 50, display: needActions, __dest: 'action' })
           cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
         }
         commit('setCols', cols)
