@@ -589,6 +589,15 @@ export default {
       }
       this.updateCols()
     },
+    removeCustomColumnHandler (colName) {
+      const existingCol = this.cols.filter((existingCol, index) => {
+        return existingCol.name === colName
+      })
+      if (existingCol.length) {
+        existingCol[0].display = false
+        this.updateCols()
+      }
+    },
     removeCol () {
       this.cols.splice(this.editableCol.index, 1)
       this.updateCols()
@@ -775,8 +784,6 @@ export default {
     &__to-new-messages
       right calc(50% - 76px)
       bottom 18px
-  .flip-list-move
-    transition transform 0.5s
   .ghost
     opacity 0.5
     color $grey-7
