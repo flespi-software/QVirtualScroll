@@ -54,7 +54,7 @@
                 <q-item-section>
                   <template v-if="name === '_default'">{{(i18n && i18n['Default columns']) || 'Default columns'}}</template>
                   <template v-else-if="name === '_protocol'">{{(i18n && i18n['Columns by schema']) || 'Columns by schema'}}</template>
-                  <template v-else>{{name}}</template>
+                  <template v-else>{{schema.name}}</template>
                 </q-item-section>
                 <q-item-section avatar v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'">
                   <q-btn icon="mdi-close" color="white" flat round dense @click.stop="colsSchemaRemoveHandler(name)"/>
@@ -62,7 +62,7 @@
               </q-item>
             </template>
             <q-separator/>
-            <q-item clickable dense v-ripple @click="colsSchemaAddingHandler" :disable="!colsSchemaEdited" :active="colsSchemaEdited" active-class="schema--active" class="q-px-sm" v-close-popup>
+            <q-item clickable dense v-ripple @click="colsSchemaAddingHandler" :disable="!colsSchemaEdited" active-class="schema--active" class="q-px-sm" v-close-popup>
               <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
                 <q-icon name="mdi-table-plus" />
               </q-item-section>
@@ -77,24 +77,24 @@
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}" :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}">
       <q-resize-observer @resize="wrapperResizeHandler"/>
       <div :class="[`bg-${currentTheme.controlsInverted ? 'grey-8' : 'white'}`]" class="absolute-top-right rounded-borders" style="z-index: 2; right: 20px;">
-        <q-input ref="newColsSchemaName"
-          v-model="newColsSchema.name" v-if="colsSchemaAdd" autofocus no-error-icon
+        <q-input
+          v-model="newSchemaName" v-if="colsSchemaAdd" autofocus
           label="Preset name" outlined hide-bottom-space dense
           :dark="currentTheme.controlsInverted"
-          :color="!!cols.schemas[newColsSchema.name] ? 'yellow' : !newColsSchema.name ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
-          @keyup.enter="() => { if (newColsSchema.name) {colsSchemaAddingDoneHandler()} }"
-          @keyup.esc="colsSchemaAddingCloseHandler"
-          :bottom-slots="!!cols.schemas[newColsSchema.name]"
+          :color="!!cols.schemas[newSchemaName] ? 'yellow' : (!newSchemaName || newSchemaName.indexOf('_') === 0) ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
+          @keyup.enter="() => { if (newSchemaName && newSchemaName.indexOf('_') !== 0) {colsSchemaAddingDoneHandler()} }"
+          @keyup.esc="colsSchemaAddingCloseHandler()"
+          :bottom-slots="!!cols.schemas[newSchemaName]"
         >
           <q-btn
             :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-content-save-outline"
-            dense flat @click="colsSchemaAddingDoneHandler" :disable="!newColsSchema.name"
+            dense flat @click="colsSchemaAddingDoneHandler" :disable="(!newSchemaName || newSchemaName.indexOf('_') === 0)"
           />
           <q-btn
             :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-close"
-            dense flat @click="colsSchemaAddingCloseHandler"
+            dense flat @click="colsSchemaAddingCloseHandler()"
           />
-          <div slot="hint" v-if="!!cols.schemas[newColsSchema.name]" class="text-yellow">Your schema will be owerwritten or change name</div>
+          <div slot="hint" v-if="!!cols.schemas[newSchemaName]" class="text-yellow">Your schema will be owerwritten or change name</div>
         </q-input>
       </div>
       <q-btn
@@ -346,16 +346,19 @@ export default {
       colsAddition: false,
       menuModel: false,
       colsSchemaAdd: false,
-      newColsSchema: undefined,
-      colsSchemaEdited: false
+      colsSchemaEdited: !!this.cols.schemas._unsaved,
+      newSchemaName: 'Modified'
     }
   },
   computed: {
     activeSchema () {
-      return this.colsSchemaEdited ? '' : this.cols.activeSchema
+      return this.cols.activeSchema
     },
     colsEnum () {
       return this.cols.enum
+    },
+    unsavedColsSchema () {
+      return this.cols.schemas._unsaved || {}
     },
     isSystemSchema () {
       return this.activeSchema === '_default' || this.activeSchema === '_protocol'
@@ -626,10 +629,11 @@ export default {
       const existingCol = this.cols.enum[colName]
       let scrollWidth = 0
       const lastCol = this.activeCols[this.activeCols.length - 1]
+      const lastColSchema = this.cols.enum[lastCol.name]
       if (!existingCol) {
         this.cols.enum[colName] = { name: colName, custom: true }
       }
-      if (lastCol.__dest === 'etc') {
+      if (lastColSchema.__dest === 'etc') {
         this.activeCols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
         scrollWidth = this.$refs.scroller.$el.scrollWidth - lastCol.width
       } else {
@@ -640,6 +644,13 @@ export default {
         this.$nextTick(() => { this.$refs.scroller.$el.scrollLeft = scrollWidth - (this.wrapperWidth / 2) })
       }
       this.updateCols()
+    },
+    removeCustomColumnHandler (colName) {
+      const index = this.activeCols.findIndex(col => col.name === colName)
+      if (index !== -1) {
+        this.activeCols.splice(index, 1)
+        this.updateCols()
+      }
     },
     removeCol () {
       delete this.cols.enum[this.editableCol.data.name]
@@ -681,29 +692,32 @@ export default {
       this.colsAddition = true
     },
     colsSchemaAddingHandler () {
-      let schemaName = 'Preset'
-      if (!this.activeSchema && this.cols.activeSchema !== '_default' && this.cols.activeSchema !== '_protocol') {
-        schemaName = this.cols.activeSchema
-      }
-      this.newColsSchema = {
-        name: schemaName,
-        cols: cloneDeep(this.activeCols)
-      }
+      this.newSchemaName = 'Modified'
       setTimeout(() => { this.colsSchemaAdd = true }, 100)
     },
     colsSchemaAddingCloseHandler () {
       this.colsSchemaAdd = false
-      this.newColsSchema = undefined
+      this.newSchemaName = 'Modified'
     },
     colsSchemaAddingDoneHandler () {
       const colSchema = {
-        name: this.newColsSchema.name,
-        cols: this.newColsSchema.cols
+        name: this.newSchemaName,
+        cols: cloneDeep(this.activeCols)
       }
       this.cols.schemas[colSchema.name] = colSchema
       this.cols.activeSchema = colSchema.name
       this.colsSchemaEdited = false
       this.colsSchemaAddingCloseHandler()
+      this.$delete(this.cols.schemas, '_unsaved')
+      this.updateCols()
+    },
+    setUnsavedSchema (cols) {
+      const colSchema = {
+        name: 'Modified',
+        cols: cols
+      }
+      this.cols.schemas._unsaved = colSchema
+      this.cols.activeSchema = '_unsaved'
       this.updateCols()
     },
     colsSchemaRemoveHandler (name) {
@@ -736,8 +750,9 @@ export default {
       deep: true,
       handler (cols, oldCols) {
         if (cols === oldCols) {
-          if (this.cols.activeSchema) {
+          if (this.cols.activeSchema !== '_unsaved') {
             this.colsSchemaEdited = true
+            this.setUnsavedSchema(cloneDeep(cols))
           }
         }
         this.updateDynamicCSS()

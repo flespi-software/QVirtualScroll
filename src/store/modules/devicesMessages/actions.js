@@ -54,9 +54,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       enum: {}
     }
     if (cols.length) {
-      schema.activeSchema = 'custom preset'
-      schema.schemas['custom preset'] = {
-        name: 'custom preset',
+      schema.activeSchema = '_unsaved'
+      schema.schemasю_unsaved = {
+        name: 'Modified',
         cols: cols.reduce((res, col) => {
           if (col.display) {
             res.push({ name: col.name, width: col.width })

@@ -36,7 +36,7 @@ import cols from '../data/cols.json'
 
 function getCols (cols) {
   const schema = {
-    activeSchema: 'custom',
+    activeSchema: '_unsaved',
     schemas: {
       _default: {
         name: '_default',
@@ -50,8 +50,8 @@ function getCols (cols) {
         name: '_protocol',
         cols: cols.filter(col => !col.custom).map(col => ({ name: col.name, width: 150 }))
       },
-      custom: {
-        name: 'custom',
+      _unsaved: {
+        name: 'Modified',
         cols: cols.map(col => ({ name: col.name, __dest: col.__dest, width: 150 }))
       }
     },
