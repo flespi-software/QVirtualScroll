@@ -1,4 +1,6 @@
 import _get from 'lodash/get'
+
+const defaultCols = ['begin', 'end', 'duration', 'timestamp', 'id']
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = {}
@@ -26,6 +28,68 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return params
   }
 
+  /* migration to new format storing cols 28.12.20 */
+  function migrateCols (cols) {
+    const schema = {
+      activeSchema: '_default',
+      schemas: {
+        _default: {
+          name: '_default',
+          cols: defaultCols.map(name => ({ name, width: 150 }))
+        },
+        _protocol: {
+          name: '_protocol',
+          cols: cols.reduce((res, col) => {
+            if (!col.custom) {
+              res.push({ name: col.name, width: 150 })
+            }
+            return res
+          }, [])
+        }
+      },
+      enum: {}
+    }
+    if (cols.length) {
+      schema.activeSchema = 'custom preset'
+      schema.schemas['custom preset'] = {
+        name: 'custom preset',
+        cols: cols.reduce((res, col) => {
+          if (col.display) {
+            res.push({ name: col.name, width: col.width })
+          }
+          return res
+        }, [])
+      }
+      schema.enum = cols.reduce((res, col) => {
+        res[col.name] = { ...col }
+        delete res[col.name].display
+        delete res[col.name].width
+        return res
+      }, {})
+    }
+    return schema
+  }
+
+  function getDefaultColsSchema () {
+    return {
+      activeSchema: '_default',
+      schemas: {
+        _default: {
+          name: '_default',
+          cols: defaultCols.map(name => ({ name, width: 150 }))
+        },
+        _protocol: {
+          name: '_protocol',
+          cols: defaultCols.map(name => ({ name, width: 150 }))
+        }
+      },
+      enum: defaultCols.reduce((res, name) => {
+        res[name] = { name }
+        return res
+      }, {})
+    }
+  }
+
   function getColsFromLS (state) {
     let colsFromStorage = {}
     if (state.lsNamespace) {
@@ -38,28 +102,53 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       const lsPath = state.lsNamespace.split('.'),
         lsItemName = lsPath.shift(),
         lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
+        appStorage = LocalStorage.getItem(lsItemName) || {}
       colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
     } else {
-      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+      colsFromStorage = LocalStorage.getItem(state.name)
+      if (!colsFromStorage || colsFromStorage === 'null') {
+        colsFromStorage = {}
+      }
     }
     return colsFromStorage
   }
 
   function getCols ({ state, commit }, counters) {
-    let cols = []
     const colsFromStorage = getColsFromLS(state)
     if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
-      cols = colsFromStorage[state.active]
-      /* adding sys cols after migration. 12.11.20 */
-      cols = cols.filter(col => !col.__dest)
-      if (cols[0].__dest === 'action') {
-        cols.shift()
+      let colsSchema = colsFromStorage[state.active]
+      const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
+        ? colsFromStorage['custom-cols-schemas'] : {}
+      colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+      if (Array.isArray(colsSchema)) {
+        colsSchema = migrateCols(colsSchema)
+        commit('setColsToLS', colsSchema)
       }
-      commit('updateCols', cols)
+
+      /* adding sys cols after migration. 12.11.20 */
+      if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
+        delete colsSchema.enum.action
+      }
+      commit('updateCols', colsSchema)
     } else {
-      counters.push({ name: 'etc', width: 150, display: true, __dest: 'etc' })
-      commit('setCols', counters)
+      const colsSchema = getDefaultColsSchema()
+      counters.forEach(counter => {
+        const name = counter.name
+        const enumCol = {
+          name
+        }
+        const schemaCol = {
+          name,
+          width: 100,
+          description: `${counter.name}[${counter.type}]`
+        }
+        colsSchema.schemas._protocol.cols.push(schemaCol)
+        colsSchema.enum[name] = enumCol
+      })
+      colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+      colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+      colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
+      commit('setCols', colsSchema)
     }
   }
 

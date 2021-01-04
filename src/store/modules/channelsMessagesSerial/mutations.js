@@ -198,14 +198,33 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     return colsFromStorage
   }
 
+  function splitSchemas (cols) {
+    const customColsSchema = {
+      ...cols.schemas,
+      _default: undefined,
+      _protocol: undefined
+    }
+    const defaultColsSchema = {
+      activeSchema: cols.activeSchema,
+      schemas: {
+        _default: cols.schemas._default,
+        _protocol: cols.schemas._protocol
+      },
+      enum: cols.enum
+    }
+    return { customColsSchema, defaultColsSchema }
+  }
+
   function setColsToLS (state, cols) {
-    const colsFromStorage = getColsFromLS(state)
-    colsFromStorage[state.active] = cols
+    const colsFromStorage = getColsFromLS(state) || {}
+    const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
+    colsFromStorage[state.active] = defaultColsSchema
+    colsFromStorage['custom-cols-schemas'] = { ...colsFromStorage['custom-cols-schemas'], ...customColsSchema }
     if (state.lsNamespace) {
       const lsPath = state.lsNamespace.split('.'),
         lsItemName = lsPath.shift(),
         lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
+        appStorage = LocalStorage.getItem(lsItemName) || {}
       set(appStorage, lsRouteToItem, colsFromStorage)
       LocalStorage.set(lsItemName, appStorage)
     } else {
@@ -216,18 +235,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   function setCols (state, cols) {
     setColsToLS(state, cols)
     Vue.set(state, 'cols', cols)
-  }
-
-  function setDefaultCols (state) {
-    state.cols.forEach((col, index) => {
-      if (col.__dest) { return }
-      if (state.defaultColsNames.includes(col.name)) {
-        Vue.set(state.cols[index], 'display', true)
-      } else {
-        Vue.set(state.cols[index], 'display', false)
-      }
-    })
-    updateCols(state, state.cols)
   }
 
   function setSettings (state, channel) {
@@ -293,7 +300,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setActive,
     setCols,
     updateCols,
-    setDefaultCols,
     setSelected,
     clearSelected,
     setSortBy,

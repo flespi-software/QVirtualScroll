@@ -1,5 +1,6 @@
 import _get from 'lodash/get'
 
+const defaultCols = ['timestamp', 'server.timestamp', 'ident', 'position.latitude', 'position.longitude', 'position.altitude', 'position.speed']
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = {}
@@ -30,6 +31,64 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
+  /* migration to new format storing cols 28.12.20 */
+  function migrateCols (cols) {
+    const schema = {
+      activeSchema: '_default',
+      schemas: {
+        _default: {
+          name: '_default',
+          cols: defaultCols.map(name => ({ name, width: 150 }))
+        },
+        _protocol: {
+          name: '_protocol',
+          cols: cols.reduce((res, col) => {
+            if (!col.custom) {
+              res.push({ name: col.name, width: 150 })
+            }
+            return res
+          }, [])
+        }
+      },
+      enum: {}
+    }
+    if (cols.length) {
+      schema.activeSchema = 'custom preset'
+      schema.schemas['custom preset'] = {
+        name: 'custom preset',
+        cols: cols.reduce((res, col) => {
+          if (col.display) {
+            res.push({ name: col.name, width: col.width })
+          }
+          return res
+        }, [])
+      }
+      schema.enum = cols.reduce((res, col) => {
+        res[col.name] = { ...col }
+        delete res[col.name].display
+        delete res[col.name].width
+        return res
+      }, {})
+    }
+    return schema
+  }
+
+  function getDefaultColsSchema () {
+    return {
+      activeSchema: '_default',
+      schemas: {
+        _default: {
+          name: '_default',
+          cols: defaultCols.map(name => ({ name, width: 150 }))
+        }
+      },
+      enum: defaultCols.reduce((res, name) => {
+        res[name] = { name }
+        return res
+      }, {})
+    }
+  }
+
   function getColsFromLS (state) {
     let colsFromStorage = {}
     if (state.lsNamespace) {
@@ -42,10 +101,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       const lsPath = state.lsNamespace.split('.'),
         lsItemName = lsPath.shift(),
         lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
+        appStorage = LocalStorage.getItem(lsItemName) || {}
       colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
     } else {
-      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
+      colsFromStorage = LocalStorage.getItem(state.name)
+      if (!colsFromStorage || colsFromStorage === 'null') {
+        colsFromStorage = {}
+      }
     }
     return colsFromStorage
   }
@@ -57,17 +119,25 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       try {
         Vue.set(state, 'isLoading', true)
         const colsFromStorage = getColsFromLS(state)
-        let cols = []
-        const needntMigration = (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) &&
-          (colsFromStorage[state.active][1] && colsFromStorage[state.active][1].unit !== undefined) // type and unit adding 02.09.20
+        let colsSchema = (colsFromStorage && colsFromStorage[state.active])
+          ? colsFromStorage[state.active] : getDefaultColsSchema()
+        const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
+          ? colsFromStorage['custom-cols-schemas'] : {}
+        colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+        if (Array.isArray(colsSchema)) {
+          colsSchema = migrateCols(colsSchema)
+          commit('setColsToLS', colsSchema)
+        }
+        const needMigration = !colsSchema.enum || (
+          _get(colsSchema.enum, 'timestamp.unit', undefined) === undefined
+        ) // type and unit adding 02.09.20
 
-        if (needntMigration) {
-          cols = colsFromStorage[state.active]
-          /* adding sys cols after migration. 12.11.20 */
-          if (cols[0].__dest === 'action') {
-            cols.shift()
-          }
-        } else {
+        /* adding sys cols after migration. 12.11.20 */
+        if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
+          delete colsSchema.enum.action
+        }
+
+        if (needMigration) {
           const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
           const protocolIdData = protocolIdResp.data
           errorsCheck(protocolIdData)
@@ -75,31 +145,50 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
             const colsResp = await Vue.connector.gw.getChannelProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
             const colsData = colsResp.data
             errorsCheck(colsData)
-            colsData.result[0].message_parameters.forEach(col => {
-              const colItem = {
-                name: col.name,
-                width: 160,
-                display: state.defaultColsNames.includes(col.name),
-                description: col.info,
-                type: col.type || '',
-                unit: col.unit || ''
+            const messageParams = colsData.result[0].message_parameters
+            /* initing columns by message parameters */
+            colsSchema.schemas._protocol = {
+              name: '_protocol',
+              cols: []
+            }
+            messageParams.forEach((param) => {
+              const name = param.name
+              const enumCol = {
+                name,
+                type: param.type || '',
+                unit: param.unit || '',
+                description: param.info || ''
               }
-              if (colItem.name === 'timestamp') {
+              const schemaCol = {
+                name,
+                width: 150
+              }
+              if (name === 'timestamp') {
                 const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-                colItem.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-                colItem.type = ''
-                colItem.unit = ''
+                enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+                enumCol.type = ''
+                enumCol.unit = ''
+                schemaCol.width = 190
+                colsSchema.schemas._protocol.cols.unshift(schemaCol)
+                colsSchema.enum.timestamp = enumCol
+                return
               }
-              if (colItem.name === 'server.timestamp') {
-                colItem.type = ''
-                colItem.unit = ''
+              if (name === 'server.timestamp') {
+                enumCol.type = ''
+                enumCol.unit = ''
+                schemaCol.width = 190
               }
-              cols.push(colItem)
+              colsSchema.schemas._protocol.cols.push(schemaCol)
+              colsSchema.enum[name] = enumCol
             })
           }
-          cols.push({ name: 'etc', width: 150, display: needEtc, __dest: 'etc' })
+          if (needEtc) {
+            colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+            colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+          }
+          colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
         }
-        commit('setCols', cols)
+        commit('setCols', colsSchema)
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)

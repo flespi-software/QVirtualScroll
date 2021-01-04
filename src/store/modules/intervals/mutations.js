@@ -1,6 +1,5 @@
 import get from 'lodash/get'
 import set from 'lodash/set'
-const defaultCols = ['begin', 'end', 'duration', 'timestamp', 'id']
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   function setMessages (state, data) {
     if (data && data.length) {
@@ -82,14 +81,33 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     return colsFromStorage
   }
 
+  function splitSchemas (cols) {
+    const customColsSchema = {
+      ...cols.schemas,
+      _default: undefined,
+      _protocol: undefined
+    }
+    const defaultColsSchema = {
+      activeSchema: cols.activeSchema,
+      schemas: {
+        _default: cols.schemas._default,
+        _protocol: cols.schemas._protocol
+      },
+      enum: cols.enum
+    }
+    return { customColsSchema, defaultColsSchema }
+  }
+
   function setColsToLS (state, cols) {
-    const colsFromStorage = getColsFromLS(state)
-    colsFromStorage[state.active] = cols
+    const colsFromStorage = getColsFromLS(state) || {}
+    const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
+    colsFromStorage[state.active] = defaultColsSchema
+    colsFromStorage['custom-cols-schemas'] = { ...colsFromStorage['custom-cols-schemas'], ...customColsSchema }
     if (state.lsNamespace) {
       const lsPath = state.lsNamespace.split('.'),
         lsItemName = lsPath.shift(),
         lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
+        appStorage = LocalStorage.getItem(lsItemName) || {}
       set(appStorage, lsRouteToItem, colsFromStorage)
       LocalStorage.set(lsItemName, appStorage)
     } else {
@@ -97,69 +115,12 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     }
   }
 
-  function setCols (state, counters) {
-    let cols = [
-      {
-        name: 'begin',
-        title: 'begin',
-        width: 170,
-        display: true,
-        description: 'Begin of interval'
-      },
-      {
-        name: 'end',
-        width: 170,
-        display: true,
-        description: 'End of interval'
-      },
-      {
-        name: 'duration',
-        width: 85,
-        display: true,
-        description: 'Duration of interval'
-      },
-      {
-        name: 'timestamp',
-        width: 170,
-        display: true,
-        description: 'Interval timestamp'
-      },
-      {
-        name: 'id',
-        width: 50,
-        display: true,
-        description: 'ID of interval'
-      }
-    ]
-    const actionsCol = counters.shift()
-    const etcCol = counters.pop()
-    counters.forEach(counter => {
-      Vue.set(counter, 'width', 100)
-      Vue.set(counter, 'display', true)
-      Vue.set(counter, 'description', `${counter.name}[${counter.type}]`)
-      cols.push(counter)
-    })
-    cols = [actionsCol, ...cols, etcCol]
+  function setCols (state, cols) {
     setColsToLS(state, cols)
     Vue.set(state, 'cols', cols)
   }
 
-  function updateCols (state, cols) {
-    setColsToLS(state, cols)
-    Vue.set(state, 'cols', cols)
-  }
-
-  function setDefaultCols (state) {
-    state.cols.forEach((col, index) => {
-      if (col.__dest) { return }
-      if (defaultCols.includes(col.name)) {
-        Vue.set(state.cols[index], 'display', true)
-      } else {
-        Vue.set(state.cols[index], 'display', false)
-      }
-    })
-    updateCols(state, state.cols)
-  }
+  const updateCols = setCols
 
   function setSelected (state, indexes) {
     Vue.set(state, 'selected', indexes)
@@ -193,8 +154,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     clear,
     setActive,
     setCols,
+    setColsToLS,
     updateCols,
-    setDefaultCols,
     setSelected,
     clearSelected,
     setSortBy,

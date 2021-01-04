@@ -30,26 +30,45 @@
         :theme="currentTheme"
         @save="dateRangeModalSave"
       />
-      <q-btn icon="mdi-dots-vertical" flat dense>
+      <q-btn icon="mdi-dots-vertical" flat dense round>
         <q-menu>
-          <q-list dark class="bg-grey-7 q-py-sm" style="min-width: 180px">
-            <q-item clickable dense v-ripple @click="colsAddition = true" class="q-px-sm" v-close-popup>
+          <q-list dark class="bg-grey-7 q-py-xs" style="min-width: 180px; max-width: 500px">
+            <q-item clickable dense v-ripple @click="colAddingHandler" class="q-px-sm" v-close-popup>
               <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
-                <q-icon name="mdi-playlist-plus " />
+                <q-icon name="mdi-playlist-plus" />
               </q-item-section>
               <q-item-section>Add column</q-item-section>
             </q-item>
-            <q-item clickable v-ripple dense class="q-px-sm" v-close-popup @click="toDefaultCols" v-if="toDefaultCols">
+            <q-separator/>
+            <q-item-label header class="q-pa-none q-pl-xs q-pt-xs" style="font-size: .8rem">Columns presets</q-item-label>
+            <template>
+              <q-item
+                clickable v-ripple dense class="q-px-sm schema-item" :active="activeSchema === name" active-class="schema--active"
+                v-close-popup @click="customSchemaApply(name)" v-for="(schema, name) in cols.schemas" :key="name"
+              >
+                <q-item-section avatar class="q-pr-sm" style="min-width: 32px">
+                  <q-icon v-if="name === '_default'" name="mdi-playlist-star" />
+                  <q-icon v-else-if="name === '_protocol'" name="mdi-playlist-check" />
+                  <q-icon v-else name="mdi-table-large" />
+                </q-item-section>
+                <q-item-section>
+                  <template v-if="name === '_default'">{{(i18n && i18n['Default columns']) || 'Default columns'}}</template>
+                  <template v-else-if="name === '_protocol'">{{(i18n && i18n['Columns by schema']) || 'Columns by schema'}}</template>
+                  <template v-else>{{name}}</template>
+                </q-item-section>
+                <q-item-section avatar v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'">
+                  <q-btn icon="mdi-close" color="white" flat round dense @click.stop="colsSchemaRemoveHandler(name)"/>
+                </q-item-section>
+              </q-item>
+            </template>
+            <q-separator/>
+            <q-item clickable dense v-ripple @click="colsSchemaAddingHandler" :disable="!colsSchemaEdited" :active="colsSchemaEdited" active-class="schema--active" class="q-px-sm" v-close-popup>
               <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
-                <q-icon name="mdi-playlist-star" />
+                <q-icon name="mdi-table-plus" />
               </q-item-section>
-              <q-item-section>{{(i18n && i18n['Default columns']) || 'Default columns'}}</q-item-section>
-            </q-item>
-            <q-item clickable v-ripple dense class="q-px-sm" v-close-popup @click="toProtocolSchemaCols">
-              <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
-                <q-icon name="mdi-playlist-check" />
-              </q-item-section>
-              <q-item-section>{{(i18n && i18n['Columns by schema']) || 'Columns by schema'}}</q-item-section>
+              <q-item-section>Save preset</q-item-section>
+              <q-tooltip v-if="!colsSchemaEdited">Configure columns schema first, then save</q-tooltip>
+              <q-tooltip v-else>Save current columns schema</q-tooltip>
             </q-item>
           </q-list>
         </q-menu>
@@ -57,6 +76,27 @@
     </q-toolbar>
     <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}" :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}">
       <q-resize-observer @resize="wrapperResizeHandler"/>
+      <div :class="[`bg-${currentTheme.controlsInverted ? 'grey-8' : 'white'}`]" class="absolute-top-right rounded-borders" style="z-index: 2; right: 20px;">
+        <q-input ref="newColsSchemaName"
+          v-model="newColsSchema.name" v-if="colsSchemaAdd" autofocus no-error-icon
+          label="Preset name" outlined hide-bottom-space dense
+          :dark="currentTheme.controlsInverted"
+          :color="!!cols.schemas[newColsSchema.name] ? 'yellow' : !newColsSchema.name ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
+          @keyup.enter="() => { if (newColsSchema.name) {colsSchemaAddingDoneHandler()} }"
+          @keyup.esc="colsSchemaAddingCloseHandler"
+          :bottom-slots="!!cols.schemas[newColsSchema.name]"
+        >
+          <q-btn
+            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-content-save-outline"
+            dense flat @click="colsSchemaAddingDoneHandler" :disable="!newColsSchema.name"
+          />
+          <q-btn
+            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-close"
+            dense flat @click="colsSchemaAddingCloseHandler"
+          />
+          <div slot="hint" v-if="!!cols.schemas[newColsSchema.name]" class="text-yellow">Your schema will be owerwritten or change name</div>
+        </q-input>
+      </div>
       <q-btn
         v-if="currentScrollTop < allScrollTop && items.length"
         fab-mini flat icon="mdi-chevron-down"
@@ -93,12 +133,12 @@
           v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${headerHeight}px`, width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
         >
           <div class="header__inner" :style="{ width: `${rowWidth}px` }">
-            <template v-for="(prop, index) in cols">
-              <div class="header__item" :key="prop.name" v-if="prop.display" :class="{[`item_${activeColsIndexes[index]}`]: true}">
+            <template v-for="(prop, index) in activeCols">
+              <div class="header__item" :key="prop.name" :class="{[`item_${index}`]: true}">
                 <span class="item__label">
-                  {{prop.title || prop.name}}
-                  <span v-if="prop.addition">({{prop.addition}})</span>
-                  <span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span>
+                  {{colsEnum[prop.name].title || prop.name}}
+                  <span v-if="colsEnum[prop.name].addition">({{colsEnum[prop.name].addition}})</span>
+                  <span v-if="colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">, {{colsEnum[prop.name].unit}}</span>
                 </span>
               </div>
             </template>
@@ -127,24 +167,32 @@
           v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
         >
           <div class="header__inner" :style="{width: `${rowWidth}px` }">
-            <draggable :list="cols" ghostClass="ghost" tag="span" @end="$emit('update-cols', cols)" :move="moveDragHandler">
+            <draggable :list="activeCols" ghostClass="ghost" tag="span" @end="updateCols" :move="moveDragHandler">
               <transition-group type="transition" name="flip-list">
-                <template v-for="(prop, index) in cols">
-                  <div class="header__item" :key="prop.name" v-if="prop.display"
-                    :class="{[`item_${activeColsIndexes[index]}`]: true}" style="cursor: move"
+                <template v-for="(prop, index) in activeCols">
+                  <div class="header__item" :key="prop.name"
+                    :class="{[`item_${index}`]: true}" style="cursor: move"
                   >
-                    <q-tooltip v-if="prop.description || prop.title">{{`${prop.name}: ${prop.description ? prop.description :
-                      ''}`}}
+                    <q-tooltip v-if="colsEnum[prop.name].description || colsEnum[prop.name].title">
+                      {{`${prop.name}: ${colsEnum[prop.name].description ? colsEnum[prop.name].description : ''}`}}
                     </q-tooltip>
-                    <span class="item__label">{{prop.title || prop.name}}<span v-if="prop.addition">({{prop.addition}})</span><span v-if="prop.unit" style="font-size: .8rem" class="text-grey-4">, {{prop.unit}}</span></span>
+                    <span class="item__label">
+                      {{colsEnum[prop.name].title || prop.name}}
+                      <span v-if="colsEnum[prop.name].addition">
+                        ({{colsEnum[prop.name].addition}})
+                      </span>
+                      <span v-if="colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">
+                        , {{colsEnum[prop.name].unit}}
+                      </span>
+                    </span>
                     <vue-draggable-resizable
-                      :ref="`drag${activeColsIndexes[index]}`"
+                      :ref="`drag${index}`"
                       class="absolute-top-left"
                       v-if="$q.platform.is.desktop && needResizeControl"
                       :active="true" :draggable="false" :handles="['mr']" :w="prop.width" :preventDeactivation="true"
                       :h="(itemHeight * itemsCount) + headerHeight" :minw="50" :z='1'
                       @resizing="() => { resizing = true }"
-                      @resizestop="(left, top, width) => {onResize(width, activeColsIndexes[index]), $emit('update-cols', cols), resizing = false}"
+                      @resizestop="(left, top, width) => {onResize(width, index), updateCols(), resizing = false}"
                     />
                   </div>
                 </template>
@@ -191,6 +239,7 @@ import ColsAdditing from './ColsAdditing'
 import draggable from 'vuedraggable'
 import get from 'lodash/get'
 import debounce from 'lodash/debounce'
+import cloneDeep from 'lodash/cloneDeep'
 
 const { setScrollPosition } = scroll
 
@@ -214,8 +263,20 @@ export default {
       type: Object
     },
     cols: {
-      type: Array,
-      required: true
+      type: Object,
+      required: true,
+      default () {
+        return {
+          activeSchema: '_init',
+          schemas: {
+            _init: {
+              name: '_init',
+              cols: []
+            }
+          },
+          enum: {}
+        }
+      }
     },
     actions: {
       type: Array,
@@ -244,8 +305,7 @@ export default {
     viewConfig: Object,
     loading: Boolean,
     scrollOffset: [Number, String],
-    hasNewMessages: [Object, Boolean],
-    toDefaultCols: Function
+    hasNewMessages: [Object, Boolean]
   },
   components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal, ColsMenu, ColsAdditing },
   data () {
@@ -272,6 +332,7 @@ export default {
         contentInverted: false,
         headerShow: true
       },
+      activeCols: cloneDeep(this.cols.schemas[this.cols.activeSchema].cols),
       defaultConfig: defaultConfig,
       hasItemClickHandler: false,
       currentScrollTop: 0,
@@ -283,25 +344,24 @@ export default {
       addingRow: undefined,
       editableRow: null,
       colsAddition: false,
-      menuModel: false
+      menuModel: false,
+      colsSchemaAdd: false,
+      newColsSchema: undefined,
+      colsSchemaEdited: false
     }
   },
   computed: {
+    activeSchema () {
+      return this.colsSchemaEdited ? '' : this.cols.activeSchema
+    },
+    colsEnum () {
+      return this.cols.enum
+    },
+    isSystemSchema () {
+      return this.activeSchema === '_default' || this.activeSchema === '_protocol'
+    },
     needShowToolbar () {
       return this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDateRange
-    },
-    activeCols () {
-      return this.cols.filter(col => col.display)
-    },
-    activeColsIndexes () {
-      let i = 0
-      return this.cols.reduce((result, col, index) => {
-        if (col.display) {
-          result[index] = i
-          i++
-        }
-        return result
-      }, {})
     },
     currentTheme () {
       const theme = Object.assign(this.defaultTheme, this.theme)
@@ -324,8 +384,9 @@ export default {
       return widths
     },
     additionCols () {
-      let cols = this.cols.reduce((res, col) => {
-        if (col.display) {
+      const activeColsNames = this.activeCols.map(col => col.name)
+      let cols = Object.values(this.cols.enum).reduce((res, col) => {
+        if (activeColsNames.includes(col.name)) {
           res.existed[col.name] = true
         } else {
           res.notExisted[col.name] = true
@@ -562,26 +623,17 @@ export default {
       this.editableRow = null
     },
     addCustomColumnHandler (colName) {
-      let existingIndex = -1
-      const existingCol = this.cols.filter((existingCol, index) => {
-        const flag = existingCol.name === colName
-        if (flag) { existingIndex = index }
-        return flag
-      })
+      const existingCol = this.cols.enum[colName]
       let scrollWidth = 0
-      const lastCol = this.cols[this.cols.length - 1]
-      if (existingCol.length) {
-        existingCol[0].display = true
-        for (let i = 0; i < this.cols.length; i++) {
-          if (i === existingIndex) { break }
-          const col = this.cols[i]
-          if (col.display) { scrollWidth += this.cols[i].width }
-        }
-      } else if (lastCol.__dest === 'etc') {
-        this.cols.splice(this.cols.length - 1, 0, { name: colName, width: 150, display: true, custom: true })
-        scrollWidth = this.$refs.scroller.$el.scrollWidth - (lastCol.display ? lastCol.width : 0)
+      const lastCol = this.activeCols[this.activeCols.length - 1]
+      if (!existingCol) {
+        this.cols.enum[colName] = { name: colName, custom: true }
+      }
+      if (lastCol.__dest === 'etc') {
+        this.activeCols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
+        scrollWidth = this.$refs.scroller.$el.scrollWidth - lastCol.width
       } else {
-        this.cols.push({ name: colName, width: 150, display: true, custom: true })
+        this.activeCols.push({ name: colName, width: 150 })
         scrollWidth = this.$refs.scroller.$el.scrollWidth
       }
       if (scrollWidth) {
@@ -589,36 +641,17 @@ export default {
       }
       this.updateCols()
     },
-    removeCustomColumnHandler (colName) {
-      const existingCol = this.cols.filter((existingCol, index) => {
-        return existingCol.name === colName
-      })
-      if (existingCol.length) {
-        existingCol[0].display = false
-        this.updateCols()
-      }
-    },
     removeCol () {
-      this.cols.splice(this.editableCol.index, 1)
+      delete this.cols.enum[this.editableCol.data.name]
       this.updateCols()
     },
     toggleCol () {
-      const col = this.activeCols[this.editableCol.index]
+      if (!this.editableCol) { return }
+      const col = this.editableCol.data
       if (col.custom) {
         this.removeCol()
-      } else {
-        this.$set(this.activeCols[this.editableCol.index], 'display', !this.activeCols[this.editableCol.index].display)
-        this.updateCols()
       }
-    },
-    toProtocolSchemaCols () {
-      this.cols.forEach((col, index, cols) => {
-        if (col.custom) {
-          cols.splice(index, 1)
-        } else if (!col.display) {
-          this.$set(col, 'display', true)
-        }
-      })
+      this.activeCols.splice(this.editableCol.index, 1)
       this.updateCols()
     },
     updateCols () {
@@ -643,7 +676,48 @@ export default {
           if (counter === 10) { clearInterval(this.scrollHorizontalInterval) }
         }, 10)
       }
-    }, 300)
+    }, 300),
+    colAddingHandler () {
+      this.colsAddition = true
+    },
+    colsSchemaAddingHandler () {
+      let schemaName = 'Preset'
+      if (!this.activeSchema && this.cols.activeSchema !== '_default' && this.cols.activeSchema !== '_protocol') {
+        schemaName = this.cols.activeSchema
+      }
+      this.newColsSchema = {
+        name: schemaName,
+        cols: cloneDeep(this.activeCols)
+      }
+      setTimeout(() => { this.colsSchemaAdd = true }, 100)
+    },
+    colsSchemaAddingCloseHandler () {
+      this.colsSchemaAdd = false
+      this.newColsSchema = undefined
+    },
+    colsSchemaAddingDoneHandler () {
+      const colSchema = {
+        name: this.newColsSchema.name,
+        cols: this.newColsSchema.cols
+      }
+      this.cols.schemas[colSchema.name] = colSchema
+      this.cols.activeSchema = colSchema.name
+      this.colsSchemaEdited = false
+      this.colsSchemaAddingCloseHandler()
+      this.updateCols()
+    },
+    colsSchemaRemoveHandler (name) {
+      this.$delete(this.cols.schemas, name)
+      this.updateCols()
+    },
+    customSchemaApply (name) {
+      this.cols.activeSchema = name
+      this.updateCols()
+    },
+    initSchema () {
+      let schemaName
+      return schemaName
+    }
   },
   beforeUpdate () {
     const scrollerElement = get(this.$refs, 'scroller', undefined)
@@ -658,13 +732,12 @@ export default {
         this.currentFilter = val
       }
     },
-    cols: {
+    activeCols: {
       deep: true,
-      handler (val, prevCols) {
-        if (!(prevCols && prevCols.length) && val) {
-          const fullWidth = this.$refs.wrapper.offsetWidth
-          if (this.rowWidth < fullWidth) {
-            this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
+      handler (cols, oldCols) {
+        if (cols === oldCols) {
+          if (this.cols.activeSchema) {
+            this.colsSchemaEdited = true
           }
         }
         this.updateDynamicCSS()
@@ -672,6 +745,11 @@ export default {
         this.$nextTick(() => {
           this.needResizeControl = true
         })
+      }
+    },
+    'cols.activeSchema' (schema, oldSchema) {
+      if (schema !== oldSchema && this.cols.schemas[schema]) {
+        this.activeCols = cloneDeep(this.cols.schemas[schema].cols)
       }
     },
     viewConfig: {
@@ -688,8 +766,8 @@ export default {
   },
   mounted () {
     const fullWidth = this.$refs.wrapper.offsetWidth
-    if (this.rowWidth < fullWidth && this.cols && this.cols.length) {
-      this.cols[this.cols.length - 1].width = fullWidth - (this.rowWidth - 150)
+    if (this.rowWidth < fullWidth && this.activeCols && this.activeCols.length) {
+      this.activeCols[this.activeCols.length - 1].width = fullWidth - (this.rowWidth - 150)
     }
     this.hasItemClickHandler = !!this._events['item-click']
     this.uid = uid().split('-')[0]
@@ -788,4 +866,9 @@ export default {
     opacity 0.5
     color $grey-7
     background $grey-3
+  .schema-item
+    min-height 38px
+  .schema--active
+    background-color $grey-6
+    color white
 </style>

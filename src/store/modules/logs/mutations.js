@@ -1,4 +1,3 @@
-import defaultCols from './defaultCols'
 import get from 'lodash/get'
 import set from 'lodash/set'
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
@@ -175,14 +174,33 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     return colsFromStorage
   }
 
+  function splitSchemas (cols) {
+    const customColsSchema = {
+      ...cols.schemas,
+      _default: undefined,
+      _protocol: undefined
+    }
+    const defaultColsSchema = {
+      activeSchema: cols.activeSchema,
+      schemas: {
+        _default: cols.schemas._default,
+        _protocol: cols.schemas._protocol
+      },
+      enum: cols.enum
+    }
+    return { customColsSchema, defaultColsSchema }
+  }
+
   function setColsToLS (state, cols) {
-    const colsFromStorage = getColsFromLS(state)
-    colsFromStorage[state.origin] = cols
+    const colsFromStorage = getColsFromLS(state) || {}
+    const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
+    colsFromStorage[state.origin] = defaultColsSchema
+    colsFromStorage['custom-cols-schemas'] = { ...colsFromStorage['custom-cols-schemas'], ...customColsSchema }
     if (state.lsNamespace) {
       const lsPath = state.lsNamespace.split('.'),
         lsItemName = lsPath.shift(),
         lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
+        appStorage = LocalStorage.getItem(lsItemName) || {}
       set(appStorage, lsRouteToItem, colsFromStorage)
       LocalStorage.set(lsItemName, appStorage)
     } else {
@@ -196,10 +214,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   }
 
   const updateCols = setCols
-
-  function setDefaultCols (state) {
-    setCols(state, defaultCols)
-  }
 
   function setOffline (state, needPostOfflineMessage) {
     if (needPostOfflineMessage) {
@@ -257,7 +271,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     setOrigin,
     setCols,
     updateCols,
-    setDefaultCols,
+    setColsToLS,
     setMissingMessages,
     setSelected,
     clearSelected,

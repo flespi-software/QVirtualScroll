@@ -2,9 +2,9 @@
 ## Props
 | Name  | Type | Description  | Default |
 |---|---|---|---|
-| actions  | Array  | A array of actions that displays for each of row data| [] |
-|  cols | Array  | A array of cols of data  |*Required*|
-|  items |  Array | A array of items of list  |*Required*|
+| actions  | Array  | An array of actions that displays for each of row data | [] |
+|  cols | Object  | An object of cols model  |*Required*|
+|  items |  Array | An array of items of list  |*Required*|
 |  i18n | Object  |  Object with fields of translate some things |{}|
 |  dateRange | Number  | The timestamps range for dataset component  |0|
 |  filter | String  |  Init text for filter input |''|
@@ -14,7 +14,6 @@
 | itemHeight |  Number |  Height of list item |19|
 | autoscroll |  Boolean |  Need autoscroll flag |false|
 | hasNewMessages |  Boolean or null |  Need show new messages indicator |undefined|
-| toDefaultCols |  Function |  Reset default columns handler |undefined|
 
 ## Action
 ````javascript
@@ -28,12 +27,25 @@ action = {
 ````
 ## Col
 ````javascript
-col = {
-    name: 'param#1',
-    width: 150,
-    display: true,
-    __dest: 'etc', // sys destination fields. May be only etc
-    addition: '' // some addition data for col name
+cols = {
+  activeSchema: '_default',
+  schemas: {
+    _default: {
+      name: '_default',
+      cols: [
+        name: 'param#1',
+        width: 150
+      ]
+    }
+  },
+  enum: {
+    'param#1': {
+      name: 'param#1',
+      __dest: 'etc', // sys destination fields. May be only etc
+      addition: '', // some addition data for col name
+      unit: 'Km/h'
+    }
+  }
 }
 
 ````

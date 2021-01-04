@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "Quasar component for displaing messages",
   "productName": "QVirtualScroll",
   "cordovaId": "org.cordova.quasar.app",

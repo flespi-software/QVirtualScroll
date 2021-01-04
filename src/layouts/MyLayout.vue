@@ -15,7 +15,6 @@
             :i18n="{from: 'FROM', to: 'TO'}"
             :filter="filter"
             :loading="loading"
-            :toDefaultCols="stdColsHandler"
             @change-filter="filterChangeHandler"
             @change-date="dateChangeHandler"
             @change-date-prev="datePrevChangeHandler"
@@ -35,6 +34,35 @@
 import VirtualScrollList from '../components/VirtualScrollList'
 import cols from '../data/cols.json'
 
+function getCols (cols) {
+  const schema = {
+    activeSchema: 'custom',
+    schemas: {
+      _default: {
+        name: '_default',
+        cols: [
+          { name: 'param#2', width: 150 },
+          { name: 'param#3', width: 150 },
+          { name: 'param#4', width: 150 }
+        ]
+      },
+      _protocol: {
+        name: '_protocol',
+        cols: cols.filter(col => !col.custom).map(col => ({ name: col.name, width: 150 }))
+      },
+      custom: {
+        name: 'custom',
+        cols: cols.map(col => ({ name: col.name, __dest: col.__dest, width: 150 }))
+      }
+    },
+    enum: cols.reduce((res, col) => {
+      res[col.name] = { name: col.name, __dest: col.__dest, custom: col.custom }
+      return res
+    }, {})
+  }
+  return schema
+}
+
 export default {
   data () {
     return {
@@ -52,7 +80,7 @@ export default {
           type: 'edit'
         }
       ],
-      cols: cols,
+      cols: getCols(cols),
       items: [],
       filter: '',
       mode: 0,
@@ -107,7 +135,7 @@ export default {
         }
       }
       for (let i = 0; i < limit; i++) {
-        const item = this.cols.reduce((res, col) => {
+        const item = this.cols.schemas[this.cols.activeSchema].cols.reduce((res, col) => {
           res[col.name] = randVal()
           return res
         }, {})
@@ -261,8 +289,7 @@ export default {
     },
     updateColsHandler (newCols) {
       this.cols = newCols
-    },
-    stdColsHandler () { console.log('std-cols') }
+    }
   },
   components: {
     VirtualScrollList

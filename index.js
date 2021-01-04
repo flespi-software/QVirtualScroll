@@ -1,5 +1,4 @@
 import logsModule from './lib/logs.js'
-import channelsMessagesModulePull from './lib/channelsMessagesPull.js'
 import channelsMessagesModuleSerial from './lib/channelsMessagesSerial.js'
 import devicesMessagesModule from './lib/devicesMessages.js'
 import intervalsModule from './lib/intervals.js'
@@ -10,7 +9,6 @@ export {
   VirtualScrollList,
   DateRangeModal,
   logsModule,
-  channelsMessagesModulePull,
   channelsMessagesModuleSerial,
   devicesMessagesModule,
   intervalsModule

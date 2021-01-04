@@ -14,9 +14,6 @@ All modules depend on the availability of the server field and the token in the 
 ### [Logs Module](docs/LogsModule.md)
 Module for processing and storing log messages from the channel
 
-### [Channels Messages Module](docs/ChannelsMessagesPullModule.md)
-Module for processing and storing messages poll from the channel in pull mode
-
 ### [Channels Messages Module](docs/ChannelsMessagesSerialModule.md)
 Module for processing and storing messages poll from the channel in serial mode
 

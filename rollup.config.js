@@ -47,7 +47,7 @@ const devPlugins = [
   bundleSize()
 ]
 
-let plugins = isProduction ? prodPlugins : [...devPlugins, ...prodPlugins]
+const plugins = isProduction ? prodPlugins : [...devPlugins, ...prodPlugins]
 
 export default [
   {
@@ -57,19 +57,6 @@ export default [
         file: 'lib/logs.js',
         format: 'umd',
         name: 'logs',
-        exports: 'named',
-        sourcemap: true
-      }
-    ],
-    plugins: plugins
-  },
-  {
-    input: './src/store/modules/channelsMessagesPull/index.js',
-    output: [
-      {
-        file: 'lib/channelsMessagesPull.js',
-        format: 'umd',
-        name: 'channelsMessagesPull',
         exports: 'named',
         sourcemap: true
       }

@@ -21,7 +21,7 @@ export default function ({ Vue, LocalStorage, name, errorHandler, filterHandler,
     end: Date.now(),
     limit: 1000,
     reverse: false,
-    cols: [],
+    cols: undefined,
     selected: [],
     sortBy: null
   }
