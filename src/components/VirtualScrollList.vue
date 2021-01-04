@@ -346,7 +346,6 @@ export default {
       colsAddition: false,
       menuModel: false,
       colsSchemaAdd: false,
-      colsSchemaEdited: !!this.cols.schemas._unsaved,
       newSchemaName: 'Modified'
     }
   },
@@ -357,6 +356,7 @@ export default {
     colsEnum () {
       return this.cols.enum
     },
+    colsSchemaEdited () { return !!this.cols.schemas._unsaved },
     unsavedColsSchema () {
       return this.cols.schemas._unsaved || {}
     },
@@ -706,7 +706,6 @@ export default {
       }
       this.cols.schemas[colSchema.name] = colSchema
       this.cols.activeSchema = colSchema.name
-      this.colsSchemaEdited = false
       this.colsSchemaAddingCloseHandler()
       this.$delete(this.cols.schemas, '_unsaved')
       this.updateCols()
@@ -751,7 +750,6 @@ export default {
       handler (cols, oldCols) {
         if (cols === oldCols) {
           if (this.cols.activeSchema !== '_unsaved') {
-            this.colsSchemaEdited = true
             this.setUnsavedSchema(cloneDeep(cols))
           }
         }
