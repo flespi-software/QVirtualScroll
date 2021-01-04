@@ -55,7 +55,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
     if (cols.length) {
       schema.activeSchema = '_unsaved'
-      schema.schemasю_unsaved = {
+      schema.schemas._unsaved = {
         name: 'Modified',
         cols: cols.reduce((res, col) => {
           if (col.display) {
