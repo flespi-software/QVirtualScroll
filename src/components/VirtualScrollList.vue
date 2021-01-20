@@ -8,7 +8,7 @@
       />
       <q-input
         :class="{'full-width': $q.platform.is.desktop || showSearch, collapsed: $q.platform.is.mobile && !showSearch}" outlined hide-bottom-space dense
-        @focus="showSearch = true"
+        @focus="showSearch = true" clearable
         :autofocus="$q.platform.is.mobile"
         @blur="searchBlurHandler"
         v-if="currentViewConfig.needShowFilter && ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
@@ -16,6 +16,7 @@
         type="text" v-model="currentFilter"
         :dark="currentTheme.controlsInverted"
         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
+        :bg-color="currentFilter ? 'green-5' : undefined"
         placeholder="param1=n*,param2,param3>=5"
         :debounce="0"
       >
@@ -30,8 +31,8 @@
         :theme="currentTheme"
         @save="dateRangeModalSave"
       />
-      <q-btn icon="mdi-dots-vertical" flat dense round>
-        <q-menu>
+      <q-btn icon="mdi-dots-vertical" flat dense round :disable="!items.length">
+        <q-menu ref="tableMenu">
           <q-list dark class="bg-grey-7 q-py-xs" style="min-width: 180px; max-width: 500px">
             <q-item clickable dense v-ripple @click="colAddingHandler" class="q-px-sm" v-close-popup>
               <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
@@ -164,10 +165,10 @@
           </slot>
         </q-menu>
         <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
-          v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+          v-if="(items.length || loading) && currentTheme.headerShow && activeCols.length" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
         >
           <div class="header__inner" :style="{width: `${rowWidth}px` }">
-            <draggable :list="activeCols" ghostClass="ghost" tag="span" @end="updateCols" :move="moveDragHandler">
+            <draggable :list="activeCols" ghostClass="ghost" tag="span" @end="endDragHandler" :move="moveDragHandler">
               <transition-group type="transition" name="flip-list">
                 <template v-for="(prop, index) in activeCols">
                   <div class="header__item" :key="prop.name"
@@ -202,6 +203,7 @@
         </div>
         <virtual-list
           ref="scroller"
+          v-if="activeCols.length"
           :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
           class="list__content absolute-top-left absolute-bottom-right"
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
@@ -214,6 +216,15 @@
           :itemcount="items.length"
           :itemprops="getItemProps"
         />
+        <div
+          v-else
+          :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
+          class="list__content absolute-top-left absolute-bottom-right text-center"
+          :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+        >
+          <div :class="$q.platform.is.mobile ? ['text-h5 q-mt-sm'] : ['text-h4 q-mt-xl']" class='text-grey-5'>No columns to show.</div>
+          <div :class="$q.platform.is.mobile ? ['text-h7'] : ['text-h6']" class='text-grey-6'>Configure your custom columns:<q-btn flat dense round color="white" icon="mdi-dots-vertical" @click="$refs.tableMenu.show()"/></div>
+        </div>
         <cols-additing
           v-if="colsAddition"
           style="width: 250px"
@@ -356,7 +367,7 @@ export default {
     colsEnum () {
       return this.cols.enum
     },
-    colsSchemaEdited () { return !!this.cols.schemas._unsaved },
+    colsSchemaEdited () { return this.activeSchema === '_unsaved' },
     unsavedColsSchema () {
       return this.cols.schemas._unsaved || {}
     },
@@ -468,6 +479,7 @@ export default {
     onResize (width, index) {
       if (typeof index === 'number') {
         this.activeCols[index].width = width
+        this.cols.schemas[this.activeSchema].cols[index].width = width
       }
       this.updateDynamicCSS()
     },
@@ -627,21 +639,24 @@ export default {
     },
     addCustomColumnHandler (colName) {
       const existingCol = this.cols.enum[colName]
+      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
       let scrollWidth = 0
-      const lastCol = this.activeCols[this.activeCols.length - 1]
-      const lastColSchema = this.cols.enum[lastCol.name]
+      const lastCol = this.activeCols[this.activeCols.length - 1] || { name: '', width: 0 }
+      const lastColSchema = this.cols.enum[lastCol.name] || {}
       if (!existingCol) {
         this.cols.enum[colName] = { name: colName, custom: true }
       }
       if (lastColSchema.__dest === 'etc') {
         this.activeCols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
-        scrollWidth = this.$refs.scroller.$el.scrollWidth - lastCol.width
+        this.cols.schemas[this.activeSchema].cols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
+        if (scrollEl) { scrollWidth = scrollEl.scrollWidth - lastCol.width }
       } else {
         this.activeCols.push({ name: colName, width: 150 })
-        scrollWidth = this.$refs.scroller.$el.scrollWidth
+        this.cols.schemas[this.activeSchema].cols.push({ name: colName, width: 150 })
+        if (scrollEl) { scrollWidth = scrollEl.scrollWidth }
       }
-      if (scrollWidth) {
-        this.$nextTick(() => { this.$refs.scroller.$el.scrollLeft = scrollWidth - (this.wrapperWidth / 2) })
+      if (scrollWidth && scrollEl) {
+        this.$nextTick(() => { scrollEl.scrollLeft = scrollWidth - (this.wrapperWidth / 2) })
       }
       this.updateCols()
     },
@@ -649,6 +664,7 @@ export default {
       const index = this.activeCols.findIndex(col => col.name === colName)
       if (index !== -1) {
         this.activeCols.splice(index, 1)
+        this.cols.schemas[this.activeSchema].cols.splice(index, 1)
         this.updateCols()
       }
     },
@@ -659,10 +675,12 @@ export default {
     toggleCol () {
       if (!this.editableCol) { return }
       const col = this.editableCol.data
-      if (col.custom) {
+      const colEnum = this.cols.enum[col.name]
+      if (colEnum.custom) {
         this.removeCol()
       }
       this.activeCols.splice(this.editableCol.index, 1)
+      this.cols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
       this.updateCols()
     },
     updateCols () {
@@ -688,6 +706,10 @@ export default {
         }, 10)
       }
     }, 300),
+    endDragHandler () {
+      this.cols.schemas[this.activeSchema].cols = cloneDeep(this.activeCols)
+      this.updateCols()
+    },
     colAddingHandler () {
       this.colsAddition = true
     },
@@ -758,6 +780,11 @@ export default {
         this.$nextTick(() => {
           this.needResizeControl = true
         })
+      }
+    },
+    cols (cols, oldCols) {
+      if (cols !== oldCols) {
+        this.activeCols = cloneDeep(this.cols.schemas[this.cols.activeSchema].cols)
       }
     },
     'cols.activeSchema' (schema, oldSchema) {

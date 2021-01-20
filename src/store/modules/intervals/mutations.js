@@ -1,5 +1,4 @@
-import get from 'lodash/get'
-import set from 'lodash/set'
+import { setColsLS } from '../ls'
 export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
   function setMessages (state, data) {
     if (data && data.length) {
@@ -67,56 +66,8 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     await Vue.connector.unsubscribeIntervals(state.active)
   }
 
-  function getColsFromLS (state) {
-    let colsFromStorage = {}
-    if (state.lsNamespace) {
-      const lsPath = state.lsNamespace.split('.'),
-        lsItemName = lsPath.shift(),
-        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName)
-      colsFromStorage = get(appStorage, lsRouteToItem, colsFromStorage)
-    } else {
-      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
-    }
-    return colsFromStorage
-  }
-
-  function splitSchemas (cols) {
-    const customColsSchema = {
-      ...cols.schemas,
-      _default: undefined,
-      _protocol: undefined
-    }
-    const defaultColsSchema = {
-      activeSchema: cols.activeSchema,
-      schemas: {
-        _default: cols.schemas._default,
-        _protocol: cols.schemas._protocol
-      },
-      enum: cols.enum
-    }
-    return { customColsSchema, defaultColsSchema }
-  }
-
-  function setColsToLS (state, cols) {
-    const colsFromStorage = getColsFromLS(state) || {}
-    const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
-    colsFromStorage[state.active] = defaultColsSchema
-    colsFromStorage['custom-cols-schemas'] = { ...colsFromStorage['custom-cols-schemas'], ...customColsSchema }
-    if (state.lsNamespace) {
-      const lsPath = state.lsNamespace.split('.'),
-        lsItemName = lsPath.shift(),
-        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName) || {}
-      set(appStorage, lsRouteToItem, colsFromStorage)
-      LocalStorage.set(lsItemName, appStorage)
-    } else {
-      LocalStorage.set(state.name, colsFromStorage)
-    }
-  }
-
   function setCols (state, cols) {
-    setColsToLS(state, cols)
+    setColsLS(LocalStorage, state.lsNamespace, state.name, state.active, cols)
     Vue.set(state, 'cols', cols)
   }
 
@@ -154,7 +105,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
     clear,
     setActive,
     setCols,
-    setColsToLS,
     updateCols,
     setSelected,
     clearSelected,

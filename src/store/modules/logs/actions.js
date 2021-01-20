@@ -1,5 +1,6 @@
 import _get from 'lodash/get'
 import defaultCols from './defaultCols'
+import { getColsLS } from '../ls'
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = { filter: [] }
@@ -35,30 +36,32 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   /* migration to new format storing cols 28.12.20 */
-  function migrateCols (cols) {
+  function migrateCols (active, initCols, cols) {
+    const defaultColsL = initCols || defaultCols
     const schema = {
       activeSchema: '_default',
       schemas: {
         _default: {
           name: '_default',
-          cols: defaultCols.map(name => ({ name, width: 150 }))
+          cols: defaultColsL.map(col => ({ ...col }))
         },
         _protocol: {
           name: '_protocol',
-          cols: cols.reduce((res, col) => {
-            if (!col.custom) {
-              res.push({ name: col.name, width: 150 })
-            }
-            return res
-          }, [])
+          cols: defaultColsL.map(col => ({ ...col }))
         }
       },
-      enum: {}
+      enum: defaultColsL.reduce((res, col) => {
+        res[col.name] = { ...col }
+        delete res[col.name].display
+        delete res[col.name].width
+        return res
+      }, {})
     }
-    if (cols.length) {
-      schema.activeSchema = '_unsaved'
-      schema.schemas._unsaved = {
-        name: 'Modified',
+    if (cols.length && JSON.stringify(defaultColsL) !== JSON.stringify(schema.schemas._default.cols)) {
+      const name = `Custom[${active}]`
+      schema.activeSchema = name
+      schema.schemas[name] = {
+        name,
         cols: cols.reduce((res, col) => {
           if (col.display) {
             res.push({ name: col.name, width: col.width })
@@ -66,12 +69,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           return res
         }, [])
       }
-      schema.enum = cols.reduce((res, col) => {
-        res[col.name] = { ...col }
-        delete res[col.name].display
-        delete res[col.name].width
-        return res
-      }, {})
     }
     return schema
   }
@@ -93,35 +90,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  function getColsFromLS (state) {
-    let colsFromStorage = {}
-    if (state.lsNamespace) {
-      /* removing old store 12.03.20 */
-      const oldStore = LocalStorage.getItem(state.name) || {}
-      if (oldStore) {
-        colsFromStorage = oldStore
-        LocalStorage.remove(state.name)
-      }
-      const lsPath = state.lsNamespace.split('.'),
-        lsItemName = lsPath.shift(),
-        lsRouteToItem = `${lsPath.join('.')}.${state.name}`,
-        appStorage = LocalStorage.getItem(lsItemName) || {}
-      colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
-    } else {
-      colsFromStorage = LocalStorage.getItem(state.name) || colsFromStorage
-    }
-    return colsFromStorage
-  }
-
   function getCols ({ state, commit }, initCols) {
-    let colsSchema = getDefaultColsSchema(initCols || state.defaultCols)
+    let colsSchema = getDefaultColsSchema(initCols || defaultCols)
     colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
     colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
     /* LS processing */
-    const colsFromStorage = getColsFromLS(state)
+    const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
     if (colsFromStorage && colsFromStorage[state.origin]) {
       colsSchema = Array.isArray(colsFromStorage[state.origin])
-        ? migrateCols(colsFromStorage[state.origin])
+        ? migrateCols(state.origin, initCols, colsFromStorage[state.origin])
         : colsFromStorage[state.origin]
     }
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
