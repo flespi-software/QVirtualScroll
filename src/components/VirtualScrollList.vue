@@ -324,6 +324,7 @@ export default {
       needShowFilter: false,
       needShowDateRange: false
     }
+    const firstSchemaName = this.cols.schemas[this.cols.activeSchema] ? this.cols.activeSchema : '_default'
     return {
       uid: 0,
       currentFilter: this.filter,
@@ -343,7 +344,7 @@ export default {
         contentInverted: false,
         headerShow: true
       },
-      activeCols: cloneDeep(this.cols.schemas[this.cols.activeSchema].cols),
+      activeCols: cloneDeep(this.cols.schemas[firstSchemaName].cols),
       defaultConfig: defaultConfig,
       hasItemClickHandler: false,
       currentScrollTop: 0,
@@ -362,6 +363,11 @@ export default {
   },
   computed: {
     activeSchema () {
+      const schemaName = this.cols.activeSchema
+      if (!this.cols.schemas[schemaName]) {
+        this.customSchemaApply('_default')
+        return '_default'
+      }
       return this.cols.activeSchema
     },
     colsEnum () {
@@ -784,7 +790,7 @@ export default {
     },
     cols (cols, oldCols) {
       if (cols !== oldCols) {
-        this.activeCols = cloneDeep(this.cols.schemas[this.cols.activeSchema].cols)
+        this.activeCols = cloneDeep(this.cols.schemas[this.activeSchema].cols)
       }
     },
     'cols.activeSchema' (schema, oldSchema) {
