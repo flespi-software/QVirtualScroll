@@ -94,6 +94,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   function getDefaultColsSchema () {
+    const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
     return {
       activeSchema: '_default',
       schemas: {
@@ -104,6 +105,11 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       },
       enum: defaultCols.reduce((res, name) => {
         res[name] = { name }
+        if (name.match(/timestamp$/)) {
+          res[name].addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+          res[name].type = ''
+          res[name].unit = ''
+        }
         return res
       }, {})
     }
@@ -140,6 +146,17 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
           delete colsSchema.enum.action
         }
+        /* adding locale to all timestamps 26.01.21 */
+        const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+        Object.keys(colsSchema.enum).forEach(name => {
+          if (name.match(/timestamp$/)) {
+            const col = colsSchema.enum[name]
+            col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+            col.type = ''
+            col.unit = ''
+          }
+        })
+        /* adding locale to all timestamps end */
         if (needMigration) {
           if (device.device_type_id) {
             /* getting protocol id */
@@ -157,6 +174,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
               name: '_protocol',
               cols: []
             }
+            const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
             messageParams.forEach((param) => {
               const name = param.name
               const enumCol = {
@@ -169,20 +187,16 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
                 name,
                 width: 150
               }
-              if (name === 'timestamp') {
-                const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+              if (name.match(/timestamp$/)) {
                 enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
                 enumCol.type = ''
                 enumCol.unit = ''
                 schemaCol.width = 190
-                colsSchema.schemas._protocol.cols.unshift(schemaCol)
-                colsSchema.enum.timestamp = enumCol
-                return
-              }
-              if (name === 'server.timestamp') {
-                enumCol.type = ''
-                enumCol.unit = ''
-                schemaCol.width = 190
+                if (name === 'timestamp') {
+                  colsSchema.schemas._protocol.cols.unshift(schemaCol)
+                  colsSchema.enum.timestamp = enumCol
+                  return
+                }
               }
               colsSchema.schemas._protocol.cols.push(schemaCol)
               colsSchema.enum[name] = enumCol

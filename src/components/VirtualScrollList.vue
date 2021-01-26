@@ -47,6 +47,10 @@
                 clickable v-ripple dense class="q-px-sm schema-item" :active="activeSchema === name" active-class="schema--active"
                 v-close-popup @click="customSchemaApply(name)" v-for="(schema, name) in cols.schemas" :key="name"
               >
+                <div @click.stop.prevent class="absolute-botom-right absolute-top-left full-height full-width" style="z-index: 1;padding-top: 3px;background-color: rgba(0,0,0,0.5);" v-if="prevDeleteSchemaName === name">
+                  <q-btn class="q-mx-sm" color="red" label="delete" dense @click.stop="colsSchemaRemoveHandler(name)"/>
+                  <q-btn color="grey" label="cancel" dense @click.stop="closePreventRemoveSchema"/>
+                </div>
                 <q-item-section avatar class="q-pr-sm" style="min-width: 32px">
                   <q-icon v-if="name === '_default'" name="mdi-playlist-star" />
                   <q-icon v-else-if="name === '_protocol'" name="mdi-playlist-check" />
@@ -58,7 +62,7 @@
                   <template v-else>{{schema.name}}</template>
                 </q-item-section>
                 <q-item-section avatar v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'">
-                  <q-btn icon="mdi-close" color="white" flat round dense @click.stop="colsSchemaRemoveHandler(name)"/>
+                  <q-btn icon="mdi-close" color="white" flat round dense @click.stop="prevDeleteSchemaName = name"/>
                 </q-item-section>
               </q-item>
             </template>
@@ -358,7 +362,8 @@ export default {
       colsAddition: false,
       menuModel: false,
       colsSchemaAdd: false,
-      newSchemaName: 'Modified'
+      newSchemaName: 'Modified',
+      prevDeleteSchemaName: undefined
     }
   },
   computed: {
@@ -748,8 +753,17 @@ export default {
       this.updateCols()
     },
     colsSchemaRemoveHandler (name) {
-      this.$delete(this.cols.schemas, name)
-      this.updateCols()
+      setTimeout(() => {
+        this.$delete(this.cols.schemas, name)
+        this.updateCols()
+        this.setPreventRemoveSchema(undefined)
+      }, 200)
+    },
+    setPreventRemoveSchema (name) {
+      this.prevDeleteSchemaName = name
+    },
+    closePreventRemoveSchema () {
+      setTimeout(() => { this.prevDeleteSchemaName = undefined }, 200)
     },
     customSchemaApply (name) {
       this.cols.activeSchema = name

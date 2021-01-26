@@ -90,6 +90,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   function getDefaultColsSchema () {
+    const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
     return {
       activeSchema: '_default',
       schemas: {
@@ -104,6 +105,11 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       },
       enum: defaultCols.reduce((res, name) => {
         res[name] = { name }
+        if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
+          res[name].addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+          res[name].type = ''
+          res[name].unit = ''
+        }
         return res
       }, {})
     }
@@ -126,18 +132,36 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
         delete colsSchema.enum.action
       }
+      /* adding locale to all timestamps 26.01.21 */
+      const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+      Object.keys(colsSchema.enum).forEach(name => {
+        if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
+          const col = colsSchema.enum[name]
+          col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+          col.type = ''
+          col.unit = ''
+        }
+      })
+      /* adding locale to all timestamps end */
       commit('updateCols', colsSchema)
     } else {
       const colsSchema = getDefaultColsSchema()
+      const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
       counters.forEach(counter => {
         const name = counter.name
         const enumCol = {
-          name
+          name,
+          description: `${counter.name}[${counter.type}]`
         }
         const schemaCol = {
           name,
-          width: 100,
-          description: `${counter.name}[${counter.type}]`
+          width: 100
+        }
+        if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
+          enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+          enumCol.type = ''
+          enumCol.unit = ''
+          schemaCol.width = 190
         }
         colsSchema.schemas._protocol.cols.push(schemaCol)
         colsSchema.enum[name] = enumCol
