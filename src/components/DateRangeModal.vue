@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { date } from 'quasar'
+import { date, debounce } from 'quasar'
 import DateRangePicker from 'datetimerangepicker'
 export default {
   props: ['theme', 'date'],
@@ -71,15 +71,18 @@ export default {
         newTo = this.dateModel[0] - 1,
         newFrom = newTo - delta
       this.dateModel = [newFrom, newTo]
-      this.$emit('save', this.dateModel)
+      this.debouncedSave()
     },
     nextHandler () {
       const delta = this.dateModel[1] - this.dateModel[0],
         newFrom = this.dateModel[1] + 1,
         newTo = newFrom + delta
       this.dateModel = [newFrom, newTo]
-      this.$emit('save', this.dateModel)
+      this.debouncedSave()
     }
+  },
+  created () {
+    this.debouncedSave = debounce(() => { this.$emit('save', this.dateModel) }, 300)
   },
   watch: {
     date (date) {
