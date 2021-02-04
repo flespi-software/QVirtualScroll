@@ -31,9 +31,26 @@
         :theme="currentTheme"
         @save="dateRangeModalSave"
       />
-      <q-btn icon="mdi-dots-vertical" flat dense round :disable="!items.length">
+      <q-btn icon="mdi-dots-vertical" :loading="hasAsyncPanelActions" flat dense round :disable="!items.length">
+        <template slot="loading">
+          <q-icon size="1.5rem" name="mdi-dots-vertical"/>
+          <q-spinner class="absolute-bottom-right" color="white" size=".7rem" />
+        </template>
         <q-menu ref="tableMenu">
           <q-list dark class="bg-grey-7 q-py-xs" style="min-width: 180px; max-width: 500px">
+            <template v-for="(action, index) in panelActions">
+              <q-item v-close-popup v-if="action.condition" class="q-px-sm" clickable @click="action.handler" :key="index" dense v-ripple>
+                <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
+                  <q-icon :name="action.icon" />
+                </q-item-section>
+                <q-item-section>{{action.label}}</q-item-section>
+                <q-item-section side v-if="action.async">
+                  <q-spinner color="white" size="1rem" />
+                </q-item-section>
+                <q-tooltip v-if="action.tooltip">{{action.tooltip}}</q-tooltip>
+              </q-item>
+            </template>
+            <q-separator v-if="panelActions.length"/>
             <q-item clickable dense v-ripple @click="colAddingHandler" class="q-px-sm" v-close-popup>
               <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
                 <q-icon name="mdi-playlist-plus" />
@@ -297,6 +314,10 @@ export default {
       type: Array,
       required: true
     },
+    panelActions: {
+      type: Array,
+      default () { return [] }
+    },
     dateRange: {
       type: Array
     },
@@ -377,6 +398,9 @@ export default {
     },
     colsEnum () {
       return this.cols.enum
+    },
+    hasAsyncPanelActions () {
+      return !!this.panelActions.filter(action => action.async).length
     },
     colsSchemaEdited () { return this.activeSchema === '_unsaved' },
     unsavedColsSchema () {

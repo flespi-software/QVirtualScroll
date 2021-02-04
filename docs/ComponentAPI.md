@@ -3,6 +3,7 @@
 | Name  | Type | Description  | Default |
 |---|---|---|---|
 | actions  | Array  | An array of actions that displays for each of row data | [] |
+| panelActions  | Array  | An array of panel actions that displays for all table | [] |
 |  cols | Object  | An object of cols model  |*Required*|
 |  items |  Array | An array of items of list  |*Required*|
 |  i18n | Object  |  Object with fields of translate some things |{}|
@@ -23,6 +24,19 @@ action = {
     classes: 'text-grey-3',
     type: 'add'
 }
+
+````
+
+## Panel action
+````javascript
+action = {
+    label: 'Name',
+    icon: 'icon',
+    handler: () => { console.log(123) },
+    condition: true, // will shown in menu?
+    tooltip: 'Save messages to CSV',
+    async: true // flag async spinner
+  }
 
 ````
 ## Col

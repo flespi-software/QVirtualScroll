@@ -7,6 +7,7 @@
             :cols="cols"
             :items="filteredItems"
             :actions="actions"
+            :panelActions="panelActions"
             :date="date"
             :dateRange="dateRange"
             :mode="mode"
@@ -103,7 +104,17 @@ export default {
         needShowEtc: true
       },
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
-      loading: true
+      loading: true,
+      panelActions: [
+        {
+          label: 'CSV',
+          icon: 'mdi-file-document-outline',
+          handler: () => { console.log(123) },
+          condition: true,
+          tooltip: 'Save messages to CSV',
+          async: true
+        }
+      ]
     }
   },
   computed: {

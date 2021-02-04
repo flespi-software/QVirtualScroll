@@ -67,7 +67,8 @@ module.exports = function (ctx) {
         'QSlider',
         'QBtnToggle',
         'QChip',
-        'QMenu'
+        'QMenu',
+        'QSpinner'
       ],
 
       directives: [
