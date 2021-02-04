@@ -127,9 +127,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         errorsCheck(deviceData)
         const device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
-        const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-        let colsSchema = (colsFromStorage && colsFromStorage[device.device_type_id])
-          ? colsFromStorage[device.device_type_id] : getDefaultColsSchema()
+        let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])
+        let colsSchema = colsFromStorage || getDefaultColsSchema()
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
           ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
@@ -138,9 +138,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
           setColsLS(LocalStorage, state.lsNamespace, state.name, state.settings.device_type_id, colsSchema)
         }
-        const needMigration = !colsSchema.enum || (
-          _get(colsSchema.enum, 'timestamp.unit', undefined) === undefined
-        ) // type and unit adding 02.09.20
+        const needMigration = !colsFromStorage || _get(colsSchema.enum, 'timestamp.unit', undefined) === undefined // type and unit adding 02.09.20
 
         /* adding sys cols after migration. 12.11.20 */
         if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {

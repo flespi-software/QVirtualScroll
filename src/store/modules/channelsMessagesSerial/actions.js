@@ -115,9 +115,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-        let colsSchema = (colsFromStorage && colsFromStorage[state.active])
-          ? colsFromStorage[state.active] : getDefaultColsSchema()
+        let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        colsFromStorage = (colsFromStorage && colsFromStorage[state.active])
+        let colsSchema = colsFromStorage || getDefaultColsSchema()
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
           ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
@@ -126,7 +126,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
           setColsLS(LocalStorage, state.lsNamespace, state.name, state.active, colsSchema)
         }
-        const needMigration = !colsSchema.enum || (
+        const needMigration = !colsFromStorage || (
           _get(colsSchema.enum, 'timestamp.unit', undefined) === undefined
         ) // type and unit adding 02.09.20
 
