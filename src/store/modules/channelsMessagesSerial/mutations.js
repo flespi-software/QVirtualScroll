@@ -194,24 +194,22 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   const updateCols = setCols
 
-  function setOffline (state, needPostOfflineMessage) {
-    if (needPostOfflineMessage) {
-      state.messages.push({ __connectionStatus: 'offline', timestamp: Date.now() / 1000 })
+  function setOffline (state) {
+    state.offline = {
+      start: Math.floor(Date.now() / 1000),
+      lastMessageIndex: state.messages.length - 1
     }
-    state.offline = true
   }
 
-  function setReconnected (state, needPostOfflineMessage) {
-    if (needPostOfflineMessage) {
-      state.messages.push({ __connectionStatus: 'reconnected', timestamp: Date.now() / 1000 })
-    }
+  function setReconnected (state) {
+    state.offline.end = Math.floor(Date.now() / 1000)
+  }
+
+  function clearOfflineState (state) {
     state.offline = false
   }
 
   function setMissingMessages (state, { data, index }) {
-    data.forEach((val) => {
-      val['x-flespi-status'] = 'missed'
-    })
     state.messages.splice(index + 1, 0, ...data)
   }
 
@@ -234,6 +232,7 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
   return {
     setOffline,
     setReconnected,
+    clearOfflineState,
     setHistoryMessages,
     setRTMessages,
     setMissingMessages,

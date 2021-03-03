@@ -332,26 +332,18 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.origin) {
       try {
         Vue.set(state, 'isLoading', true)
-        const lastIndexOffline = state.messages.reduceRight((result, value, index) => {
-          if (result) {
-            return result
-          }
-          if (value.__connectionStatus === 'offline') {
-            result = index
-          }
-          return result
-        }, 0)
+        const { start, end, lastMessageIndex } = state.offline
         const params = {
           data: {
-            from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1].timestamp) + 1,
-            to: Math.floor(state.messages[lastIndexOffline + 1].timestamp)
+            from: start,
+            to: end
           },
           headers: getHeaders(state)
         }
         const resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
         const data = resp.data
         errorsCheck(data)
-        commit('setMissingMessages', { data: data.result, index: lastIndexOffline })
+        commit('setMissingMessages', { data: data.result, index: lastMessageIndex })
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)

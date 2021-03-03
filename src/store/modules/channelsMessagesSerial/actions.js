@@ -399,23 +399,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        const lastIndexOffline = state.messages.reduceRight((result, value, index) => {
-          if (result) {
-            return result
-          }
-          if (value.__connectionStatus === 'offline') {
-            result = index
-          }
-          return result
-        }, 0)
+        const { start, end, lastMessageIndex } = state.offline
         const params = {
-          from: !lastIndexOffline ? 0 : Math.floor(state.messages[lastIndexOffline - 1]['server.timestamp']) + 1,
-          to: Math.floor(state.messages[lastIndexOffline + 1]['server.timestamp'])
+          from: start,
+          to: end
         }
         const resp = await Vue.connector.gw.getChannelsMessages(state.active, { data: JSON.stringify(params) })
         const data = resp.data
         errorsCheck(data)
-        commit('setMissingMessages', { data: data.result, index: lastIndexOffline })
+        commit('setMissingMessages', { data: data.result, index: lastMessageIndex })
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
