@@ -300,7 +300,11 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       Vue.set(state, 'isLoading', true)
       const to = Math.floor(_get(state, 'messages[0]["server.timestamp"]', state.to) - 1)
       const params = getParams(state)
-      params.to = to
+      // params.to = to
+      /* api container interface fix */
+      params.filter = `server.timestamp<=${to}${params.filter ? `,${params.filter}` : ''}`
+      params.to = to + 2
+      /* api container interface fix */
       params.reverse = true
       if (loopId && state.messages.length > state.limit * 2) {
         await unsubscribePooling({ state, commit, rootState })
@@ -326,7 +330,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       const from = Math.floor(_get(state, `messages[${state.messages.length - 1}]['server.timestamp']`, state.from) + 1)
       const params = getParams(state)
       let messagesCount = 0
-      params.from = from
+      // params.from = from
+      /* api container interface fix */
+      params.filter = `server.timestamp>=${from}${params.filter ? `,${params.filter}` : ''}`
+      params.to = from - 2
       const messages = await getMessages({ state, commit, rootState }, params)
       messagesCount += messages.length
       const needRT = (params.to > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
