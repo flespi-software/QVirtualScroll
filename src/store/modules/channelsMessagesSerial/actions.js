@@ -332,11 +332,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       let messagesCount = 0
       // params.from = from
       /* api container interface fix */
-      params.filter = `server.timestamp>=${from}${params.filter ? `,${params.filter}` : ''}`
-      params.to = from - 2
-      const messages = await getMessages({ state, commit, rootState }, params)
+      const fixParams = { ...params }
+      fixParams.filter = `server.timestamp>=${from}${params.filter ? `,${params.filter}` : ''}`
+      fixParams.to = from - 2
+      const messages = await getMessages({ state, commit, rootState }, fixParams)
       messagesCount += messages.length
-      const needRT = (params.to > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
+      const needRT = (params.to + 2 > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
+      console.log(params.to > Math.floor(Date.now() / 1000))
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })
