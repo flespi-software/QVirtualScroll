@@ -57,7 +57,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         return res
       }, {})
     }
-    if (cols.length && JSON.stringify(defaultColsL) !== JSON.stringify(schema.schemas._default.cols)) {
+    if (cols && cols.length && JSON.stringify(defaultColsL) !== JSON.stringify(schema.schemas._default.cols)) {
       const name = `Custom[${active}]`
       schema.activeSchema = name
       schema.schemas[name] = {
