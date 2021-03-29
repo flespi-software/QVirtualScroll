@@ -158,9 +158,9 @@
             <template v-for="(prop, index) in activeCols">
               <div class="header__item" :key="prop.name" :class="{[`item_${index}`]: true}">
                 <span class="item__label">
-                  {{colsEnum[prop.name].title || prop.name}}
-                  <span v-if="colsEnum[prop.name].addition">({{colsEnum[prop.name].addition}})</span>
-                  <span v-if="colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">, {{colsEnum[prop.name].unit}}</span>
+                  {{colsEnum[prop.name] && colsEnum[prop.name].title || prop.name}}
+                  <span v-if="colsEnum[prop.name] && colsEnum[prop.name].addition">({{colsEnum[prop.name].addition}})</span>
+                  <span v-if="colsEnum[prop.name] && colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">, {{colsEnum[prop.name].unit}}</span>
                 </span>
               </div>
             </template>
@@ -195,15 +195,15 @@
                   <div class="header__item" :key="prop.name"
                     :class="{[`item_${index}`]: true}" style="cursor: move"
                   >
-                    <q-tooltip v-if="colsEnum[prop.name].description || colsEnum[prop.name].title">
+                    <q-tooltip v-if="colsEnum[prop.name] && (colsEnum[prop.name].description || colsEnum[prop.name].title)">
                       {{`${prop.name}: ${colsEnum[prop.name].description ? colsEnum[prop.name].description : ''}`}}
                     </q-tooltip>
                     <span class="item__label">
-                      {{colsEnum[prop.name].title || prop.name}}
-                      <span v-if="colsEnum[prop.name].addition">
+                      {{colsEnum[prop.name] && colsEnum[prop.name].title || prop.name}}
+                      <span v-if="colsEnum[prop.name] && colsEnum[prop.name].addition">
                         ({{colsEnum[prop.name].addition}})
                       </span>
-                      <span v-if="colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">
+                      <span v-if="colsEnum[prop.name] && colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">
                         , {{colsEnum[prop.name].unit}}
                       </span>
                     </span>
@@ -709,11 +709,6 @@ export default {
     },
     toggleCol () {
       if (!this.editableCol) { return }
-      const col = this.editableCol.data
-      const colEnum = this.cols.enum[col.name]
-      if (colEnum.custom) {
-        this.removeCol()
-      }
       this.activeCols.splice(this.editableCol.index, 1)
       this.cols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
       this.updateCols()

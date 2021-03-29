@@ -66,15 +66,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (col.display) {
           res.schema.push({ name: col.name, width: col.width })
         }
-        res.enum[col.name] = { ...col }
-        delete res.enum[col.name].display
-        delete res.enum[col.name].width
         return res
       }, {
         schema: [],
-        enum: {},
         isDefault: true,
-        isProtocol: true
+        isProtocol: true,
+        enum: {}
       })
       if (!processedSchemaByCols.isDefault || !processedSchemaByCols.isProtocol) {
         const channelResp = await Vue.connector.gw.getChannels(active, { fields: 'name' })
@@ -88,7 +85,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           cols: processedSchemaByCols.schema
         }
       }
-      schema.enum = processedSchemaByCols.enum
     }
     return schema
   }
@@ -109,6 +105,22 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
+  async function migrateAll (state, data) {
+    for (const name in data) {
+      let colsSchema = data[name]
+      if (Array.isArray(colsSchema)) {
+        colsSchema = await migrateCols(state.active, colsSchema)
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
+      } else if (colsSchema.enum) {
+        delete colsSchema.enum
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
+      }
+    }
+    return data
+  }
+
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     commit('reqStart')
     const needEtc = sysColsNeedInitFlags.etc
@@ -116,84 +128,60 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       try {
         Vue.set(state, 'isLoading', true)
         let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        migrateAll(state, colsFromStorage)
         colsFromStorage = (colsFromStorage && colsFromStorage[state.active])
-        let colsSchema = colsFromStorage || getDefaultColsSchema()
+        const colsSchema = colsFromStorage || getDefaultColsSchema()
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
           ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-        if (Array.isArray(colsSchema)) {
-          colsSchema = await migrateCols(state.active, colsSchema)
-          colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-          setColsLS(LocalStorage, state.lsNamespace, state.name, state.active, colsSchema)
-        }
-        const needMigration = !colsFromStorage || (
-          _get(colsSchema.enum, 'timestamp.unit', undefined) === undefined
-        ) // type and unit adding 02.09.20
+        colsSchema.enum = {}
 
-        /* adding sys cols after migration. 12.11.20 */
-        if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
-          delete colsSchema.enum.action
-        }
-        /* adding locale to all timestamps 26.01.21 */
-        const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-        Object.keys(colsSchema.enum).forEach(name => {
-          if (name.match(/timestamp$/)) {
-            const col = colsSchema.enum[name]
-            col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-            col.type = ''
-            col.unit = ''
+        const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
+        const protocolIdData = protocolIdResp.data
+        errorsCheck(protocolIdData)
+        if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
+          const colsResp = await Vue.connector.gw.getChannelProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
+          const colsData = colsResp.data
+          errorsCheck(colsData)
+          const messageParams = colsData.result[0].message_parameters
+          /* initing columns by message parameters */
+          colsSchema.schemas._protocol = {
+            name: '_protocol',
+            cols: []
           }
-        })
-        /* adding locale to all timestamps end */
-
-        if (needMigration) {
-          const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
-          const protocolIdData = protocolIdResp.data
-          errorsCheck(protocolIdData)
-          if (protocolIdData.result && protocolIdData.result.length && protocolIdData.result[0].protocol_id) {
-            const colsResp = await Vue.connector.gw.getChannelProtocols(protocolIdData.result[0].protocol_id, { fields: 'message_parameters' })
-            const colsData = colsResp.data
-            errorsCheck(colsData)
-            const messageParams = colsData.result[0].message_parameters
-            /* initing columns by message parameters */
-            colsSchema.schemas._protocol = {
-              name: '_protocol',
-              cols: []
+          const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+          messageParams.forEach((param) => {
+            const name = param.name
+            const enumCol = {
+              name,
+              type: param.type || '',
+              unit: param.unit || '',
+              description: param.info || ''
             }
-            const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-            messageParams.forEach((param) => {
-              const name = param.name
-              const enumCol = {
-                name,
-                type: param.type || '',
-                unit: param.unit || '',
-                description: param.info || ''
+            const schemaCol = {
+              name,
+              width: 150
+            }
+            if (name.match(/timestamp$/)) {
+              enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+              enumCol.type = ''
+              enumCol.unit = ''
+              schemaCol.width = 190
+              if (name === 'timestamp') {
+                colsSchema.schemas._protocol.cols.unshift(schemaCol)
+                colsSchema.enum.timestamp = enumCol
+                return
               }
-              const schemaCol = {
-                name,
-                width: 150
-              }
-              if (name.match(/timestamp$/)) {
-                enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-                enumCol.type = ''
-                enumCol.unit = ''
-                schemaCol.width = 190
-                if (name === 'timestamp') {
-                  colsSchema.schemas._protocol.cols.unshift(schemaCol)
-                  colsSchema.enum.timestamp = enumCol
-                  return
-                }
-              }
-              colsSchema.schemas._protocol.cols.push(schemaCol)
-              colsSchema.enum[name] = enumCol
-            })
-          }
-          if (needEtc) {
-            colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-            colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-          }
-          colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
+            }
+            colsSchema.schemas._protocol.cols.push(schemaCol)
+            colsSchema.enum[name] = enumCol
+          })
         }
+        if (needEtc) {
+          colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+          !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+        }
+        colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
         commit('setCols', colsSchema)
         Vue.set(state, 'isLoading', false)
       } catch (e) {
@@ -300,11 +288,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       Vue.set(state, 'isLoading', true)
       const to = Math.floor(_get(state, 'messages[0]["server.timestamp"]', state.to) - 1)
       const params = getParams(state)
-      // params.to = to
-      /* api container interface fix */
-      params.filter = `server.timestamp<=${to}${params.filter ? `,${params.filter}` : ''}`
-      params.to = to + 2
-      /* api container interface fix */
+      params.to = to
       params.reverse = true
       if (loopId && state.messages.length > state.limit * 2) {
         await unsubscribePooling({ state, commit, rootState })
@@ -330,15 +314,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       const from = Math.floor(_get(state, `messages[${state.messages.length - 1}]['server.timestamp']`, state.from) + 1)
       const params = getParams(state)
       let messagesCount = 0
-      // params.from = from
-      /* api container interface fix */
-      const fixParams = { ...params }
-      fixParams.filter = `server.timestamp>=${from}${params.filter ? `,${params.filter}` : ''}`
-      fixParams.to = from - 2
-      const messages = await getMessages({ state, commit, rootState }, fixParams)
+      params.from = from
+      const messages = await getMessages({ state, commit, rootState }, params)
       messagesCount += messages.length
       const needRT = (params.to + 2 > Math.floor(Date.now() / 1000) && (state.limit && messages.length < state.limit) && !loopId)
-      console.log(params.to > Math.floor(Date.now() / 1000))
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })

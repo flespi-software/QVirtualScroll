@@ -115,62 +115,55 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function getCols ({ state, commit }, counters) {
-    const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-    if (colsFromStorage && colsFromStorage[state.active] && colsFromStorage[state.active].length) {
-      let colsSchema = colsFromStorage[state.active]
-      const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
-        ? colsFromStorage['custom-cols-schemas'] : {}
-      colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+  async function migrateAll (state, data) {
+    for (const name in data) {
+      let colsSchema = data[name]
       if (Array.isArray(colsSchema)) {
         colsSchema = await migrateCols(state.active, colsSchema)
-        colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-        setColsLS(LocalStorage, state.lsNamespace, state.name, state.active, colsSchema)
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
+      } else if (colsSchema.enum) {
+        delete colsSchema.enum
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
       }
-
-      /* adding sys cols after migration. 12.11.20 */
-      if (_get(colsSchema.enum, 'action.__dest', undefined) === 'action') {
-        delete colsSchema.enum.action
-      }
-      /* adding locale to all timestamps 26.01.21 */
-      const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-      Object.keys(colsSchema.enum).forEach(name => {
-        if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
-          const col = colsSchema.enum[name]
-          col.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-          col.type = ''
-          col.unit = ''
-        }
-      })
-      /* adding locale to all timestamps end */
-      commit('updateCols', colsSchema)
-    } else {
-      const colsSchema = getDefaultColsSchema()
-      const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-      counters.forEach(counter => {
-        const name = counter.name
-        const enumCol = {
-          name,
-          description: `${counter.name}[${counter.type}]`
-        }
-        const schemaCol = {
-          name,
-          width: 100
-        }
-        if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
-          enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-          enumCol.type = ''
-          enumCol.unit = ''
-          schemaCol.width = 190
-        }
-        colsSchema.schemas._protocol.cols.push(schemaCol)
-        colsSchema.enum[name] = enumCol
-      })
-      colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-      colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-      colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
-      commit('setCols', colsSchema)
     }
+    return data
+  }
+
+  async function getCols ({ state, commit }, counters) {
+    let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+    migrateAll(colsFromStorage)
+    colsFromStorage = colsFromStorage[state.active]
+    const colsSchema = colsFromStorage || getDefaultColsSchema()
+    const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
+      ? colsFromStorage['custom-cols-schemas'] : {}
+    colsSchema.enum = {}
+    colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+    const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+    counters.forEach(counter => {
+      const name = counter.name
+      const enumCol = {
+        name,
+        description: `${counter.name}[${counter.type}]`
+      }
+      const schemaCol = {
+        name,
+        width: 100
+      }
+      if (name.match(/timestamp$/) || name === 'begin' || name === 'end') {
+        enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+        enumCol.type = ''
+        enumCol.unit = ''
+        schemaCol.width = 190
+      }
+      colsSchema.schemas._protocol.cols.push(schemaCol)
+      colsSchema.enum[name] = enumCol
+    })
+    colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+    !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+    colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
+    commit('setCols', colsSchema)
   }
 
   function errorsCheck (data) {

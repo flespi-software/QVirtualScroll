@@ -14,8 +14,7 @@ function splitSchemas (cols) {
       _default: cols.schemas._default,
       _protocol: cols.schemas._protocol,
       _unsaved: cols.schemas._unsaved
-    },
-    enum: cols.enum
+    }
   }
   return { customColsSchema, defaultColsSchema }
 }

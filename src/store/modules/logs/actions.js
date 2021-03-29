@@ -1,6 +1,6 @@
 import _get from 'lodash/get'
 import defaultCols from './defaultCols'
-import { getColsLS } from '../ls'
+import { getColsLS, setColsLS } from '../ls'
 export default function ({ Vue, LocalStorage, errorHandler }) {
   function getParams (state) {
     const params = { filter: [] }
@@ -90,20 +90,36 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
+  function migrateAll (state, initCols, data) {
+    for (const name in data) {
+      let colsSchema = data[name]
+      if (Array.isArray(colsSchema)) {
+        colsSchema = migrateCols(state.origin, initCols, data[state.origin])
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
+      } else if (colsSchema.enum) {
+        delete colsSchema.enum
+        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
+        data[name] = colsSchema
+      }
+    }
+    return data
+  }
+
   function getCols ({ state, commit }, initCols) {
-    let colsSchema = getDefaultColsSchema(initCols || defaultCols)
+    const colsSchema = getDefaultColsSchema(initCols || defaultCols)
     colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
     colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
     /* LS processing */
     const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-    if (colsFromStorage && colsFromStorage[state.origin]) {
-      colsSchema = Array.isArray(colsFromStorage[state.origin])
-        ? migrateCols(state.origin, initCols, colsFromStorage[state.origin])
-        : colsFromStorage[state.origin]
-    }
+    migrateAll(state, initCols, colsFromStorage)
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
       ? colsFromStorage['custom-cols-schemas'] : {}
-    colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+    if (colsFromStorage && colsFromStorage[state.origin]) {
+      const colsSchemaLS = colsFromStorage[state.origin]
+      colsSchema.activeSchema = colsSchemaLS.activeSchema
+      colsSchema.schemas = { ...colsSchema.schemas, ...colsSchemaLS.schemas, ...customColsSchemas }
+    }
     commit('setCols', colsSchema)
   }
 
