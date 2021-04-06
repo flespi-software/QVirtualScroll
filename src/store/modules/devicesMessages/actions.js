@@ -196,7 +196,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           })
         }
         if (needEtc) {
-          colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+          device.device_type_id && colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
           !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
         }
         colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
