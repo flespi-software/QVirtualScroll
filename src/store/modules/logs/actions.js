@@ -330,13 +330,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function pollingGet ({ state, commit, rootState }) {
     const api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
-    let properties = {}
-    if (state.cid) {
-      properties = { userProperties: { cid: state.cid } }
-    }
+    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       messagesBuffer.push(JSON.parse(message))
-    }, { rh: 2, properties })
+    }, { rh: 2, prefix: filter })
     state.realtimeEnabled = true
     return () => {
       loopId = initRenderLoop(state, commit)
@@ -378,11 +375,8 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       messagesBuffer = []
       loopId = 0
     }
-    let properties = {}
-    if (state.cid) {
-      properties = { userProperties: { cid: state.cid } }
-    }
-    await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { properties })
+    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
+    await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { prefix: filter })
     state.realtimeEnabled = false
   }
 

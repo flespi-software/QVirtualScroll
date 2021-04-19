@@ -2,11 +2,11 @@ import getActions from './actions'
 import getMutations from './mutations'
 import get from 'lodash/get'
 
-export default function ({ Vue, LocalStorage, name, errorHandler, filterHandler, newMessagesInterseptor }) {
+export default function ({ Vue, LocalStorage, name, errorHandler, newMessagesInterseptor }) {
   const lsNamespace = get(name, 'lsNamespace', undefined)
   name = get(name, 'name', name)
   const actions = getActions({ Vue, LocalStorage, errorHandler }),
-    mutations = getMutations({ Vue, LocalStorage, filterHandler, newMessagesInterseptor })
+    mutations = getMutations({ Vue, LocalStorage, newMessagesInterseptor })
 
   const state = {
     name,

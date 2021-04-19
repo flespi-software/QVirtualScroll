@@ -1,5 +1,5 @@
 import { setColsLS } from '../ls'
-export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
+export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
   function setMessages (state, data) {
     if (data && data.length) {
       if (state.reverse) {

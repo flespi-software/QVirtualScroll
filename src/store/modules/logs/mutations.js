@@ -1,5 +1,5 @@
 import { setColsLS } from '../ls'
-export default function ({ Vue, LocalStorage, filterHandler, newMessagesInterseptor }) {
+export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
   let messagesKeyPointer = 0
   function messagesIndexing (messages) {
     if (!messages.length) { return }
@@ -10,9 +10,6 @@ export default function ({ Vue, LocalStorage, filterHandler, newMessagesIntersep
 
   function setRTMessages (state, data) {
     if (data && data.length) {
-      if (state.filter && filterHandler) {
-        data = filterHandler(state.filter, data)
-      }
       messagesIndexing(data)
       const messages = state.messages
       newMessagesInterseptor && newMessagesInterseptor(data)

@@ -381,9 +381,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   async function pollingGet ({ state, commit, rootState }) {
+    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}` : undefined
     await Vue.connector.subscribeMessagesDevices(state.active, (message) => {
       messagesBuffer.push(JSON.parse(message))
-    }, { rh: 2 })
+    }, { rh: 2, prefix: filter })
     state.realtimeEnabled = true
     return () => {
       loopId = initRenderLoop(state, commit)
@@ -397,7 +398,8 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       messagesBuffer = []
       loopId = 0
     }
-    await Vue.connector.unsubscribeMessagesDevices(state.active)
+    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}` : undefined
+    await Vue.connector.unsubscribeMessagesDevices(state.active, undefined, { prefix: filter })
     state.realtimeEnabled = false
   }
 

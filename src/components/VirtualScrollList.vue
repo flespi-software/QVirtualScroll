@@ -14,10 +14,11 @@
         v-if="currentViewConfig.needShowFilter && ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
         @keyup.enter="searchSubmitHandler"
         type="text" v-model="currentFilter"
+        @clear="searchSubmitHandler"
         :dark="currentTheme.controlsInverted"
         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
         :bg-color="currentFilter ? 'green-5' : undefined"
-        placeholder="param1=n*,param2,param3>=5"
+        placeholder='param1="name",param2!="",param3>=5*'
         :debounce="0"
       >
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
@@ -709,6 +710,11 @@ export default {
     },
     toggleCol () {
       if (!this.editableCol) { return }
+      const col = this.editableCol.data
+      const colEnum = this.cols.enum[col.name]
+      if (colEnum.custom) {
+        this.removeCol()
+      }
       this.activeCols.splice(this.editableCol.index, 1)
       this.cols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
       this.updateCols()
