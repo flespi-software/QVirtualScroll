@@ -18,7 +18,7 @@
         :dark="currentTheme.controlsInverted"
         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
         :bg-color="currentFilter ? 'green-5' : undefined"
-        placeholder='param1="name",param2!="",param3>=5*'
+        placeholder='param1=="name" || (param2!="" && param3>=5)'
         :debounce="0"
       >
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
