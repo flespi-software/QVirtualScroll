@@ -89,6 +89,13 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return schema
   }
 
+  function getDefaultEnum () {
+    return defaultCols.reduce((res, name) => {
+      res[name] = { name }
+      return res
+    }, {})
+  }
+
   function getDefaultColsSchema () {
     return {
       activeSchema: '_default',
@@ -98,10 +105,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           cols: defaultCols.map(name => ({ name, width: 150 }))
         }
       },
-      enum: defaultCols.reduce((res, name) => {
-        res[name] = { name }
-        return res
-      }, {})
+      enum: getDefaultEnum()
     }
   }
 
@@ -134,8 +138,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
           ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-        colsSchema.enum = {}
-
+        if (!colsSchema.enum) {
+          colsSchema.enum = getDefaultEnum()
+        }
         const protocolIdResp = await Vue.connector.gw.getChannels(state.active, { fields: 'protocol_id' })
         const protocolIdData = protocolIdResp.data
         errorsCheck(protocolIdData)

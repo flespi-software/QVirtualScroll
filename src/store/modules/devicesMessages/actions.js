@@ -93,8 +93,20 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return schema
   }
 
-  function getDefaultColsSchema () {
+  function getDefaultEnum () {
     const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+    return defaultCols.reduce((res, name) => {
+      res[name] = { name }
+      if (name.match(/timestamp$/)) {
+        res[name].addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+        res[name].type = ''
+        res[name].unit = ''
+      }
+      return res
+    }, {})
+  }
+
+  function getDefaultColsSchema () {
     return {
       activeSchema: '_default',
       schemas: {
@@ -103,15 +115,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           cols: defaultCols.map(name => ({ name, width: 150 }))
         }
       },
-      enum: defaultCols.reduce((res, name) => {
-        res[name] = { name }
-        if (name.match(/timestamp$/)) {
-          res[name].addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-          res[name].type = ''
-          res[name].unit = ''
-        }
-        return res
-      }, {})
+      enum: getDefaultEnum()
     }
   }
 
@@ -150,7 +154,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
           ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-        colsSchema.enum = {}
+        if (!colsSchema.enum) {
+          colsSchema.enum = getDefaultEnum()
+        }
         if (device.device_type_id) {
           /* getting protocol id */
           const protocolResp = await Vue.connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
