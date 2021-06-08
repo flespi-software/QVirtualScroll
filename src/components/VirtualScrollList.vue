@@ -712,7 +712,7 @@ export default {
       if (!this.editableCol) { return }
       const col = this.editableCol.data
       const colEnum = this.cols.enum[col.name]
-      if (colEnum.custom) {
+      if (colEnum && colEnum.custom) {
         this.removeCol()
       }
       this.activeCols.splice(this.editableCol.index, 1)
