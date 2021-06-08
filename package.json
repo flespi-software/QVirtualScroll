@@ -25,14 +25,14 @@
     "@quasar/extras": "^1.5.2",
     "datetimerangepicker": "github:flespi-software/DateTimeRangePicker#6d6dec2fb16695b8ca96af816596a7a938eca519",
     "flespi-io-js": "git+https://github.com/flespi-software/flespi-io-js.git",
-    "lodash": "^4.17.20",
-    "quasar": "^1.14.2",
+    "lodash": "^4.17.21",
+    "quasar": "^1.15.20",
     "vue-draggable-resizable": "^2.2.0",
     "vue-virtual-scroll-list": "^1.4.6",
     "vuedraggable": "^2.23.2"
   },
   "peerDependencies": {
-    "quasar": "^1.14.2",
+    "quasar": "^1.15.20",
     "vue": ">=2"
   },
   "devDependencies": {
