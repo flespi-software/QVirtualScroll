@@ -1,12 +1,12 @@
 import vue from 'rollup-plugin-vue'
-import babel from 'rollup-plugin-babel'
-import { eslint } from 'rollup-plugin-eslint'
+import babel from '@rollup/plugin-babel'
+import eslint from '@rollup/plugin-eslint'
 import bundleSize from 'rollup-plugin-filesize'
-import resolve from 'rollup-plugin-node-resolve'
-import commonjs from 'rollup-plugin-commonjs'
+import resolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
 import ignore from 'rollup-plugin-ignore'
 import autoExternal from 'rollup-plugin-auto-external'
-import { uglify } from 'rollup-plugin-uglify'
+import { terser } from 'rollup-plugin-terser'
 
 const extensions = ['.js', '.vue']
 const isProduction = !process.env.ROLLUP_WATCH
@@ -36,11 +36,10 @@ const prodPlugins = [
   }),
   babel({
     exclude: 'node_modules/**',
-    externalHelpers: false,
-    runtimeHelpers: true,
+    babelHelpers: 'runtime',
     extensions: ['.js', '.vue']
   }),
-  uglify()
+  terser()
 ]
 const devPlugins = [
   eslint(lintOpts),

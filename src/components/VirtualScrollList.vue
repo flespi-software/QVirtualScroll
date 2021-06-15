@@ -350,8 +350,10 @@ export default {
       needShowFilter: false,
       needShowDateRange: false
     }
-    const firstSchemaName = this.cols.schemas[this.cols.activeSchema] ? this.cols.activeSchema : '_default'
+    const localCols = cloneDeep(this.cols)
+    const firstSchemaName = localCols.schemas[this.cols.activeSchema] ? this.cols.activeSchema : '_default'
     return {
+      localCols,
       uid: 0,
       currentFilter: this.filter,
       wrapperHeight: 0,
@@ -515,7 +517,8 @@ export default {
     onResize (width, index) {
       if (typeof index === 'number') {
         this.activeCols[index].width = width
-        this.cols.schemas[this.activeSchema].cols[index].width = width
+        this.localCols.schemas[this.activeSchema].cols[index].width = width
+        this.updateCols()
       }
       this.updateDynamicCSS()
     },
@@ -674,21 +677,22 @@ export default {
       this.editableRow = null
     },
     addCustomColumnHandler (colName) {
-      const existingCol = this.cols.enum[colName]
+      const existingCol = this.localCols.enum[colName]
       const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
       let scrollWidth = 0
       const lastCol = this.activeCols[this.activeCols.length - 1] || { name: '', width: 0 }
-      const lastColSchema = this.cols.enum[lastCol.name] || {}
+      const lastColSchema = this.localCols.enum[lastCol.name] || {}
+      console.log(lastColSchema)
       if (!existingCol) {
-        this.cols.enum[colName] = { name: colName, custom: true }
+        this.localCols.enum[colName] = { name: colName, custom: true }
       }
       if (lastColSchema.__dest === 'etc') {
-        this.activeCols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
-        this.cols.schemas[this.activeSchema].cols.splice(this.activeCols.length - 1, 0, { name: colName, width: 150 })
+        this.activeCols.splice(this.activeCols.length - 2, 0, { name: colName, width: 150 })
+        this.localCols.schemas[this.activeSchema].cols.splice(this.activeCols.length - 2, 0, { name: colName, width: 150 })
         if (scrollEl) { scrollWidth = scrollEl.scrollWidth - lastCol.width }
       } else {
         this.activeCols.push({ name: colName, width: 150 })
-        this.cols.schemas[this.activeSchema].cols.push({ name: colName, width: 150 })
+        this.localCols.schemas[this.activeSchema].cols.push({ name: colName, width: 150 })
         if (scrollEl) { scrollWidth = scrollEl.scrollWidth }
       }
       if (scrollWidth && scrollEl) {
@@ -700,27 +704,27 @@ export default {
       const index = this.activeCols.findIndex(col => col.name === colName)
       if (index !== -1) {
         this.activeCols.splice(index, 1)
-        this.cols.schemas[this.activeSchema].cols.splice(index, 1)
+        this.localCols.schemas[this.activeSchema].cols.splice(index, 1)
         this.updateCols()
       }
     },
     removeCol () {
-      delete this.cols.enum[this.editableCol.data.name]
+      delete this.localCols.enum[this.editableCol.data.name]
       this.updateCols()
     },
     toggleCol () {
       if (!this.editableCol) { return }
       const col = this.editableCol.data
-      const colEnum = this.cols.enum[col.name]
+      const colEnum = this.localCols.enum[col.name]
       if (colEnum && colEnum.custom) {
         this.removeCol()
       }
       this.activeCols.splice(this.editableCol.index, 1)
-      this.cols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
+      this.localCols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
       this.updateCols()
     },
     updateCols () {
-      this.$emit('update-cols', this.cols)
+      this.$emit('update-cols', this.localCols)
     },
     moveDragHandler: debounce(function (evt, oevt) {
       const wrapperWidth = this.wrapperWidth
@@ -743,7 +747,7 @@ export default {
       }
     }, 300),
     endDragHandler () {
-      this.cols.schemas[this.activeSchema].cols = cloneDeep(this.activeCols)
+      this.localCols.schemas[this.activeSchema].cols = cloneDeep(this.activeCols)
       this.updateCols()
     },
     colAddingHandler () {
@@ -762,8 +766,8 @@ export default {
         name: this.newSchemaName,
         cols: cloneDeep(this.activeCols)
       }
-      this.cols.schemas[colSchema.name] = colSchema
-      this.cols.activeSchema = colSchema.name
+      this.localCols.schemas[colSchema.name] = colSchema
+      this.localCols.activeSchema = colSchema.name
       this.colsSchemaAddingCloseHandler()
       this.$delete(this.cols.schemas, '_unsaved')
       this.updateCols()
@@ -773,8 +777,8 @@ export default {
         name: 'Modified',
         cols: cols
       }
-      this.cols.schemas._unsaved = colSchema
-      this.cols.activeSchema = '_unsaved'
+      this.localCols.schemas._unsaved = colSchema
+      this.localCols.activeSchema = '_unsaved'
       this.updateCols()
     },
     colsSchemaRemoveHandler (name) {
@@ -791,7 +795,7 @@ export default {
       setTimeout(() => { this.prevDeleteSchemaName = undefined }, 200)
     },
     customSchemaApply (name) {
-      this.cols.activeSchema = name
+      this.localCols.activeSchema = name
       this.updateCols()
     },
     initSchema () {
@@ -831,6 +835,7 @@ export default {
       if (cols !== oldCols) {
         this.activeCols = cloneDeep(this.cols.schemas[this.activeSchema].cols)
       }
+      this.localCols = cloneDeep(cols)
     },
     'cols.activeSchema' (schema, oldSchema) {
       if (schema !== oldSchema && this.cols.schemas[schema]) {
