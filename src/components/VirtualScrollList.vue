@@ -182,7 +182,7 @@
               :row="editableRow"
               @add="colsAddition = true, addingRow = editableRow"
               @remove="toggleCol"
-              @action="(type) => clickHandler({ index: this.editableRow.index, type, content: this.editableRow.data })"
+              @action="(type) => clickHandler({ index: editableRow.index, type, content: editableRow.data })"
             />
           </slot>
         </q-menu>
