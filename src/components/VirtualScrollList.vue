@@ -682,7 +682,6 @@ export default {
       let scrollWidth = 0
       const lastCol = this.activeCols[this.activeCols.length - 1] || { name: '', width: 0 }
       const lastColSchema = this.localCols.enum[lastCol.name] || {}
-      console.log(lastColSchema)
       if (!existingCol) {
         this.localCols.enum[colName] = { name: colName, custom: true }
       }

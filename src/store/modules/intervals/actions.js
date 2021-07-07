@@ -214,15 +214,16 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function get ({ state, commit, rootState }) {
+  async function getMessages ({ state, commit, rootState }, params) {
+    let messages = []
     commit('reqStart')
     if (rootState.token && state.active && state.activeDevice) {
       try {
         Vue.set(state, 'isLoading', true)
-        const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(getParams(state)) })
+        const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
         const data = resp.data
         errorsCheck(data)
-        commit('setMessages', data.result)
+        messages = data.result
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)
@@ -230,6 +231,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         Vue.set(state, 'isLoading', false)
       }
     }
+    return messages
+  }
+
+  async function get ({ state, commit, rootState }) {
+    const messages = await getMessages({ state, commit, rootState }, getParams(state))
+    commit('setMessages', messages)
   }
 
   const messageProcessing = (state, packet) => {
@@ -295,6 +302,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   return {
+    getMessages,
     get,
     pollingGet,
     initTime,
