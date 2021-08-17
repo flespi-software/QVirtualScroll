@@ -555,6 +555,7 @@ export default {
     listScroll: function (e, data) {
       const { offset } = data
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
+      if (!scrollerElement) { return }
       const offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
       this.scrollNormalize()
       if (!this.currentScrollTop) {
