@@ -419,6 +419,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           from: start,
           to: end
         }
+        if (state.filter) { params.data.filter = state.filter }
         const resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
         const data = resp.data
         errorsCheck(data)

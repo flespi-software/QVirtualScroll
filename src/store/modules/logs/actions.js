@@ -353,6 +353,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           },
           headers: getHeaders(state)
         }
+        if (state.filter) { params.data.filter = state.filter }
         const resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
         const data = resp.data
         errorsCheck(data)
