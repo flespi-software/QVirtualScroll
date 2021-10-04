@@ -204,7 +204,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         dateEnd = new Date(dateEnd)
         dateEnd.setHours(23, 59, 59, 999)
         commit('setBegin', dateBegin.valueOf())
-        commit('setEnd', dateEnd.valueOf())
+        commit('setEnd', dateEnd.valueOf() + 0.999)
         Vue.set(state, 'isLoading', false)
       } catch (e) {
         errorHandler && errorHandler(e)

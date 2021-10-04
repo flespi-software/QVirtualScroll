@@ -13,10 +13,10 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       params.filter = `${state.filter}`
     }
     if (state.from) {
-      params.from = Math.floor(state.from / 1000)
+      params.from = state.from / 1000
     }
     if (state.to) {
-      params.to = Math.floor(state.to / 1000)
+      params.to = state.to / 1000
     }
     if (state.reverse) {
       params.reverse = state.reverse
@@ -219,7 +219,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   function getFromTo (val) {
     const now = val || Date.now(),
       from = new Date(now).setHours(0, 0, 0, 0),
-      to = from + 86399999
+      to = from + 86399999.999
     return { from, to }
   }
 
@@ -278,17 +278,17 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function get ({ state, commit, rootState }) {
     if (!state.isLoading) {
       Vue.set(state, 'isLoading', true)
-      const start = Math.floor(Date.now() / 1000)
+      const start = Date.now() / 1000
       const params = getParams(state)
       let messagesCount = 0
       const messages = await getMessages({ state, commit, rootState }, params)
       messagesCount += messages.length
-      const now = Math.floor(Date.now() / 1000)
+      const now = Date.now() / 1000
       const needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })
-        const stop = Math.floor(Date.now() / 1000)
+        const stop = Date.now() / 1000
         const params = getParams(state)
         params.from = start
         params.to = stop
@@ -311,7 +311,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   async function getPrevPage ({ state, commit, rootState }) {
     if (!state.isLoading) {
       Vue.set(state, 'isLoading', true)
-      const to = Math.floor(_get(state, 'messages[0].timestamp', state.to) - 1)
+      const to = _get(state, 'messages[0].timestamp', state.to) - 0.000001
       const params = getParams(state)
       params.to = to
       params.reverse = true
@@ -336,7 +336,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       if (state.realtimeEnabled) { return }
       Vue.set(state, 'isLoading', true)
       const start = Date.now()
-      const from = Math.floor(_get(state, `messages[${state.messages.length - 1}].timestamp`, state.from) + 1)
+      const from = _get(state, `messages[${state.messages.length - 1}].timestamp`, state.from) + 0.000001
       const params = getParams(state)
       let messagesCount = 0
       params.from = from
@@ -348,8 +348,8 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         startRTRender = await pollingGet({ state, commit, rootState })
         const stop = Date.now()
         const params = getParams(state)
-        params.from = Math.floor(start / 1000)
-        params.to = Math.floor(stop / 1000)
+        params.from = start / 1000
+        params.to = stop / 1000
         const missedMessages = await getMessages({ state, commit, rootState }, params)
         messagesCount += missedMessages.length
         messages.splice(messages.length, 0, ...missedMessages)

@@ -193,13 +193,13 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
 
   function setOffline (state) {
     state.offline = {
-      start: Math.floor(Date.now() / 1000),
+      start: Date.now() / 1000,
       lastMessageIndex: state.messages.length - 1
     }
   }
 
   function setReconnected (state) {
-    state.offline.end = Math.floor(Date.now() / 1000)
+    state.offline.end = Date.now() / 1000
   }
 
   function clearOfflineState (state) {

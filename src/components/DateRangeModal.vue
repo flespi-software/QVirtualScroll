@@ -60,7 +60,9 @@ export default {
       this.mode = mode
     },
     dateRangeModalSave () {
-      this.$emit('save', this.dateModel)
+      let [from, to] = this.dateModel
+      to += 0.999
+      this.$emit('save', [from ,to])
       this.dateRangeModalClose()
     },
     formatDate (timestamp) {
@@ -68,14 +70,14 @@ export default {
     },
     prevHandler () {
       const delta = this.dateModel[1] - this.dateModel[0],
-        newTo = this.dateModel[0] - 1,
+        newTo = this.dateModel[0] - 0.001,
         newFrom = newTo - delta
       this.dateModel = [newFrom, newTo]
       this.debouncedSave()
     },
     nextHandler () {
       const delta = this.dateModel[1] - this.dateModel[0],
-        newFrom = this.dateModel[1] + 1,
+        newFrom = this.dateModel[1] + 0.001,
         newTo = newFrom + delta
       this.dateModel = [newFrom, newTo]
       this.debouncedSave()
