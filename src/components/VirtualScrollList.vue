@@ -852,17 +852,6 @@ export default {
       if (flag !== prev) {
         flag ? this.enableAutoscroll() : this.disableAutoscroll()
       }
-    },
-    loading () {
-      this.$nextTick(() => {
-        const header = this.$refs.header,
-          scroller = this.$refs.scroller
-        if (header && scroller) {
-          console.log(header.scrollLeft)
-          // scroller.$el.scrollLeft = header.scrollLeft
-          // wrapper.querySelector('.list__header .header__inner').style.left = (scroller.$el.querySelector('.q-w-list').getBoundingClientRect().left - wrapper.getBoundingClientRect().left) + 'px'
-        }
-      })
     }
   },
   mounted () {
