@@ -5,9 +5,9 @@
     </q-btn>
     <q-btn @click="dateRangeToggle" flat :color="theme.color" style="min-width: 124px; font-size: .8rem; line-height: .8rem;" class="q-pa-none">
       <div>
-        <div>{{formatDate(dateModel[0])}}</div>
+        <div>{{formatDate(date[0])}}</div>
         <div style="font-size: .5rem">|</div>
-        <div>{{formatDate(dateModel[1])}}</div>
+        <div>{{formatDate(date[1])}}</div>
       </div>
       <q-tooltip>Change time</q-tooltip>
     </q-btn>
@@ -30,7 +30,7 @@
         </q-card-section>
         <q-card-actions align="right" :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
           <q-btn flat :color="theme.color" @click="dateRangeModalClose">close</q-btn>
-          <q-btn flat :color="theme.color" @click="dateRangeModalSave" :disable="saveDisabled">save</q-btn>
+          <q-btn flat :color="theme.color" @click="dateRangeModalSave" :disable="saveDisabled">apply</q-btn>
         </q-card-actions>
       </q-card>
     </q-dialog>
