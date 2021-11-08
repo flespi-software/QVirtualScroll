@@ -42,6 +42,13 @@ export default {
       }
       return cols
     }
+  },
+  created () {
+    document.addEventListener('keyup', (e) => {
+      if (e.which === 13 && !this.filteredCols.length) {
+        this.$emit('add', this.filter)
+      }
+    })
   }
 }
 </script>
