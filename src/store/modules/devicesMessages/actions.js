@@ -294,7 +294,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         params.to = stop
         const missedMessages = await getMessages({ state, commit, rootState }, params)
         messagesCount += missedMessages.length
-        messages.splice(messages.length, 0, ...missedMessages)
+        messages.splice(0, 0, ...missedMessages)
       } else if ((params.to < now || (state.limit && messages.length >= state.limit)) && loopId) {
         await unsubscribePooling({ state, commit, rootState })
       }
