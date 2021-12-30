@@ -189,7 +189,7 @@
         <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
           v-if="(items.length || loading) && currentTheme.headerShow && activeCols.length" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
         >
-          <div class="header__inner" :style="{width: `${rowWidth}px` }">
+          <div class="header__inner" :style="{width: `${rowWidth + 10}px` }">
             <draggable :list="activeCols" ghostClass="ghost" tag="span" @end="endDragHandler" :move="moveDragHandler">
               <transition-group type="transition" name="flip-list">
                 <template v-for="(prop, index) in activeCols">
