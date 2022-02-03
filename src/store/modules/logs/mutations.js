@@ -4,7 +4,10 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
   function messagesIndexing (messages) {
     if (!messages.length) { return }
     messages.forEach((message, index) => {
-      messages[index]['x-flespi-message-key'] = messagesKeyPointer++
+      Object.defineProperty(messages[index], 'x-flespi-message-key', {
+        value: messagesKeyPointer++,
+        enumerable: false
+      })
     })
   }
 

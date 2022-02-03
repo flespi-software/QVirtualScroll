@@ -448,7 +448,7 @@ export default {
       if (this.addingRow) {
         const params = Object.keys(this.addingRow.data)
         params.forEach((param) => {
-          if (!cols.existed[param] && !cols.notExisted[param] && param.indexOf('x-flespi') === -1) {
+          if (!cols.existed[param] && !cols.notExisted[param]) {
             cols.notExisted[param] = true
           }
         })
