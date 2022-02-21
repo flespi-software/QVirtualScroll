@@ -7,15 +7,15 @@
       <q-item-section>Copy</q-item-section>
     </q-item>
     <q-separator v-if="selection" spaced inset dark />
-    <template v-if="row && row.actions && row.actions.length">
-      <q-item clickable v-ripple @click="$emit('action', action.type)" dense class="q-px-sm" v-for="action in row.actions" :key="action.label" v-close-popup>
+    <template v-if="row && row.actions">
+      <q-item clickable v-ripple @click="$emit('action', action.type)" dense class="q-px-sm" v-for="action in getActions(row.actions)" :key="action.label" v-close-popup>
         <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
           <q-icon :name="action.icon" />
         </q-item-section>
         <q-item-section>{{action.label}}</q-item-section>
       </q-item>
     </template>
-    <q-separator v-if="row && row.actions && row.actions.length" spaced inset dark />
+    <q-separator v-if="row && row.actions" spaced inset dark />
     <q-item clickable dense v-ripple @click="add" class="q-px-sm" v-close-popup>
       <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
         <q-icon name="mdi-plus-circle-outline" />
@@ -58,6 +58,13 @@ export default {
         data = this.row.dataHandler(this.col, this.row, data)
       }
       return data
+    },
+    getActions (actions) {
+      if (typeof actions === 'function') {
+        return actions()
+      } else {
+        return actions
+      }
     }
   }
 }
