@@ -62,7 +62,7 @@ export default {
     dateRangeModalSave () {
       let [from, to] = this.dateModel
       to += 0.999
-      this.$emit('save', [from ,to])
+      this.save([from ,to])
       this.dateRangeModalClose()
     },
     formatDate (timestamp) {
@@ -73,22 +73,27 @@ export default {
         newTo = this.dateModel[0] - 0.001,
         newFrom = newTo - delta
       this.dateModel = [newFrom, newTo]
-      this.debouncedSave()
+      this.debouncedSave([newFrom, newTo])
     },
     nextHandler () {
       const delta = this.dateModel[1] - this.dateModel[0],
         newFrom = this.dateModel[1] + 0.001,
         newTo = newFrom + delta
       this.dateModel = [newFrom, newTo]
-      this.debouncedSave()
+      this.debouncedSave([newFrom, newTo])
+    },
+    save (date) {
+      this.$emit('save', date)
     }
   },
   created () {
-    this.debouncedSave = debounce(() => { this.$emit('save', this.dateModel) }, 300)
+    this.debouncedSave = debounce(this.save, 300)
   },
   watch: {
-    date (date) {
-      this.dateModel = date
+    date (date, prev) {
+      if (date[0] !== prev[0] || date[1] !== prev[1]) {
+        this.dateModel = date
+      }
     }
   },
   components: { DateRangePicker }
