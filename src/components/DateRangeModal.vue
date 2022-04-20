@@ -14,7 +14,7 @@
     <q-btn :color="theme.color" flat dense @click="nextHandler" icon="keyboard_arrow_right">
       <q-tooltip>Next time range</q-tooltip>
     </q-btn>
-    <q-dialog ref="dateRangePickerModal" content-class="modal-date-range" content-style="z-index: 90000;">
+    <q-dialog ref="dateRangePickerModal" content-class="modal-date-range" content-style="z-index: 90000;" no-route-dismiss>
       <q-card>
         <q-card-section class="scroll q-pa-none" :class="{[`bg-${theme.bgColor}`]: true, 'text-white': !!theme.bgColor}">
           <div class="flex flex-center">
