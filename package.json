@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "description": "Quasar component for displaing messages",
   "productName": "QVirtualScroll",
   "capacitorId": "",

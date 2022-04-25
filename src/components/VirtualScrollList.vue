@@ -37,7 +37,7 @@
           <q-icon size="1.5rem" name="mdi-dots-vertical"/>
           <q-spinner class="absolute-bottom-right" color="white" size=".7rem" />
         </template>
-        <q-menu ref="tableMenu">
+        <q-menu ref="tableMenu" no-route-dismiss>
           <q-list dark class="bg-grey-7 q-py-xs" style="min-width: 180px; max-width: 500px">
             <template v-for="(action, index) in panelActions">
               <q-item v-close-popup v-if="action.condition" class="q-px-sm" clickable @click="action.handler" :key="index" dense v-ripple>
