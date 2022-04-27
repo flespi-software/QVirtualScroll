@@ -121,7 +121,7 @@
         </q-input>
       </div>
       <q-btn
-        v-if="currentScrollTop < allScrollTop && items.length"
+        v-if="(currentScrollTop + itemHeight) < allScrollTop && items.length"
         fab-mini flat icon="mdi-chevron-down"
         @click="$emit('action-to-bottom')"
         class="absolute-bottom-right action action__to-bottom" style="z-index: 2"
@@ -231,7 +231,7 @@
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
           wclass="q-w-list"
           v-auto-bottom="needAutoScroll"
-          :onscroll="listScroll"
+          :onscroll="listScrollWrapper"
           :size="itemHeight"
           :remain="itemsCount"
           :item="item"
@@ -552,7 +552,12 @@ export default {
       }
       return verticalDirection
     },
-    listScroll: function (e, data) {
+    listScrollWrapper (e, data) {
+      window.requestAnimationFrame(() => {
+        this.listScroll(e, data)
+      })
+    },
+    listScroll (e, data) {
       const { offset } = data
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (!scrollerElement) { return }
