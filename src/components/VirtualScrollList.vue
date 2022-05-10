@@ -226,7 +226,7 @@
         <virtual-list
           ref="scroller"
           v-if="activeCols.length"
-          :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
+          :style="{height: `${wrapperHeight}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
           class="list__content absolute-top-left absolute-bottom-right"
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
           wclass="q-w-list"
@@ -263,6 +263,7 @@
 <script>
 import VirtualList from 'vue-virtual-scroll-list'
 import { uid, scroll } from 'quasar'
+import { Logger } from '../domain/logger'
 import VueDraggableResizable from 'vue-draggable-resizable'
 import DateRangeModal from './DateRangeModal'
 import ListItem from './ListItem.vue'
@@ -279,6 +280,10 @@ const { setScrollPosition } = scroll
 export default {
   name: 'VirtualScrollList',
   props: {
+    name: {
+      type: String,
+      default: () => 'VirtualScrollList'
+    },
     item: {
       type: Object,
       default: () => ListItem
@@ -387,7 +392,8 @@ export default {
       menuModel: false,
       colsSchemaAdd: false,
       newSchemaName: 'Modified',
-      prevDeleteSchemaName: undefined
+      prevDeleteSchemaName: undefined,
+      logger: new Logger(this.name)
     }
   },
   computed: {
@@ -509,6 +515,7 @@ export default {
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (scrollerElement) {
         setScrollPosition(scrollerElement, scrollerElement.scrollTop + 1)
+        this.logger.info(`[reset] Scroll ${JSON.stringify({scrollTop: scrollerElement.scrollTop, offsetAll: scrollerElement.scrollHeight})}`)
       }
     },
     wrapperResizeHandler () {
@@ -535,7 +542,8 @@ export default {
           const prevScrollPosition = offsetAll - (this.allScrollTop - offsetAll) - (this.allScrollTop - this.currentScrollTop)
           this.currentScrollTop = prevScrollPosition >= 0 ? prevScrollPosition : 0
           this.allScrollTop = offsetAll
-          scrollerElement.scrollTop = this.currentScrollTop
+          setScrollPosition(scrollerElement, this.currentScrollTop)
+          this.logger.info(`[normalize] Scroll ${JSON.stringify({scrollTop: this.currentScrollTop, offsetAll: scrollerElement.scrollHeight})}`)
         }
       } else {
         this.allScrollTop = offsetAll
@@ -553,6 +561,7 @@ export default {
       return verticalDirection
     },
     listScrollWrapper (e, data) {
+      this.scrollNormalize()
       window.requestAnimationFrame(() => {
         this.listScroll(e, data)
       })
@@ -562,7 +571,6 @@ export default {
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
       if (!scrollerElement) { return }
       const offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
-      this.scrollNormalize()
       if (!this.currentScrollTop) {
         this.currentScrollTop = offset
       }
@@ -583,6 +591,7 @@ export default {
         }
       }
       this.$emit('scroll', { event: e, data })
+      this.logger.info(`ScrollEvent ${JSON.stringify({...data, scrollTop: scrollerElement.scrollTop, offsetAll})}`)
       if (scrollOffset) {
         if (verticalDirection && (verticalDirection === 'top' || verticalDirection === 'none') && offset < scrollOffset) {
           this.$emit('scroll-top')
@@ -633,6 +642,7 @@ export default {
       let height = index * this.itemHeight
       if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
       setScrollPosition(scrollerElement, height)
+      this.logger.info(`[scrollTo] Scroll ${JSON.stringify({scrollTop: height, offsetAll: scrollerElement.scrollHeight, index})}`)
     },
     scrollToWithSavePadding (index) {
       const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
@@ -640,6 +650,7 @@ export default {
       if (index > this.items.length - this.itemsCount) { index = this.items.length - this.itemsCount }
       const height = index * this.itemHeight
       setScrollPosition(scrollerElement, height + this.currentScrollTop)
+      this.logger.info(`[scrollToWithSavePadding] Scroll ${JSON.stringify({scrollTop: height + this.currentScrollTop, offsetAll: scrollerElement.scrollHeight, index})}`)
     },
     updateScrollState () {
       if (!this.items.length) {
@@ -648,6 +659,7 @@ export default {
         const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
         if (this.needAutoScroll && scrollerElement) {
           setScrollPosition(scrollerElement, scrollerElement.scrollHeight)
+          this.logger.info(`[updateScrollState] Scroll ${JSON.stringify({scrollTop: scrollerElement.scrollHeight, offsetAll: scrollerElement.scrollHeight})}`)
         }
       }
       this.scrollNormalize()
@@ -876,14 +888,16 @@ export default {
   },
   directives: {
     'auto-bottom': {
-      inserted: (el, { value }) => {
+      inserted: (el, { value }, vnode) => {
         if (value) {
           setScrollPosition(el, el.scrollHeight)
+          vnode.context.logger.info(`[auto-bottom-inserted] Scroll ${JSON.stringify({scrollTop: el.scrollHeight, offsetAll: el.scrollHeight})}`)
         }
       },
-      componentUpdated: (el, { value }) => {
+      componentUpdated: (el, { value }, vnode) => {
         if (value) {
           setScrollPosition(el, el.scrollHeight)
+          vnode.context.logger.info(`[auto-bottom-componentUpdated] Scroll ${JSON.stringify({scrollTop: el.scrollHeight, offsetAll: el.scrollHeight})}`)
         }
       }
     }
