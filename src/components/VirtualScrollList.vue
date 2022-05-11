@@ -173,6 +173,7 @@
         <q-menu
           ref="menu" v-if="items.length && !loading"
           context-menu touch-position
+          no-route-dismiss
           @before-show="menuShow"
           @before-hide="menuHide"
         >
