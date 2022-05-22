@@ -264,7 +264,6 @@
 <script>
 import VirtualList from 'vue-virtual-scroll-list'
 import { uid, scroll } from 'quasar'
-import { Logger } from '../domain/logger'
 import VueDraggableResizable from 'vue-draggable-resizable'
 import DateRangeModal from './DateRangeModal'
 import ListItem from './ListItem.vue'
@@ -394,7 +393,7 @@ export default {
       colsSchemaAdd: false,
       newSchemaName: 'Modified',
       prevDeleteSchemaName: undefined,
-      logger: new Logger(this.name)
+      logger: this.$logger.extendName(this.name)
     }
   },
   computed: {

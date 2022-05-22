@@ -1,7 +1,7 @@
 import _get from 'lodash/get'
 import { getColsLS, setColsLS } from '../ls'
 const defaultCols = ['begin', 'end', 'duration', 'timestamp', 'id']
-export default function ({ Vue, LocalStorage, errorHandler }) {
+export default function ({ Vue, LocalStorage, errorHandler, logger }) {
   function getParams (state) {
     const params = {}
     if (state.limit) {
@@ -26,67 +26,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       params.reverse = state.reverse
     }
     return params
-  }
-
-  /* migration to new format storing cols 28.12.20 */
-  async function migrateCols (active, cols) {
-    const schema = {
-      activeSchema: '_default',
-      schemas: {
-        _default: {
-          name: '_default',
-          cols: cols.reduce((res, col) => {
-            if ((defaultCols.includes(col.name) || (!!col.__dest && col.display))) {
-              res.push({ name: col.name, width: col.width })
-            }
-            return res
-          }, [])
-        },
-        _protocol: {
-          name: '_protocol',
-          cols: cols.reduce((res, col) => {
-            if (!col.custom) {
-              res.push({ name: col.name, width: 150 })
-            }
-            return res
-          }, [])
-        }
-      },
-      enum: {}
-    }
-    if (cols.length) {
-      const processedSchemaByCols = cols.reduce((res, col) => {
-        const isColDefault = defaultCols.includes(col.name)
-        res.isDefault = res.isDefault && ((!col.display && !isColDefault) || (col.display && (isColDefault || !!col.__dest)))
-        res.isProtocol = res.isProtocol && !col.custom
-        if (col.display) {
-          res.schema.push({ name: col.name, width: col.width })
-        }
-        res.enum[col.name] = { ...col }
-        delete res.enum[col.name].display
-        delete res.enum[col.name].width
-        return res
-      }, {
-        schema: [],
-        enum: {},
-        isDefault: true,
-        isProtocol: true
-      })
-      if (!processedSchemaByCols.isDefault || !processedSchemaByCols.isProtocol) {
-        const calcResp = await Vue.connector.gw.getCalcs(active, { fields: 'name' })
-        const calcData = calcResp.data
-        errorsCheck(calcData)
-        let name = _get(calcData, 'result[0].name', `Calc-${active}`)
-        name = `${name}[${active}]`
-        schema.activeSchema = name
-        schema.schemas[name] = {
-          name,
-          cols: processedSchemaByCols.schema
-        }
-      }
-      schema.enum = processedSchemaByCols.enum
-    }
-    return schema
   }
 
   function getDefaultEnum () {
@@ -119,25 +58,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function migrateAll (state, data) {
-    for (const name in data) {
-      let colsSchema = data[name]
-      if (Array.isArray(colsSchema)) {
-        colsSchema = await migrateCols(state.active, colsSchema)
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      } else if (colsSchema.enum) {
-        delete colsSchema.enum
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      }
-    }
-    return data
-  }
 
   async function getCols ({ state, commit }, counters) {
     let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-    migrateAll(colsFromStorage)
     colsFromStorage = colsFromStorage[state.active]
     const colsSchema = colsFromStorage || getDefaultColsSchema()
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
@@ -172,12 +95,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     commit('setCols', colsSchema)
   }
 
-  function errorsCheck (data) {
+  function errorsCheck (commit, data) {
     if (data.errors) {
+      commit('reqError', data.errors)
       data.errors.forEach((error) => {
         const errObject = new Error(error.reason)
         errorHandler && errorHandler(errObject)
       })
+    } else {
+      commit('reqFullfiled')
     }
   }
 
@@ -191,8 +117,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           fields: 'end,begin'
         }
         const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
+        commit('reqStart', { endpoint: 'getCalcsDevicesIntervals-initTime', active: state.active, device: state.activeDevice, data: JSON.stringify(params) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         let dateBegin = Date.now(),
           dateEnd = Date.now()
         if (data.result.length) {
@@ -221,8 +148,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       try {
         Vue.set(state, 'isLoading', true)
         const resp = await Vue.connector.gw.getCalcsDevicesIntervals(state.active, state.activeDevice, 'all', { data: JSON.stringify(params) })
+        commit('reqStart', { endpoint: 'getCalcsDevicesIntervals', active: state.active, device: state.activeDevice, data: JSON.stringify(params) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         messages = data.result
         Vue.set(state, 'isLoading', false)
       } catch (e) {
@@ -293,12 +221,14 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     await Vue.connector.subscribeIntervals(state.active, state.activeDevice, '+', (message, topic, packet) => {
       messagesBuffer.push(packet)
     }, { rh: 2 })
+    logger.info(`subscribed to Intervals ${state.active} - ${state.activeDevice}`)
   }
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling ({ state }) {
     if (intervalId) { clearInterval(intervalId) }
     await Vue.connector.unsubscribeIntervals(state.active, state.activeDevice, '+')
+    logger.info(`unsubscribed to Intervals ${state.active} - ${state.activeDevice}`)
   }
 
   return {

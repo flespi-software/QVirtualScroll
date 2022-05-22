@@ -3,7 +3,7 @@ import { getColsLS, setColsLS } from '../ls'
 
 const defaultCols = ['timestamp', 'server.timestamp', 'ident', 'position.latitude', 'position.longitude', 'position.altitude', 'position.speed']
 
-export default function ({ Vue, LocalStorage, errorHandler }) {
+export default function ({ Vue, LocalStorage, errorHandler, logger }) {
   function getParams (state) {
     const params = {}
     if (state.limit) {
@@ -24,73 +24,16 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return params
   }
 
-  function errorsCheck (data) {
+  function errorsCheck (commit, data) {
     if (data.errors) {
+      commit('reqError', data.errors)
       data.errors.forEach((error) => {
         const errObject = new Error(error.reason)
         errorHandler && errorHandler(errObject)
       })
+    } else {
+      commit('reqFullfiled')
     }
-  }
-
-  /* migration to new format storing cols 28.12.20 */
-  async function migrateCols (type, cols) {
-    const schema = {
-      activeSchema: '_default',
-      schemas: {
-        _default: {
-          name: '_default',
-          cols: cols.reduce((res, col) => {
-            if ((defaultCols.includes(col.name) || (!!col.__dest && col.display))) {
-              res.push({ name: col.name, width: col.width })
-            }
-            return res
-          }, [])
-        },
-        _protocol: {
-          name: '_protocol',
-          cols: cols.reduce((res, col) => {
-            if (!col.custom) {
-              res.push({ name: col.name, width: 150 })
-            }
-            return res
-          }, [])
-        }
-      },
-      enum: {}
-    }
-    if (cols.length) {
-      const processedSchemaByCols = cols.reduce((res, col) => {
-        const isColDefault = defaultCols.includes(col.name)
-        res.isDefault = res.isDefault && ((!col.display && !isColDefault) || (col.display && (isColDefault || !!col.__dest)))
-        res.isProtocol = res.isProtocol && !col.custom
-        if (col.display) {
-          res.schema.push({ name: col.name, width: col.width })
-        }
-        res.enum[col.name] = { ...col }
-        delete res.enum[col.name].display
-        delete res.enum[col.name].width
-        return res
-      }, {
-        schema: [],
-        enum: {},
-        isDefault: true,
-        isProtocol: true
-      })
-      if (!processedSchemaByCols.isDefault || !processedSchemaByCols.isProtocol) {
-        const protocolResp = await Vue.connector.gw.getChannelProtocolsDeviceTypes('all', type, { fields: 'title' })
-        const protocolData = protocolResp.data
-        errorsCheck(protocolData)
-        const name = _get(protocolData, 'result[0].title', `Custom-${type}`)
-        schema.activeSchema = name
-        schema.schemas[name] = {
-          name,
-          cols: processedSchemaByCols.schema
-        }
-      }
-      schema.enum = processedSchemaByCols.enum
-    }
-    return schema
   }
 
   function getDefaultEnum () {
@@ -119,36 +62,18 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  async function migrateAll (state, data) {
-    for (const name in data) {
-      let colsSchema = data[name]
-      if (Array.isArray(colsSchema)) {
-        colsSchema = await migrateCols(state.active, colsSchema)
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      } else if (colsSchema.enum) {
-        delete colsSchema.enum
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      }
-    }
-    return data
-  }
-
   async function getCols ({ state, commit, rootState }, sysColsNeedInitFlags) {
     const needEtc = sysColsNeedInitFlags.etc
-    commit('reqStart')
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
         /* getting device info */
         const deviceResp = await Vue.connector.gw.getDevices(state.active)
         const deviceData = deviceResp.data
-        errorsCheck(deviceData)
+        errorsCheck(commit, deviceData)
         const device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
         let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-        migrateAll(state, colsFromStorage)
         colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])
         const colsSchema = colsFromStorage || getDefaultColsSchema()
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
@@ -160,13 +85,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         if (device.device_type_id) {
           /* getting protocol id */
           const protocolResp = await Vue.connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
+          commit('reqStart', { endpoint: 'getChannelProtocolsDeviceTypes', active:  device.device_type_id, fields: 'protocol_id' })
           const protocolData = protocolResp.data
-          errorsCheck(protocolData)
+          errorsCheck(commit, protocolData)
           const protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
           /* gettings messages parameters */
           const messageParamsResp = await Vue.connector.gw.getChannelProtocols(protocolId, { fields: 'message_parameters' })
+          commit('reqStart', { endpoint: 'getChannelProtocols', active: protocolId, fields: 'message_parameters' })
           const messageParamsData = messageParamsResp.data
-          errorsCheck(messageParamsData)
+          errorsCheck(commit, messageParamsData)
           const messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters
           /* initing columns by message parameters */
           colsSchema.schemas._protocol = {
@@ -233,8 +160,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           fields: 'timestamp'
         }
         const resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
+        commit('reqStart', { endpoint: 'getDevicesMessages-initTime', active: state.active, data: JSON.stringify(params) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         let date = Date.now()
         if (data.result.length) {
           date = Math.round(data.result[0].timestamp * 1000)
@@ -255,15 +183,15 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   async function getMessages ({ state, commit, rootState }, params) {
-    commit('reqStart')
     let result = []
     if (rootState.token && state.active) {
       const isLoadingActive = state.isLoading
       try {
         !isLoadingActive && Vue.set(state, 'isLoading', true)
         const resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
+        commit('reqStart', { endpoint: 'getDevicesMessages', active: state.active, data: JSON.stringify(params) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         !isLoadingActive && Vue.set(state, 'isLoading', false)
         result = data.result || []
       } catch (e) {
@@ -392,6 +320,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       messagesBuffer.push(JSON.parse(message))
     }, { rh: 2, prefix: filter })
     state.realtimeEnabled = true
+    logger.info(`subscribed to messagesDevices ${state.active} ${filter || ''}`)
     return () => {
       loopId = initRenderLoop(state, commit)
     }
@@ -407,6 +336,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}` : undefined
     await Vue.connector.unsubscribeMessagesDevices(state.active, undefined, { prefix: filter })
     state.realtimeEnabled = false
+    logger.info(`unsubscribed to messagesDevices ${state.active} ${filter || ''}`)
   }
 
   /* getting missed messages after offline */
@@ -421,8 +351,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         }
         if (state.filter) { params.data.filter = state.filter }
         const resp = await Vue.connector.gw.getDevicesMessages(state.active, { data: JSON.stringify(params) })
+        commit('reqStart', { endpoint: 'getDevicesMessages', active: state.active, data: JSON.stringify(params) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         commit('setMissingMessages', { data: data.result, index: lastMessageIndex })
         Vue.set(state, 'isLoading', false)
       } catch (e) {
@@ -439,6 +370,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       state.hasNewMessages = true
       unsubscribePooling({ state })
     }, { rh: 2 })
+    logger.info(`newMessagesCheck subscribed to messagesDevice ${state.active}`)
   }
 
   return {

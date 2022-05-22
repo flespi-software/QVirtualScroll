@@ -1,7 +1,7 @@
 import _get from 'lodash/get'
 import defaultCols from './defaultCols'
 import { getColsLS, setColsLS } from '../ls'
-export default function ({ Vue, LocalStorage, errorHandler }) {
+export default function ({ Vue, LocalStorage, errorHandler, logger }) {
   function getParams (state) {
     const params = { filter: [] }
     if (state.limit) {
@@ -35,44 +35,6 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     return headers
   }
 
-  /* migration to new format storing cols 28.12.20 */
-  function migrateCols (active, initCols, cols) {
-    const defaultColsL = initCols || defaultCols
-    const schema = {
-      activeSchema: '_default',
-      schemas: {
-        _default: {
-          name: '_default',
-          cols: defaultColsL.map(col => ({ ...col }))
-        },
-        _protocol: {
-          name: '_protocol',
-          cols: defaultColsL.map(col => ({ ...col }))
-        }
-      },
-      enum: defaultColsL.reduce((res, col) => {
-        res[col.name] = { ...col }
-        delete res[col.name].display
-        delete res[col.name].width
-        return res
-      }, {})
-    }
-    if (cols && cols.length && JSON.stringify(defaultColsL) !== JSON.stringify(schema.schemas._default.cols)) {
-      const name = `Custom[${active}]`
-      schema.activeSchema = name
-      schema.schemas[name] = {
-        name,
-        cols: cols.reduce((res, col) => {
-          if (col.display) {
-            res.push({ name: col.name, width: col.width })
-          }
-          return res
-        }, [])
-      }
-    }
-    return schema
-  }
-
   function getDefaultColsSchema (cols) {
     return {
       activeSchema: '_default',
@@ -90,29 +52,12 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     }
   }
 
-  function migrateAll (state, initCols, data) {
-    for (const name in data) {
-      let colsSchema = data[name]
-      if (Array.isArray(colsSchema)) {
-        colsSchema = migrateCols(state.origin, initCols, data[state.origin])
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      } else if (colsSchema.enum) {
-        delete colsSchema.enum
-        setColsLS(LocalStorage, state.lsNamespace, state.name, name, colsSchema)
-        data[name] = colsSchema
-      }
-    }
-    return data
-  }
-
   function getCols ({ state, commit }, initCols) {
     const colsSchema = getDefaultColsSchema(initCols || defaultCols)
     colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
     colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
     /* LS processing */
     const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
-    migrateAll(state, initCols, colsFromStorage)
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
       ? colsFromStorage['custom-cols-schemas'] : {}
     if (colsFromStorage && colsFromStorage[state.origin]) {
@@ -123,16 +68,19 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     commit('setCols', colsSchema)
   }
 
-  function errorsCheck (data) {
+  function errorsCheck (commit, data) {
     if (data.errors) {
+      commit('reqError', data.errors)
       data.errors.forEach((error) => {
         const errObject = new Error(error.reason)
         errorHandler && errorHandler(errObject)
       })
+    } else {
+      commit('reqFullfiled')
     }
   }
 
-  function getLogsEntries (origin, deletedStatus) {
+  function getLogsEntries (origin, deletedStatus, commit) {
     const parts = origin.split('/'),
       id = parts.pop(),
       namespace = deletedStatus
@@ -140,19 +88,24 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
         : parts.reduce((result, part) => {
           return result[part]
         }, Vue.connector.http)
+    let handler
     if (id === '*') {
-      return function (params) {
+      handler = function (params) {
+        commit('reqStart', { endpoint: 'getLogs', params })
         return namespace.logs.get({ data: JSON.stringify(params.data) }, { headers: params.headers })
       }
     } else if (deletedStatus) {
-      return function (params) {
+      handler = function (params) {
+        commit('reqStart', { endpoint: 'getLogs', params })
         return namespace.logs.get(encodeURIComponent(`origin=${origin}`), { data: JSON.stringify(params.data) }, { headers: params.headers })
       }
     } else {
-      return function (params) {
+      handler = function (params) {
+        commit('reqStart', { endpoint: 'getLogs', params })
         return namespace.logs.get(id, { data: JSON.stringify(params.data) }, { headers: params.headers })
       }
     }
+    return handler
   }
 
   function getFromTo (val) {
@@ -174,9 +127,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           },
           headers: getHeaders(state)
         }
-        const resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
+        const resp = await getLogsEntries(state.origin, state.isItemDeleted, commit)(params, commit)
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         let date = Date.now()
         if (data.result.length) {
           date = Math.round(data.result[0].timestamp * 1000)
@@ -197,15 +150,14 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
   }
 
   async function getLogs ({ state, commit, rootState }, params) {
-    commit('reqStart')
     let result = []
     if (rootState.token && state.origin) {
       const isLoadingActive = state.isLoading
       try {
         !isLoadingActive && Vue.set(state, 'isLoading', true)
-        const resp = await getLogsEntries(state.origin, state.isItemDeleted)({ data: params, headers: getHeaders(state) })
+        const resp = await getLogsEntries(state.origin, state.isItemDeleted, commit)({ data: params, headers: getHeaders(state) })
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         !isLoadingActive && Vue.set(state, 'isLoading', false)
         result = data.result || []
       } catch (e) {
@@ -335,6 +287,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       messagesBuffer.push(JSON.parse(message))
     }, { rh: 2, prefix: filter })
     state.realtimeEnabled = true
+    logger.info(`subscribed to Logs ${api} ${origin} ${state.active} ${filter || ''}`)
     return () => {
       loopId = initRenderLoop(state, commit)
     }
@@ -354,9 +307,9 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
           headers: getHeaders(state)
         }
         if (state.filter) { params.data.filter = state.filter }
-        const resp = await getLogsEntries(state.origin, state.isItemDeleted)(params)
+        const resp = await getLogsEntries(state.origin, state.isItemDeleted, commit)(params)
         const data = resp.data
-        errorsCheck(data)
+        errorsCheck(commit, data)
         commit('setMissingMessages', { data: data.result, index: lastMessageIndex })
         Vue.set(state, 'isLoading', false)
       } catch (e) {
@@ -379,6 +332,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
     const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
     await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { prefix: filter })
     state.realtimeEnabled = false
+    logger.info(`unsubscribed to Logs ${api} ${origin} ${state.active} ${filter || ''}`)
   }
 
   async function newMessagesCheck ({ state }) {
@@ -393,6 +347,7 @@ export default function ({ Vue, LocalStorage, errorHandler }) {
       state.hasNewMessages = true
       unsubscribePooling({ state })
     }, { rh: 2, properties })
+    logger.info(`newMessagesCheck subscribed to messagesLogs ${api} ${origin}`)
   }
 
   return {

@@ -1,5 +1,5 @@
 import { setColsLS } from '../ls'
-export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
+export default function ({ Vue, LocalStorage, newMessagesInterseptor, logger }) {
   let messagesKeyPointer = 0
   function messagesIndexing (messages) {
     if (!messages.length) { return }
@@ -44,6 +44,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
         messages.splice(messages.length, 0, ...data)
       }
       limiting(state, { type: 'rt', count: data.length })
+      logger.info(`setRTMessages: length: ${data.length}`)
     }
   }
 
@@ -55,6 +56,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(0, 0, ...data)
     }
+    logger.info(`prependMessages: length: ${data.length}`)
   }
 
   function appendMessages (state, data) {
@@ -64,6 +66,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
       newMessagesInterseptor && newMessagesInterseptor(data)
       messages.splice(messages.length, 0, ...data)
     }
+    logger.info(`appendMessages: length: ${data.length}`)
   }
 
   function setHistoryMessages (state, data) {
@@ -73,12 +76,14 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
     messagesIndexing(data)
     newMessagesInterseptor && newMessagesInterseptor(data)
     state.messages = data
+    logger.info(`setHistoryMessages: length: ${data.length}, reverse:${state.reverse}`)
   }
 
   function clearMessages (state) {
     state.messages.splice(0, state.messages.length)
     newMessagesInterseptor && newMessagesInterseptor([])
     clearSelected(state)
+    logger.info(`clearMessages`)
   }
 
   function setLimit (state, count) {
@@ -143,34 +148,46 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
         }
       }
     }
+    logger.info(`limiting: ${type} - count: ${count}`)
   }
 
   function setFilter (state, value) {
     if (state.filter !== value) {
       Vue.set(state, 'filter', value)
     }
+    logger.info(`setFilter: ${value}`)
   }
 
   function setFrom (state, from) {
     Vue.set(state, 'from', from)
+    logger.info(`setFrom: ${from}`)
   }
 
   function setTo (state, to) {
     Vue.set(state, 'to', to)
+    logger.info(`setTo: ${to}`)
   }
 
-  function reqStart () {
-    if (DEV) {
-      console.log('Start Request Channels messages')
-    }
+  function reqStart (state, params) {
+    logger.info(`reqStart: ${JSON.stringify(params)}`)
+  }
+
+  function reqFullfiled () {
+    logger.info(`reqFullfiled`)
+  }
+
+  function reqError (state, error) {
+    logger.info(`reqError: ${JSON.stringify(error)}`)
   }
 
   function setActive (state, id) {
     Vue.set(state, 'active', id)
+    logger.info(`setActive: ${id}`)
   }
 
   function setReverse (state, val) {
     Vue.set(state, 'reverse', val)
+    logger.info(`setReverse: ${val}`)
   }
 
   async function clear (state) {
@@ -181,6 +198,8 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
     state.limit = 1000
     state.reverse = false
     await Vue.connector.unsubscribeMessagesChannels(state.active)
+    logger.info(`clear module`)
+    logger.info(`unsubscribeMessagesChannels ${state.active}`)
   }
 
   function setCols (state, cols) {
@@ -190,6 +209,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
 
   function setSettings (state, channel) {
     Vue.set(state, 'settings', channel)
+    logger.info(`setSettings: ${channel}`)
   }
 
   const updateCols = setCols
@@ -199,10 +219,12 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
       start: Date.now() / 1000,
       lastMessageIndex: state.messages.length - 1
     }
+    logger.info(`setOffline`)
   }
 
   function setReconnected (state) {
     state.offline.end = Date.now() / 1000
+    logger.info(`setReconnected`)
   }
 
   function clearOfflineState (state) {
@@ -211,6 +233,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
 
   function setMissingMessages (state, { data, index }) {
     state.messages.splice(index + 1, 0, ...data)
+    logger.info(`setMissingMessages: ${data.length}`)
   }
 
   function setSelected (state, indexes) {
@@ -245,6 +268,8 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor }) {
     setFrom,
     setTo,
     reqStart,
+    reqFullfiled,
+    reqError,
     setReverse,
     clear,
     setActive,

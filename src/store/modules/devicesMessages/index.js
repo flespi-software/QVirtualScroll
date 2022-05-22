@@ -5,8 +5,9 @@ import get from 'lodash/get'
 export default function ({ Vue, LocalStorage, name, errorHandler, newMessagesInterseptor }) {
   const lsNamespace = get(name, 'lsNamespace', undefined)
   name = get(name, 'name', name)
-  const actions = getActions({ Vue, LocalStorage, errorHandler }),
-    mutations = getMutations({ Vue, LocalStorage, newMessagesInterseptor })
+  const logger = Vue.$logger.extendName(name);
+  const actions = getActions({ Vue, LocalStorage, errorHandler, logger }),
+    mutations = getMutations({ Vue, LocalStorage, newMessagesInterseptor, logger })
 
   const state = {
     name,
