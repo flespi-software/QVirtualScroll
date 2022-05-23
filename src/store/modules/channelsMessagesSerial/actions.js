@@ -186,13 +186,41 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     return result
   }
 
-  async function get ({ state, commit, rootState }) {
+  async function getMessagesByInitTimestamp ({ state, commit, rootState }, initTimestamp) {
+    const params = getParams(state)
+    const beforeMessagesParams = {
+      ...params,
+      from: state.from / 1000,
+      to: initTimestamp,
+      reverse: true,
+      count: state.limit / 2
+    }
+    const beforeMessages = await getMessages({ state, commit, rootState }, beforeMessagesParams)
+    const afterMessagesParams = {
+      from: initTimestamp + 0.000001,
+      to: state.to / 1000,
+      count: state.limit - beforeMessages.length
+    }
+    const afterMessages = await getMessages({ state, commit, rootState }, afterMessagesParams)
+    const messages = [...beforeMessages.reverse(), ...afterMessages]
+    return messages
+  }
+
+  async function get ({ state, commit, rootState }, initTimestamp) {
     if (!state.isLoading) {
       Vue.set(state, 'isLoading', true)
+      if (loopId) {
+        await unsubscribePooling({ state, commit, rootState })
+      }
       const start = Date.now() / 1000
-      const params = getParams(state)
       let messagesCount = 0
-      const messages = await getMessages({ state, commit, rootState }, params)
+      let messages = []
+      const params = getParams(state)
+      if (initTimestamp) {
+        messages = await getMessagesByInitTimestamp({ state, commit, rootState }, initTimestamp)
+      } else {
+        messages = await getMessages({ state, commit, rootState }, params)
+      }
       messagesCount += messages.length
       const now = Date.now() / 1000
       const needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
@@ -364,6 +392,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     pollingGet,
     getCols,
     getHistory,
+    getMessagesByInitTimestamp,
     initTime,
     unsubscribePooling,
     getMissedMessages
