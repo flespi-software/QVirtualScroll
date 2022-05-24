@@ -221,7 +221,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor, logger }) 
 
   function setCid (state, cid) {
     Vue.set(state, 'cid', cid)
-    logger.info(`setCid: ${id}`)
+    logger.info(`setCid: ${cid}`)
   }
 
   return {
