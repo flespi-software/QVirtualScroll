@@ -274,6 +274,7 @@ import draggable from 'vuedraggable'
 import get from 'lodash/get'
 import debounce from 'lodash/debounce'
 import cloneDeep from 'lodash/cloneDeep'
+import { Logger } from '../infrastructure/logger'
 
 const { setScrollPosition } = scroll
 
@@ -393,7 +394,7 @@ export default {
       colsSchemaAdd: false,
       newSchemaName: 'Modified',
       prevDeleteSchemaName: undefined,
-      logger: this.$logger.extendName(this.name)
+      logger: this.$logger ? this.$logger.extendName(this.name) : new Logger(this.name)
     }
   },
   computed: {
