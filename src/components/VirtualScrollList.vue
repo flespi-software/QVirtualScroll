@@ -227,6 +227,7 @@
         <virtual-list
           ref="scroller"
           v-if="activeCols.length"
+          tabindex="1"
           :style="{height: `${wrapperHeight}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
           class="list__content absolute-top-left absolute-bottom-right"
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
@@ -607,6 +608,16 @@ export default {
         }
       }
       this.currentScrollTop = offset
+      this.tableFocus()
+    },
+    tableFocus () {
+      const delta = get(this.$refs, 'scroller.delta')
+      if (delta && delta.total > delta.keeps) {
+        const scrollingElement = get(this.$refs, 'scroller.$el')
+        if (scrollingElement) {
+          this.$nextTick(() => { scrollingElement.focus() })
+        }
+      }
     },
     enableAutoscroll () {
       this.autoscrollEnabled = true
@@ -981,4 +992,6 @@ export default {
   .schema--active
     background-color $grey-6
     color white
+  .list__content
+    outline none
 </style>
