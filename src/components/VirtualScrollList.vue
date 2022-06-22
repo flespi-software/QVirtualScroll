@@ -614,7 +614,7 @@ export default {
       const delta = get(this.$refs, 'scroller.delta')
       if (delta && delta.total > delta.keeps) {
         const scrollingElement = get(this.$refs, 'scroller.$el')
-        if (scrollingElement) {
+        if (scrollingElement && (document.activeElement === scrollingElement || scrollingElement.contains(document.activeElement))) {
           this.$nextTick(() => { scrollingElement.focus() })
         }
       }
