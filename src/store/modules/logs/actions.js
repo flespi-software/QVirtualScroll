@@ -195,7 +195,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       if (loopId) {
         await unsubscribePooling({ state, commit, rootState })
       }
-      const start = Date.now() / 1000
+      const start = (Date.now() + 0.000999) / 1000
       let messagesCount = 0
       let messages = []
       const params = getParams(state)
@@ -205,18 +205,20 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
         messages = await getLogs({ state, commit, rootState }, params)
       }
       messagesCount += messages.length
-      const now = Date.now() / 1000
+      const now = (Date.now() + 0.000999) / 1000
       const needRT = (params.to >= now && (state.limit && messages.length < state.limit) && !loopId)
       let startRTRender = () => {}
       if (needRT) {
         startRTRender = await pollingGet({ state, commit, rootState })
-        const stop = Date.now() / 1000
-        const params = getParams(state)
-        params.from = start
-        params.to = stop
-        const missedMessages = await getLogs({ state, commit, rootState }, params)
-        messagesCount += missedMessages.length
-        messages.splice(0, 0, ...missedMessages)
+        if (initTimestamp) {
+          const stop = (Date.now() + 0.000999) / 1000
+          const params = getParams(state)
+          params.from = start
+          params.to = stop
+          const missedMessages = await getLogs({ state, commit, rootState }, params)
+          messagesCount += missedMessages.length
+          messages.splice(0, 0, ...missedMessages)
+        }
       } else if ((params.to < now || (state.limit && messages.length >= state.limit)) && loopId) {
         await unsubscribePooling({ state, commit, rootState })
       }

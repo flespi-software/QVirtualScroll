@@ -101,6 +101,7 @@ i18n = {
 config = {
     needShowFilter: false, // Flag that displays need filter input or not
     needShowDateRange: false, // Flag that displays need show dateRange-set or not.
+    needKeysProcess: false, // Flag that displays need keys process(arrow up/down).
 }
 
 ````
@@ -118,6 +119,8 @@ config = {
 |action-to-bottom| Action event on to-bottom button |*Empty*|
 |action-to-new-messages| Action event on to-new-messages indicator |*Empty*|
 |action-to-new-messages-hide| Action event on to-new-messages hide button |*Empty*|
+|arrowup| Action event on arrow up pressed |*Empty*|
+|arrowdown| Action event on arrow down pressed |*Empty*|
 
 ## Methods
 | Name  |  Description  | Params |

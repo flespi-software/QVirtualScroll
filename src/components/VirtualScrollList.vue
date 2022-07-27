@@ -349,13 +349,14 @@ export default {
     viewConfig: Object,
     loading: Boolean,
     scrollOffset: [Number, String],
-    hasNewMessages: [Object, Boolean]
+    hasNewMessages: [Object, Boolean],
   },
   components: { draggable, VirtualList, VueDraggableResizable, TableSkeleton, DateRangeModal, ColsMenu, ColsAdditing },
   data () {
     const defaultConfig = {
       needShowFilter: false,
-      needShowDateRange: false
+      needShowDateRange: false,
+      needKeysProcess: false
     }
     const localCols = cloneDeep(this.cols)
     const firstSchemaName = localCols.schemas[this.cols.activeSchema] ? this.cols.activeSchema : '_default'
@@ -827,17 +828,27 @@ export default {
       this.localCols.activeSchema = name
       this.updateCols()
     },
-    initSchema () {
-      let schemaName
-      return schemaName
+    keysProcess (event) {
+      const scrollingElement = get(this.$refs, 'scroller.$el')
+      if (scrollingElement && (document.activeElement === scrollingElement || scrollingElement.contains(document.activeElement))) {
+        if (this.viewConfig.needKeysProcess) {
+          event.preventDefault();
+          this.keyArrowNavigation(event)
+        }
+      }
+    },
+    keyArrowNavigation (event) {
+      const keyUpCode = 38
+      const keyDownCode = 40
+      const scrollingElement = get(this.$refs, 'scroller.$el')
+      if (event.which === keyUpCode) {
+        this.$emit('arrowup')
+        setScrollPosition(scrollingElement, scrollingElement.scrollTop - this.itemHeight)
+      } else if (event.which === keyDownCode) {
+        this.$emit('arrowdown')
+        setScrollPosition(scrollingElement, scrollingElement.scrollTop + this.itemHeight)
+      }
     }
-  },
-  beforeUpdate () {
-    const scrollerElement = get(this.$refs, 'scroller', undefined)
-    scrollerElement && scrollerElement.forceRender()
-  },
-  updated () {
-    this.updateScrollState()
   },
   watch: {
     filter (val) {
@@ -883,6 +894,9 @@ export default {
       }
     }
   },
+  created () {
+    document.addEventListener('keydown', this.keysProcess, false)
+  },
   mounted () {
     const fullWidth = this.$refs.wrapper.offsetWidth
     if (this.rowWidth < fullWidth && this.activeCols && this.activeCols.length) {
@@ -894,7 +908,15 @@ export default {
     this.updateDynamicCSS()
     this.updateScrollState()
   },
+  beforeUpdate () {
+    const scrollerElement = get(this.$refs, 'scroller', undefined)
+    scrollerElement && scrollerElement.forceRender()
+  },
+  updated () {
+    this.updateScrollState()
+  },
   destroyed () {
+    document.removeEventListener('keydown', this.keysProcess)
     const head = document.head || document.getElementsByTagName('head')[0]
     head.removeChild(this.dynamicCSS)
   },
