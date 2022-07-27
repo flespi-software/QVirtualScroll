@@ -832,7 +832,6 @@ export default {
       const scrollingElement = get(this.$refs, 'scroller.$el')
       if (scrollingElement && (document.activeElement === scrollingElement || scrollingElement.contains(document.activeElement))) {
         if (this.viewConfig.needKeysProcess) {
-          event.preventDefault();
           this.keyArrowNavigation(event)
         }
       }
@@ -842,9 +841,11 @@ export default {
       const keyDownCode = 40
       const scrollingElement = get(this.$refs, 'scroller.$el')
       if (event.which === keyUpCode) {
+        event.preventDefault();
         this.$emit('arrowup')
         setScrollPosition(scrollingElement, scrollingElement.scrollTop - this.itemHeight)
       } else if (event.which === keyDownCode) {
+        event.preventDefault();
         this.$emit('arrowdown')
         setScrollPosition(scrollingElement, scrollingElement.scrollTop + this.itemHeight)
       }
