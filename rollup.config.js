@@ -89,6 +89,19 @@ export default [
     plugins: plugins
   },
   {
+    input: './src/store/modules/containersMessages/index.js',
+    output: [
+      {
+        file: 'lib/containersMessages.js',
+        format: 'umd',
+        name: 'containersMessages',
+        exports: 'named',
+        sourcemap: true
+      }
+    ],
+    plugins: plugins
+  },
+  {
     input: './src/store/modules/intervals/index.js',
     output: [
       {

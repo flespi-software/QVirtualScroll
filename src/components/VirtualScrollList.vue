@@ -32,6 +32,7 @@
         :theme="currentTheme"
         @save="dateRangeModalSave"
       />
+      <slot name="after-datetime"/>
       <q-btn icon="mdi-dots-vertical" :loading="hasAsyncPanelActions" flat dense round :disable="!items.length">
         <template slot="loading">
           <q-icon size="1.5rem" name="mdi-dots-vertical"/>
