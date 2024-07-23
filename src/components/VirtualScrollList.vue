@@ -18,7 +18,7 @@
         :dark="currentTheme.controlsInverted"
         :color="currentTheme.controlsInverted ? 'grey-8' : currentTheme.color"
         :bg-color="currentFilter && currentFilter === filter ? 'green-5' : undefined"
-        placeholder='param1=="name" || (param2!="" && param3>=5)'
+        :placeholder="currentViewConfig.filterPlaceholder"
         :debounce="0"
       >
         <q-btn slot="prepend" :color="currentTheme.color" icon="mdi-magnify" @click="searchSubmitHandler" flat round dense/>
@@ -356,6 +356,7 @@ export default {
   data () {
     const defaultConfig = {
       needShowFilter: false,
+      filterPlaceholder: 'position.speed<=5 || (plugin.geofence.name=="storage" && ble.sensor.temperature.1 > 10)',
       needShowDateRange: false,
       needKeysProcess: false
     }
@@ -875,7 +876,7 @@ export default {
     },
     cols (cols, oldCols) {
       if (cols !== oldCols) {
-        this.activeCols = cloneDeep(this.cols.schemas[this.activeSchema].cols)
+        this.activeCols = cloneDeep(cols.schemas[this.activeSchema].cols)
       }
       this.localCols = cloneDeep(cols)
     },

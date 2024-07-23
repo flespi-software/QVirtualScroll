@@ -61,10 +61,10 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       try {
         Vue.set(state, 'isLoading', true)
         let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
+        ? colsFromStorage['custom-cols-schemas'] : {}
         colsFromStorage = (colsFromStorage && colsFromStorage[state.active])
         const colsSchema = colsFromStorage || getDefaultColsSchema()
-        const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
-          ? colsFromStorage['custom-cols-schemas'] : {}
         colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
         if (!colsSchema.enum) {
           colsSchema.enum = getDefaultEnum()

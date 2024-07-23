@@ -51,6 +51,9 @@ export default {
   },
   methods: {
     dateRangeToggle () {
+      if (new Date(this.dateModel[0]).toTimeString().split(' ')[0] !== '00:00:00' || new Date(this.dateModel[1]).toTimeString().split(' ')[0] !== '23:59:59') {
+        this.mode = 3
+      }
       this.$refs.dateRangePickerModal.toggle()
     },
     dateRangeModalClose () {
@@ -61,23 +64,25 @@ export default {
     },
     dateRangeModalSave () {
       let [from, to] = this.dateModel
-      to += 0.999
-      this.save([from ,to])
+      if (this.mode == 3 ) {
+        to += 999 // ms
+      }
+      this.save([from, to])
       this.dateRangeModalClose()
     },
     formatDate (timestamp) {
       return date.formatDate(timestamp, 'DD/MM/YYYY HH:mm:ss')
     },
     prevHandler () {
-      const delta = this.dateModel[1] - this.dateModel[0],
-        newTo = this.dateModel[0] - 0.001,
+      const delta = Math.floor(this.dateModel[1]) - Math.floor(this.dateModel[0]),
+        newTo = Math.floor(this.dateModel[0]) - 1, // ms
         newFrom = newTo - delta
       this.dateModel = [newFrom, newTo]
       this.debouncedSave([newFrom, newTo])
     },
     nextHandler () {
-      const delta = this.dateModel[1] - this.dateModel[0],
-        newFrom = this.dateModel[1] + 0.001,
+      const delta = Math.floor(this.dateModel[1]) - Math.floor(this.dateModel[0]),
+        newFrom = Math.floor(this.dateModel[1]) + 1, // ms
         newTo = newFrom + delta
       this.dateModel = [newFrom, newTo]
       this.debouncedSave([newFrom, newTo])

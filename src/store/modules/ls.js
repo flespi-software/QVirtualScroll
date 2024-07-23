@@ -1,5 +1,5 @@
-import get from 'lodash/get'
-import set from 'lodash/set'
+import _get from 'lodash/get'
+import _set from 'lodash/set'
 
 function splitSchemas (cols) {
   const customColsSchema = {
@@ -25,7 +25,7 @@ function getColsLS (LocalStorage, lsNamespace, name) {
       lsItemName = lsPath.shift(),
       lsRouteToItem = `${lsPath.join('.')}.${name}`,
       appStorage = LocalStorage.getItem(lsItemName)
-    colsFromStorage = get(appStorage, lsRouteToItem, colsFromStorage)
+    colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
   } else {
     colsFromStorage = LocalStorage.getItem(name) || colsFromStorage
   }
@@ -42,7 +42,7 @@ function setColsLS (LocalStorage, lsNamespace, name, active, cols) {
       lsItemName = lsPath.shift(),
       lsRouteToItem = `${lsPath.join('.')}.${name}`,
       appStorage = LocalStorage.getItem(lsItemName) || {}
-    set(appStorage, lsRouteToItem, colsFromStorage)
+    _set(appStorage, lsRouteToItem, colsFromStorage)
     LocalStorage.set(lsItemName, appStorage)
   } else {
     LocalStorage.set(name, colsFromStorage)

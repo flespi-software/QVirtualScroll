@@ -57,10 +57,16 @@ export default [
         format: 'umd',
         name: 'logs',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          'lodash/get': '_get',
+          'lodash/set': '_set'
+        }
       }
     ],
-    plugins: plugins
+    plugins: plugins,
+  // indicate which modules should be treated as external
+  external: ['lodash/get', 'lodash/set']
   },
   {
     input: './src/store/modules/channelsMessagesSerial/index.js',
@@ -70,10 +76,16 @@ export default [
         format: 'umd',
         name: 'channelsMessagesSerial',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          'lodash/get': '_get',
+          'lodash/set': '_set'
+        }
       }
     ],
-    plugins: plugins
+    plugins: plugins,
+  // indicate which modules should be treated as external
+  external: ['lodash/get', 'lodash/set']
   },
   {
     input: './src/store/modules/devicesMessages/index.js',
@@ -83,10 +95,16 @@ export default [
         format: 'umd',
         name: 'devicesMessages',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          'lodash/get': '_get',
+          'lodash/set': '_set'
+        }
       }
     ],
-    plugins: plugins
+    plugins: plugins,
+  // indicate which modules should be treated as external
+  external: ['lodash/get', 'lodash/set']
   },
   {
     input: './src/store/modules/containersMessages/index.js',
@@ -96,10 +114,16 @@ export default [
         format: 'umd',
         name: 'containersMessages',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          'lodash/get': '_get',
+          'lodash/set': '_set'
+        }
       }
     ],
-    plugins: plugins
+    plugins: plugins,
+  // indicate which modules should be treated as external
+  external: ['lodash/get', 'lodash/set']
   },
   {
     input: './src/store/modules/intervals/index.js',
@@ -109,9 +133,15 @@ export default [
         format: 'umd',
         name: 'intervals',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+          'lodash/get': '_get',
+          'lodash/set': '_set'
+        }
       }
     ],
-    plugins: plugins
+    plugins: plugins,
+  // indicate which modules should be treated as external
+  external: ['lodash/get', 'lodash/set']
   }
 ]
