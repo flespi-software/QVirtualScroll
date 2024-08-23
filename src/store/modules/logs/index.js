@@ -25,6 +25,7 @@ export default function ({ Vue, LocalStorage, name, errorHandler, newMessagesInt
     cid: null,
     limit: 1000,
     reverse: false,
+    itemtype: null,
     cols: undefined,
     offline: false,
     selected: [],

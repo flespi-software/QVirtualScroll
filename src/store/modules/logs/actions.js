@@ -24,6 +24,9 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     } else {
       delete params.filter
     }
+    if (state.itemtype) {
+      params.item_type = state.itemtype
+    }
     return params
   }
 
@@ -127,6 +130,9 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
           },
           headers: getHeaders(state)
         }
+        if (state.itemtype) {
+          params.data.item_type = state.itemtype
+        }
         const resp = await getLogsEntries(state.origin, state.isItemDeleted, commit)(params, commit)
         const data = resp.data
         errorsCheck(commit, data)
@@ -183,6 +189,9 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       from: initTimestamp + 0.000001,
       to: state.to / 1000,
       count: state.limit - beforeMessages.length
+    }
+    if (state.itemtype) {
+      afterMessagesParams.item_type = state.itemtype
     }
     const afterMessages = await getLogs({ state, commit, rootState }, afterMessagesParams)
     const messages = [...beforeMessages.reverse(), ...afterMessages]
@@ -249,6 +258,9 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       const params = getParams(state)
       params.to = to
       params.reverse = true
+      if (state.itemtype) {
+        params.item_type = state.itemtype
+      }
       if (loopId && state.messages.length > state.limit * 2) {
         await unsubscribePooling({ state, commit, rootState })
         commit('limiting', { type: 'rt_deinit' })
@@ -310,9 +322,38 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     }, 500)
   }
   async function pollingGet ({ state, commit, rootState }) {
-    const api = state.origin.split('/')[0].replace(/\*/g, '+'),
+    let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
-    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
+    let f = []
+    if (state.filter) {
+      f.push(state.filter)
+    }
+    if (state.itemtype) {
+      f.push('origin_type==' + state.itemtype)
+      switch(state.itemtype) {
+        case 4:
+          origin = 'limits/+'
+          break
+        case 29:
+          origin = 'realms/+'
+          break
+        case 33:
+          origin = 'tokens/+'
+          break
+        case 37:
+          origin = 'grants/+'
+          break
+        case 38:
+          origin = 'identity-providers/+'
+          break
+        case 40:
+          api = 'gw'
+          origin = 'geofences/+'
+          break
+      }
+    }
+
+    const filter = f.length ? `$filter/payload=${encodeURIComponent(f.join('&&'))}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       messagesBuffer.push(JSON.parse(message))
     }, { rh: 2, prefix: filter })

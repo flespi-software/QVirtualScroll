@@ -132,6 +132,11 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor, logger }) 
     logger.info(`setFilter: ${value}`)
   }
 
+  function setItemtype (state, itemtype) {
+    Vue.set(state, 'itemtype', itemtype)
+    logger.info(`setItemtype: ${itemtype}`)
+  }
+
   function setFrom (state, from) {
     Vue.set(state, 'from', from)
     logger.info(`setFrom: ${from}`)
@@ -236,6 +241,7 @@ export default function ({ Vue, LocalStorage, newMessagesInterseptor, logger }) 
     setLimit,
     setFilter,
     limiting,
+    setItemtype,
     setFrom,
     setTo,
     reqStart,
