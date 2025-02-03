@@ -25,14 +25,7 @@ framework: {
 
 In App.vue (You can use component without of Vuex modules):
 ```javascript
-import {
-    VirtualScrollList,
-    logsModule,
-    channelsMessagesPullModule,
-    channelsMessagesSerialModule,
-    devicesMessagesModule,
-    intervalsModule
-} from 'qvirtualscroll'
+import { VirtualScrollList } from 'qvirtualscroll'
 
  components: {
    VirtualScrollList

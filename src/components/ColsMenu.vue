@@ -32,8 +32,11 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue'
 import { copyToClipboard } from 'quasar'
-export default {
+
+export default defineComponent({
+  name: 'ColsMenu',
   props: ['col', 'row'],
   data () {
     const selection = this.getSelection()
@@ -67,5 +70,6 @@ export default {
       }
     }
   }
-}
+})
 </script>
+

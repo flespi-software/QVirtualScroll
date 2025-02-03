@@ -1,18 +1,20 @@
 <template>
-  <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" @click="itemClickHandler">
-    <template v-for="(prop, k) in cols" >
+  <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" :class="`row_${index}`" @click="itemClickHandler">
+    <template v-for="(prop, k) in cols" :key="k" >
       <span v-if="prop.__dest === 'etc'" class="list__item item_etc" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}" :key="k">{{etc}}</span>
-      <span v-else :key="k" class="list__item" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}">{{prop.custom ? JSON.stringify(item[prop.name]) : item[prop.name]}}</span>
+      <span v-else class="list__item" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}">{{prop.custom ? JSON.stringify(item[prop.name]) : item[prop.name]}}</span>
     </template>
   </div>
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  name: 'ListItem',
   props: [
     'item',
     'index',
-    'actions',
     'cols',
     'itemHeight',
     'rowWidth',
@@ -38,16 +40,16 @@ export default {
       this.$emit('item-click', { index, content })
     }
   }
-}
+})
 </script>
 
-<style lang="stylus" scoped>
-  .list__item
-    display inline-block
-    min-height 19px
-    white-space nowrap
-    padding-left 5px
-    text-overflow ellipsis
-    overflow hidden
-    border-right 2px solid $grey-8
+<style lang="sass" scoped>
+.list__item
+  display: inline-block
+  min-height: 19px
+  white-space: nowrap
+  padding-left: 5px
+  text-overflow: ellipsis
+  overflow: hidden
+  border-right: 2px solid $grey-8
 </style>

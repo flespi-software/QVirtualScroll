@@ -11,7 +11,9 @@
 </template>
 
 <script>
-export default {
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   name: 'TableSkeleton',
   props: ['rows'],
   computed: {
@@ -20,33 +22,33 @@ export default {
       return rows
     }
   }
-}
+})
 </script>
 
-<style lang="stylus">
-  .table-skeleton
-    overflow hidden
-    &__row
-      line-height 19px
-      margin 0
-      height: 19px
-      display flex
-      .row__item
-        padding 2px 0
-        padding-left 5px
-        border-right 2px solid $grey-8
-        .item__wrapper
-          padding-right 6px
-          .item__skeleton
-            height 15px
-            border-radius 5px
-            animation flashing 1s infinite
-            background-color rgba(255, 255, 255, .6)
-  @keyframes flashing
-    0%
-      opacity .3
-    50%
-      opacity .2
-    100%
-      opacity .3
+<style lang="sass">
+.table-skeleton
+  overflow: hidden
+  &__row
+    line-height: 19px
+    margin: 0
+    height: 19px
+    display: flex
+    .row__item
+      padding: 2px 0
+      padding-left: 5px
+      border-right: 2px solid $grey-8
+      .item__wrapper
+        padding-right: 6px
+        .item__skeleton
+          height: 15px
+          border-radius: 5px
+          animation: flashing 1s infinite
+          background-color: rgba(255, 255, 255, .6)
+@keyframes flashing
+  0%
+    opacity: .3
+  50%
+    opacity: .2
+  100%
+    opacity: .3
 </style>
