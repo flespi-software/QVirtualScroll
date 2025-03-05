@@ -1,5 +1,5 @@
 
-import VirtualScrollList from './src/components/VirtualScrollList.vue'
+import VirtualScrollList from './components/VirtualScrollList.vue'
 
 export {
   VirtualScrollList
