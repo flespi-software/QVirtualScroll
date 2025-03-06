@@ -322,14 +322,22 @@
             <q-scroll-observer axis="horizontal" @scroll="listScrollHorizontalHandler" />
           </template>
           <template v-slot="{ item, index }">
-            <list-item
+            <slot name="listItem"
               :item="item"
               :index="index"
               :cols="activeCols"
               :itemHeight="itemHeight"
               :rowWidth="rowTotalWidth"
-              :menuCellActive = "editableRow && editableCol ? { col: editableCol.index, row: editableRow.index } : null"
-            />
+            >
+              <list-item
+                :item="item"
+                :index="index"
+                :cols="activeCols"
+                :itemHeight="itemHeight"
+                :rowWidth="rowTotalWidth"
+                :menuCellActive = "editableRow && editableCol ? { col: editableCol.index, row: editableRow.index } : null"
+              />
+            </slot>
           </template>
         </q-virtual-scroll>
         <div
@@ -431,10 +439,6 @@ export default defineComponent({
     itemHeight: {
       type: Number,
       default: 19
-    },
-    item: {
-      type: Object,
-      default: () => ListItem
     },
     itemprops: {
       type: Function,
