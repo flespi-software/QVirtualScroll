@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.3] - 2025-03-18
+[fix] Fixed calculation of the rightmost 'etc' column's width upon adding or deleting of the column
+
 ### [2.0.2] - 2025-03-06
 [update] Implemented "listItem" slot that allows to pass custom ListItem component to q-virtual-scroll's default slot
 

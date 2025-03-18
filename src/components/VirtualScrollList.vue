@@ -604,6 +604,15 @@ export default defineComponent({
       }
       this.updateCols()
     },
+    adjustLastEtcColWidth () {
+      const fullWidth = this.$refs.wrapper.offsetWidth
+      if (this.activeCols && this.activeCols.length && this.rowTotalWidth < fullWidth &&
+        this.activeCols[this.activeCols.length - 1].name === 'etc') {
+        // if active columns do not fill full screenview width - adjust the width of the last column
+        // so that is filled all the remained space to the right
+        this.activeCols[this.activeCols.length - 1].width = fullWidth - (this.rowTotalWidth - 150)
+      }
+    },
     clickHandler ({ index, type, content }) {
       this.$emit('action', { index, type, content })
     },
@@ -838,6 +847,7 @@ export default defineComponent({
             this.setUnsavedSchema(cloneDeep(cols))
           }
         }
+        this.adjustLastEtcColWidth()
         this.updateDynamicCSS()
         this.needResizeControl = false
         this.$nextTick(() => {
@@ -878,12 +888,7 @@ export default defineComponent({
     document.addEventListener('keydown', this.keysProcess, false)
   },
   mounted () {
-    const fullWidth = this.$refs.wrapper.offsetWidth
-    if (this.rowTotalWidth < fullWidth && this.activeCols && this.activeCols.length) {
-      // if active columns do not fill full screenview width - adjust the with of the last column
-      // so that is filled all the remained space to the right
-      this.activeCols[this.activeCols.length - 1].width = fullWidth - (this.rowTotalWidth - 150)
-    }
+    this.adjustLastEtcColWidth()
     // cell click will be processed by parent element - cursor-pinter will be shown on the grid cells
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
     this.uid = uid().split('-')[0]
