@@ -97,7 +97,7 @@ export default defineComponent({
       currentVal: 1000,
       date: Date.now(),
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
-      defaultLimit: 20,
+      defaultLimit: 1000,
       filter: '',
       items: [],
       loading: true,
@@ -242,7 +242,7 @@ export default defineComponent({
       }
     },
     generateItems () {
-      const limit = this.mode === 0 ? this.defaultLimit : 1
+      const limit = this.mode === 0 ? this.defaultLimit : 2
       const randVal = () => {
         const types = ['String', 'Number', 'Boolean'],
           currentType = types[Math.round(Math.random() * 2)]
@@ -274,6 +274,7 @@ export default defineComponent({
           if (this.timerId) {
             clearInterval(this.timerId)
             this.timerId = 0
+            break
           }
           this.mode = val
           // this.items.length = 0

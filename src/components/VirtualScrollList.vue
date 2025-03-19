@@ -195,12 +195,12 @@
       </div>
 
       <q-btn fab-mini flat
-        v-if="(currentScrollTop + itemHeight) < allScrollTop && items.length"
+        v-if="items.length && !scrollStickToBottom"
         icon="mdi-chevron-down"
         class="absolute-bottom-right action action__to-bottom" style="z-index: 2"
         :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
         :style="{right: colsAddition ? '270px' : ''}"
-        @click="$emit('action-to-bottom')"
+        @click="toBottomClickHandler"
       >
         <q-tooltip>To bottom</q-tooltip>
       </q-btn>
@@ -317,6 +317,7 @@
           :style="{height: `${wrapperHeight}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
           class="list__content absolute-top-left absolute-bottom-right"
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+          @virtual-scroll="virtualScrollHandler"
         >
           <template #before>
             <q-scroll-observer axis="horizontal" @scroll="listScrollHorizontalHandler" />
@@ -404,6 +405,9 @@ const dragOptions = ref({
 
 export default defineComponent({
   name: 'VirtualScrollList',
+  emits: [
+    'action-to-bottom'
+  ],
   props: {
     actions: {
       type: Array,
@@ -551,11 +555,9 @@ export default defineComponent({
     return {
       activeCols: cloneDeep(this.cols.schemas[firstSchemaName].cols),
       addingRow: undefined,
-      allScrollTop: 0,
       colsAddition: false,
       colsSchemaAdd: false,
       currentFilter: this.filter,
-      currentScrollTop: 0,
       currentMode: this.mode === 1,
       currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
       dateModel: this.dateRange,
@@ -574,6 +576,7 @@ export default defineComponent({
       newSchemaName: 'Modified',
       prevDeleteSchemaName: undefined,
       resizing: false,
+      scrollStickToBottom: false,  // automatically scroll to the bottom of the table
       showSearch: false,
       uid: 0,
       wrapperHeight: 0,
@@ -763,34 +766,6 @@ export default defineComponent({
       delete this.localCols.enum[this.editableCol.data.name]
       this.updateCols()
     },
-    resetParams () {
-      const wrapper = this.$refs.wrapper
-      if (!wrapper) {
-        return false
-      }
-      this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
-      this.wrapperWidth = wrapper.offsetWidth
-      this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
-      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
-      if (scrollerElement) {
-        setVerticalScrollPosition(scrollerElement, scrollerElement.scrollTop + 1)
-        this.logger.info(`[reset] Scroll ${JSON.stringify({scrollTop: scrollerElement.scrollTop, offsetAll: scrollerElement.scrollHeight})}`)
-      }
-    },
-    scrollNormalize () {
-      const scrollerElement = get(this.$refs, 'scroller.$el', undefined)
-      if (!scrollerElement) { return }
-      const offsetAll = scrollerElement.scrollHeight - scrollerElement.clientHeight
-      if (offsetAll < this.allScrollTop) {
-        const prevScrollPosition = offsetAll - (this.allScrollTop - offsetAll) - (this.allScrollTop - this.currentScrollTop)
-        this.currentScrollTop = prevScrollPosition >= 0 ? prevScrollPosition : 0
-        this.allScrollTop = offsetAll
-        setVerticalScrollPosition(scrollerElement, this.currentScrollTop)
-        this.logger.info(`[normalize] Scroll ${JSON.stringify({scrollTop: this.currentScrollTop, offsetAll: scrollerElement.scrollHeight})}`)
-      } else {
-        this.allScrollTop = offsetAll
-      }
-    },
     searchBlurHandler() {
       this.searchSubmitHandler()
       this.showSearch = false
@@ -809,6 +784,34 @@ export default defineComponent({
     },
     searchSubmitHandler() {
       this.$emit('change-filter', this.currentFilter)
+    },
+    virtualScrollHandler (info) {
+      if (!this.scrollStickToBottom) {
+        // check if user has scroller to the bottom to start sticking
+        if (info.direction === 'increase' && info.index === info.to) {
+          this.scrollStickToBottom = true
+        }
+        return
+      }
+      if (this.scrollStickToBottom) {
+        if (info.direction === 'decrease') {
+          // user has scrolled up - stop sticking to the bottom
+          this.scrollStickToBottom = false
+          return
+        }
+        if (info.index !== info.to) {
+          // user wants to stick to the bottom - scroll to the last element if not yet
+          this.$refs.scroller.scrollTo(info.to)
+        }
+      }
+    },
+    toBottomClickHandler () {
+      // scroll to the last list item
+      this.$refs.scroller.scrollTo(this.items.length - 1)
+      // activate auto scrollting to the bottom
+      this.scrollStickToBottom = true
+      // notify parent that user moved to the bottom of the list
+      this.$emit('action-to-bottom')
     },
     toggleCol () {
       if (!this.editableCol) { return }
@@ -835,7 +838,14 @@ export default defineComponent({
       head.appendChild(this.dynamicCSS)
     },
     wrapperResizeHandler () {
-      this.resetParams()
+      const wrapper = this.$refs.wrapper
+      if (!wrapper) {
+        return false
+      }
+      // calculate the number of items that fit into the wrapper element
+      this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
+      this.wrapperWidth = wrapper.offsetWidth
+      this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
     },
   },
   watch: {
@@ -892,17 +902,12 @@ export default defineComponent({
     // cell click will be processed by parent element - cursor-pinter will be shown on the grid cells
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
     this.uid = uid().split('-')[0]
-    this.resetParams()
     this.updateDynamicCSS()
-    this.scrollNormalize()
   },
   unmounted () {
     document.removeEventListener('keydown', this.keysProcess)
     const head = document.head || document.getElementsByTagName('head')[0]
     head.removeChild(this.dynamicCSS)
-  },
-  updated () {
-    this.scrollNormalize()
   }
 })
 </script>

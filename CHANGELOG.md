@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.4] - 2025-03-19
+[fix] Fixed sticking to the bottom of the list
+
 ### [2.0.3] - 2025-03-18
 [fix] Fixed calculation of the rightmost 'etc' column's width upon adding or deleting of the column
 
