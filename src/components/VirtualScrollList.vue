@@ -406,7 +406,9 @@ const dragOptions = ref({
 export default defineComponent({
   name: 'VirtualScrollList',
   emits: [
-    'action-to-bottom'
+    'action-to-bottom',
+    'item-click',
+    'update-cols'
   ],
   props: {
     actions: {
@@ -690,9 +692,6 @@ export default defineComponent({
       }
       this.itemprops(index, props)
       return props
-    },
-    itemClickHandler ({ index, content }) {
-      this.$emit('item-click', { index, content })
     },
     keysProcess (event) {
       // check if keys processing is enabled in config

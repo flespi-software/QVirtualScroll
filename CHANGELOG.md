@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.5] - 2025-03-20
+[fix] Item click handler fixed
+
 ### [2.0.4] - 2025-03-19
 [fix] Fixed sticking to the bottom of the list
 

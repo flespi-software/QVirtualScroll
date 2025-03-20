@@ -23,6 +23,7 @@
             @change-date-range="updateDateRange"
             @change-filter="filterChangeHandler"
             @change-mode="modeChange"
+            @item-click="itemClickHandler"
             @update-cols="updateColsHandler"
           />
         </div>
@@ -267,6 +268,9 @@ export default defineComponent({
         this.items.push(item)
         this.currentVal += 1
       }
+    },
+    itemClickHandler (info) {
+      console.log("itemClickHandler", info)
     },
     modeChange (val) {
       switch (val) {

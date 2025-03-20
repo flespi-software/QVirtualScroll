@@ -1,5 +1,5 @@
 <template>
-  <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" :class="`row_${index}`" @click="itemClickHandler">
+  <div :style="{height: `${itemHeight}px`, width: `${rowWidth}px`}" :class="`row_${index}`" @click="itemClickHandler(index, item)">
     <template v-for="(prop, k) in cols" :key="k" >
       <span v-if="prop.__dest === 'etc'" class="list__item item_etc" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}" :key="k">{{etc}}</span>
       <span v-else class="list__item" :class="{[`item_${k}`]: true, 'bg-grey-6': menuCellActive && menuCellActive.row === index && menuCellActive.col === k}">{{prop.custom ? JSON.stringify(item[prop.name]) : item[prop.name]}}</span>
