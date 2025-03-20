@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.6] - 2025-03-20
+[update] Implemented devices' messages store
+
 ### [2.0.5] - 2025-03-20
 [fix] Item click handler fixed
 
