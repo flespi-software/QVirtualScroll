@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { LocalStorage } from 'quasar'
 import { useMixins } from '../mixins/mixin'
 import { useLS } from '../mixins/ls'
+import { shallowRef } from 'vue'
 
 const { getColsFromStore, setColsToStore } = useLS()
 
@@ -25,9 +26,8 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     limit: 1000,
     loopId: 0,
     offline: false,
-    messages: [],           // devices messages
-    messagesBuffer: [],     // buffer to collect yet unrendered messages for realtime tracking
-    messagesKeyPointer: 0,
+    messages: shallowRef([]),         // messages of the device
+    messagesBuffer: shallowRef([]),   // buffer to collect yet unrendered messages for realtime tracking
     pages: [],
     realtimeEnabled: false, // realtime messages pooling enabled flag
     reverse: false,
@@ -160,9 +160,10 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     },
     messagesIndexing (messages) {
       if (!messages.length) { return }
+      let messageIndex = this.messages.length
       messages.forEach((message) => {
         Object.defineProperty(message, 'x-flespi-message-key', {
-          value: this.messagesKeyPointer++,
+          value: messageIndex++,
           enumerable: false
         })
       })
@@ -176,7 +177,6 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     },
     setDevice (device) {
       this.device = device
-      // console.log("[messages store]: setDevice:", JSON.stringify(device))
     },
     setHistoryMessages (data) {
       if (this.reverse) {
@@ -184,26 +184,23 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
       }
       this.messagesIndexing(data)
       this.messages = data
-      // console.log("[messages store]: setHistoryMessages: data.length, reverse: ", data.length, this.reverse)
     },
     setLimit (count) {
       this.limit = count
     },
     setMissingMessages ({ data, index }) {
       this.messages.splice(index + 1, 0, ...data)
-      // console.log("[messages store]: setMissingMessages: data.length, index: ", data.length, index)
     },
     setOffline () {
       this.offline = {
         start: Date.now() / 1000,
         lastMessageIndex: this.messages.length - 1
       }
-      // console.log("[messages store]: setOffline: offline: ", this.offline)
     },
     setRealtimeMessages (data) {
       if (data && data.length) {
         this.messagesIndexing(data)
-        const messages = this.messages
+        const messages = [...this.messages]
         if (this.sortBy) {
           /* write by sorted field */
           const message = data[0],
@@ -231,13 +228,12 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
         } else {
           messages.splice(messages.length, 0, ...data)
         }
+        this.messages = messages
         this.limiting({ type: 'rt', count: data.length })
-        // console.log("[messages store]: setRealtimeMessages: length: ", data.length)
       }
     },
     setReconnected () {
       this.offline.end = Date.now() / 1000
-      // console.log("[messages store]: setReconnected: offline: ", this.offline)
     },
     setSelected (indexes) {
       this.selected = indexes
@@ -247,11 +243,9 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     },
     setTimestampFrom (from) {
       this.timestampFrom = from
-      // console.log("[messages store]: setTimestampFrom:", this.$id, from)
     },
     setTimestampTo (to) {
       this.timestampTo = to
-      // console.log("[messages store]: setTimestampTo:", this.$id, to)
     },
     async clear () {
       this.clearMessages()
@@ -309,7 +303,6 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
       const needEtc = sysColsNeedInitFlags.etc
       if (this.active) {
         try {
-          this.isLoading = true
           /* getting device info */
           const deviceResp = await this.$connector.gw.getDevices(this.active)
           const deviceData = deviceResp.data
@@ -327,7 +320,7 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
           if (device.device_type_id) {
             /* getting protocol id */
             const protocolResp = await this.$connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
-            this.mixins.requestStart("get channel protocols device types all", { endpoint: 'getChannelProtocolsDeviceTypes', active:  device.device_type_id, fields: 'protocol_id' })
+            this.mixins.requestStart("get channel protocols device types", { endpoint: 'getChannelProtocolsDeviceTypes', active:  device.device_type_id, fields: 'protocol_id' })
             const protocolData = protocolResp.data
             this.mixins.errorsCheck(protocolData)
             const protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
@@ -360,14 +353,15 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
                 enumCol.type = ''
                 enumCol.unit = ''
                 schemaCol.width = 190
-                if (name === 'timestamp') {
-                  colsSchema.schemas._protocol.cols.unshift(schemaCol)
-                  colsSchema.enum.timestamp = enumCol
-                  return
-                }
               }
-              colsSchema.schemas._protocol.cols.push(schemaCol)
-              colsSchema.enum[name] = enumCol
+              if (name === 'timestamp') {
+                /* insert timestamp column in the first place */
+                colsSchema.schemas._protocol.cols.unshift(schemaCol)
+                colsSchema.enum.timestamp = enumCol
+              } else {
+                colsSchema.schemas._protocol.cols.push(schemaCol)
+                colsSchema.enum[name] = enumCol
+              }
             })
           }
           if (needEtc) {
@@ -376,11 +370,9 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
           }
           colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
           this.setCols(colsSchema)
-          this.isLoading = false
         } catch (e) {
           errorHandler && errorHandler(e)
           if (process.env.DEV) { console.log(e) }
-          this.isLoading = false
         }
       }
     },
@@ -459,7 +451,7 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
         this.messagesBuffer.push(JSON.parse(message))
       }, { rh: 2, prefix: filter })
       this.realtimeEnabled = true
-      // console.log("[messages store]: pollingGet: subscribed to messagesDevices: ", this.active, this.filter || '')
+      console.log("[messages store]: pollingGet: subscribed to messagesDevices: ", this.active, this.filter || '')
       return () => {
         this.loopId = this.initRenderLoop()
       }

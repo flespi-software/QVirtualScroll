@@ -406,6 +406,7 @@ const dragOptions = ref({
 export default defineComponent({
   name: 'VirtualScrollList',
   emits: [
+    'action',
     'action-to-bottom',
     'item-click',
     'update-cols'
@@ -787,7 +788,7 @@ export default defineComponent({
     virtualScrollHandler (info) {
       if (!this.scrollStickToBottom) {
         // check if user has scroller to the bottom to start sticking
-        if (info.direction === 'increase' && info.index === info.to) {
+        if (info.direction === 'increase' && info.index === info.to && info.index > 0) {
           this.scrollStickToBottom = true
         }
         return
