@@ -766,6 +766,14 @@ export default defineComponent({
       delete this.localCols.enum[this.editableCol.data.name]
       this.updateCols()
     },
+    scrollTo (index) {
+      const scrollerElement = this.$refs.scroller.$el
+      if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
+      let height = index * this.itemHeight
+      if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
+      setVerticalScrollPosition(scrollerElement, height)
+      this.logger.info(`[scrollTo] Scroll ${JSON.stringify({scrollTop: height, offsetAll: scrollerElement.scrollHeight, index})}`)
+    },
     searchBlurHandler() {
       this.searchSubmitHandler()
       this.showSearch = false
@@ -784,26 +792,6 @@ export default defineComponent({
     },
     searchSubmitHandler() {
       this.$emit('change-filter', this.currentFilter)
-    },
-    virtualScrollHandler (info) {
-      if (!this.scrollStickToBottom) {
-        // check if user has scroller to the bottom to start sticking
-        if (info.direction === 'increase' && info.index === info.to && info.index > 0) {
-          this.scrollStickToBottom = true
-        }
-        return
-      }
-      if (this.scrollStickToBottom) {
-        if (info.direction === 'decrease') {
-          // user has scrolled up - stop sticking to the bottom
-          this.scrollStickToBottom = false
-          return
-        }
-        if (info.index !== info.to) {
-          // user wants to stick to the bottom - scroll to the last element if not yet
-          this.$refs.scroller.scrollTo(info.to)
-        }
-      }
     },
     toBottomClickHandler () {
       // scroll to the last list item
@@ -836,6 +824,26 @@ export default defineComponent({
         this.dynamicCSS.innerText = this.getDynamicCSS()
       }
       head.appendChild(this.dynamicCSS)
+    },
+    virtualScrollHandler (info) {
+      if (!this.scrollStickToBottom) {
+        // check if user has scroller to the bottom to start sticking
+        if (info.direction === 'increase' && info.index === info.to && info.index > 0) {
+          this.scrollStickToBottom = true
+        }
+        return
+      }
+      if (this.scrollStickToBottom) {
+        if (info.direction === 'decrease') {
+          // user has scrolled up - stop sticking to the bottom
+          this.scrollStickToBottom = false
+          return
+        }
+        if (info.index !== info.to) {
+          // user wants to stick to the bottom - scroll to the last element if not yet
+          this.$refs.scroller.scrollTo(info.to)
+        }
+      }
     },
     wrapperResizeHandler () {
       const wrapper = this.$refs.wrapper
