@@ -772,7 +772,7 @@ export default defineComponent({
       let height = index * this.itemHeight
       if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
       setVerticalScrollPosition(scrollerElement, height)
-      this.logger.info(`[scrollTo] Scroll ${JSON.stringify({scrollTop: height, offsetAll: scrollerElement.scrollHeight, index})}`)
+      // this.logger.info(`[scrollTo] Scroll ${JSON.stringify({scrollTop: height, offsetAll: scrollerElement.scrollHeight, index})}`)
     },
     searchBlurHandler() {
       this.searchSubmitHandler()

@@ -4,8 +4,6 @@ import { useMixins } from '../mixins/mixin'
 import { useLS } from '../mixins/ls'
 import { shallowRef } from 'vue'
 
-const { getColsFromStore, setColsToStore } = useLS()
-
 const defaultCols = [
   'timestamp',
   'server.timestamp',
@@ -16,7 +14,7 @@ const defaultCols = [
   'position.speed'
 ]
 
-export const useMessagesStore = (deviceId, errorHandler) => defineStore(`messages-${deviceId}`, {
+export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineStore(`messages-${deviceId}`, {
   state: () => ({
     active: 0,              // 0 or device ID
     cols: undefined,        // columns for messages grid (message parameters)
@@ -25,6 +23,7 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     isLoading: false,       // some async request is in progress
     limit: 1000,
     loopId: 0,
+    lsNamespace: lsNamespace,
     offline: false,
     messages: shallowRef([]),         // messages of the device
     messagesBuffer: shallowRef([]),   // buffer to collect yet unrendered messages for realtime tracking
@@ -35,10 +34,15 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
     sortBy: null,
     timestampFrom: 0,
     timestampTo: 0,
-    mixins: useMixins(`messages-${deviceId}`, errorHandler)
+    mixins: useMixins(`messages-${deviceId}`, errorHandler),
   }),
   getters: {
-
+    getColsFromStore: (state) => {
+      return useLS(state.lsNamespace).getColsFromStore
+    },
+    setColsToStore: (state) => {
+      return useLS(state.lsNamespace).setColsToStore
+    }
   },
   actions: {
     clearMessages () {
@@ -172,7 +176,7 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
       this.active = id
     },
     setCols (cols) {
-      setColsToStore(LocalStorage, this.device.device_type_id, cols)
+      this.setColsToStore(LocalStorage, this.device.device_type_id, cols)
       this.cols = cols
     },
     setDevice (device) {
@@ -309,7 +313,7 @@ export const useMessagesStore = (deviceId, errorHandler) => defineStore(`message
           this.mixins.errorsCheck(deviceData)
           const device = deviceData.result && deviceData.result[0]
           this.setDevice(device)
-          let colsFromStorage = getColsFromStore(LocalStorage)
+          let colsFromStorage = this.getColsFromStore(LocalStorage)
           const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas']) ? colsFromStorage['custom-cols-schemas'] : {}
           colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])
           const colsSchema = colsFromStorage || this.getDefaultColsSchema()
