@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.10] - 2025-04-30
+[update] Device ID is passed into errorHandler as the second argument
+
 ### [2.0.9] - 2025-04-11
 [update] Storing to LS/reading from LS of the messages columns is remastered so that LS namespace can be passed as an argument from external application
 

@@ -1,11 +1,11 @@
 
-export const useMixins = (label, errorHandler) => {
+export const useMixins = (label, deviceId, errorHandler) => {
   const errorsCheck = (data) => {
     if (data.errors) {
       requestError(data.errors)
       data.errors.forEach((error) => {
         const errObject = new Error(error.reason)
-        errorHandler && errorHandler(errObject)
+        errorHandler && errorHandler(errObject, deviceId)
       })
     } else {
       requestFullfiled()

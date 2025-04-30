@@ -34,7 +34,7 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     sortBy: null,
     timestampFrom: 0,
     timestampTo: 0,
-    mixins: useMixins(`messages-${deviceId}`, errorHandler),
+    mixins: useMixins(`messages-${deviceId}`, deviceId, errorHandler),
   }),
   getters: {
     getColsFromStore: (state) => {
@@ -375,7 +375,7 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
           colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
           this.setCols(colsSchema)
         } catch (e) {
-          errorHandler && errorHandler(e)
+          errorHandler && errorHandler(e, deviceId)
           if (process.env.DEV) { console.log(e) }
         }
       }
@@ -397,7 +397,7 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
           }
           result = data.result || []
         } catch (e) {
-          errorHandler && errorHandler(e)
+          errorHandler && errorHandler(e, deviceId)
           if (process.env.DEV) { console.log(e) }
           if (!isLoadingActive) {
             this.isLoading = false
@@ -443,7 +443,7 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
           this.setMissingMessages({ data: data.result, index: lastMessageIndex })
           this.isLoading = false
         } catch (e) {
-          errorHandler && errorHandler(e)
+          errorHandler && errorHandler(e, deviceId)
           if (process.env.DEV) { console.log(e) }
           this.isLoading = false
         }

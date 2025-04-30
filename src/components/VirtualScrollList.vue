@@ -702,7 +702,7 @@ export default defineComponent({
       const keyDownCode = 40
       if (event.which !== keyUpCode && event.which !== keyDownCode) { return }
       // find scrolling list element and current active element
-      const scrollingEl = get(this.$refs, 'scroller.$el', undefined)
+      const scrollingEl = get(this.$refs, 'scroller.$el', undefined) // TODO: get rid of lodash get here
       const activeEl = document.activeElement
       if (scrollingEl && activeEl && (activeEl === scrollingEl || scrollingEl.contains(activeEl) || activeEl.contains(scrollingEl))) {
         // list element is active - process up and down keys pressed
