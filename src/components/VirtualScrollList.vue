@@ -264,10 +264,13 @@
           </slot>
         </q-menu>
 
-        <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
-          v-if="(items.length || loading) && currentTheme.headerShow && activeCols.length" :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+        <div
+          v-if="(items.length || loading) && currentTheme.headerShow && activeCols.length"
+          :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
+          class="list__header"
+          :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
         >
-          <div class="header__inner" :style="{ width: `${rowTotalWidth + 15}px` }">
+          <div class="header__inner" :style="{ width: `${rowTotalWidth + (hasVerticalScroll ? 15 : 0)}px` }">
             <draggable
               :list="activeCols"
               v-bind="dragOptions"
@@ -382,7 +385,6 @@
 import { defineComponent, ref } from 'vue'
 import { uid, scroll } from 'quasar'
 import { DateRangeModal } from 'datetimerangepicker'
-import get from 'lodash/get'
 import cloneDeep from 'lodash/cloneDeep'
 import draggable from 'vuedraggable'
 import VueDraggableResizable from 'vue-draggable-resizable'
@@ -423,6 +425,7 @@ export default defineComponent({
   emits: [
     'action',
     'action-to-bottom',
+    'change-mode',
     'item-click',
     'update-cols'
   ],
@@ -600,6 +603,7 @@ export default defineComponent({
       editableCol: null,
       editableRow: null,
       hasItemClickHandler: false,
+      hasVerticalScroll: undefined,
       headerHeight: this.itemHeight + 5,
       itemsCount: 0,
       localCols,                    // all awailable schemas of the columns, copy of the cols property
@@ -647,12 +651,15 @@ export default defineComponent({
       if (!wrapper || !this.activeCols || !this.activeCols.length) { return }
       /* available width of the grid wrapper element */
       const fullWidth = this.$refs.wrapper.offsetWidth
+      const etcIndex = this.activeCols.findIndex(col => col.__dest === 'etc')
+      if (etcIndex < 0) { return }
       if (this.minRowTotalWidth < fullWidth) {
         /* we still have space for etc column to grow */
-        const etcIndex = this.activeCols.findIndex(col => col.__dest === 'etc')
-        if (etcIndex < 0) { return }
         /* set new width to etc column and sync columns to schema */
-        this.activeCols[etcIndex].width = fullWidth - (this.minRowTotalWidth - 150 + 15) // TODO: magic numbers
+        this.activeCols[etcIndex].width = fullWidth - (this.minRowTotalWidth - 150 + (this.hasVerticalScroll ? 15 : 0))
+      } else if (this.rowTotalWidth > this.minRowTotalWidth) {
+        /* we already don't have enough screenview width, but still may shrink etc column to its basic width */
+        this.activeCols[etcIndex].width = 150
       }
     },
     clickHandler ({ index, type, content }) {
@@ -738,15 +745,15 @@ export default defineComponent({
       const keyDownCode = 40
       if (event.which !== keyUpCode && event.which !== keyDownCode) { return }
       // find scrolling list element and current active element
-      const scrollingEl = get(this.$refs, 'scroller.$el', undefined) // TODO: get rid of lodash get here
+      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
       const activeEl = document.activeElement
-      if (scrollingEl && activeEl && (activeEl === scrollingEl || scrollingEl.contains(activeEl) || activeEl.contains(scrollingEl))) {
+      if (scrollEl && activeEl && (activeEl === scrollEl || scrollEl.contains(activeEl) || activeEl.contains(scrollEl))) {
         // list element is active - process up and down keys pressed
         // prevent firing scroll events
         event.preventDefault();
         // move list on one line up or down
         const up = (event.which === keyUpCode) ? true : false
-        setVerticalScrollPosition(scrollingEl, up ? scrollingEl.scrollTop - this.itemHeight : scrollingEl.scrollTop + this.itemHeight)
+        setVerticalScrollPosition(scrollEl, up ? scrollEl.scrollTop - this.itemHeight : scrollEl.scrollTop + this.itemHeight)
         // emit corresponding event
         this.$emit(up ? 'arrowup' : 'arrowdown')
       }
@@ -889,6 +896,10 @@ export default defineComponent({
       this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
       this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
+      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
+      if (scrollEl) {
+        this.hasVerticalScroll = scrollEl.scrollHeight > scrollEl.clientHeight
+      }
       this.adjustEtcColWidth()
     },
   },
@@ -926,6 +937,20 @@ export default defineComponent({
     filter(val) {
       if (this.currentFilter !== val) {
         this.currentFilter = val
+      }
+    },
+    items: {
+      deep: true,
+      handler () {
+        const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
+        if (scrollEl) {
+          if (scrollEl.scrollHeight - this.items.length * this.itemHeight < this.itemHeight){
+            /* total height of all displayed elements has become almost as viewport height - the next item will cause vertical scroll to appear */
+            this.hasVerticalScroll = true
+          }
+          this.adjustEtcColWidth()
+          this.$refs.scroller.refresh()
+        }
       }
     },
     viewConfig: {

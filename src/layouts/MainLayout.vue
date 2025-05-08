@@ -308,9 +308,9 @@ export default defineComponent({
       this.items.length = 0
       this.generateItems()
     },
-    updateColsHandler (newCols) {
+    updateColsHandler () {
       // this.cols = newCols
-      console.log("columns updated", JSON.stringify(newCols))
+      // console.log("columns updated", JSON.stringify(newCols))
     },
     updateDateRange (range) {
       this.dateRange = range

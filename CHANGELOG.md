@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.12] - 2025-05-08
+[fix] Improved processing of vertical scroll
+
 ### [2.0.11] - 2025-05-08
 [update] Dynamic calculation of etc column's width is refactored
 
