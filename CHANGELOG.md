@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.11] - 2025-05-08
+[update] Dynamic calculation of etc column's width is refactored
+
 ### [2.0.10] - 2025-04-30
 [update] Device ID is passed into errorHandler as the second argument
 

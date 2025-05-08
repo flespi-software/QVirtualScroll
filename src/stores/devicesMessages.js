@@ -16,7 +16,6 @@ const defaultCols = [
 
 export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineStore(`messages-${deviceId}`, {
   state: () => ({
-    active: 0,              // 0 or device ID
     cols: undefined,        // columns for messages grid (message parameters)
     device: {},             // device json
     filter: '',
@@ -172,9 +171,6 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
         })
       })
     },
-    setActive (id) {
-      this.active = id
-    },
     setCols (cols) {
       this.setColsToStore(LocalStorage, this.device.device_type_id, cols)
       this.cols = cols
@@ -258,8 +254,8 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
       this.timestampTo = 0
       this.limit = 1000
       this.reverse = false
-      await this.$connector.unsubscribeMessagesDevices(this.active)
-      // console.log("[messages store]: clear: unsubscribeMessagesDevices: ", this.$id, this.active)
+      await this.$connector.unsubscribeMessagesDevices(deviceId)
+      // console.log("[messages store]: clear: unsubscribeMessagesDevices: ", this.$id, deviceId)
     },
     async get (initTimestamp) {
       if (this.isLoading) { return }
@@ -305,103 +301,99 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     },
     async getCols (sysColsNeedInitFlags) {
       const needEtc = sysColsNeedInitFlags.etc
-      if (this.active) {
-        try {
-          /* getting device info */
-          const deviceResp = await this.$connector.gw.getDevices(this.active)
-          const deviceData = deviceResp.data
-          this.mixins.errorsCheck(deviceData)
-          const device = deviceData.result && deviceData.result[0]
-          this.setDevice(device)
-          let colsFromStorage = this.getColsFromStore(LocalStorage)
-          const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas']) ? colsFromStorage['custom-cols-schemas'] : {}
-          colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])
-          const colsSchema = colsFromStorage || this.getDefaultColsSchema()
-          colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
-          if (!colsSchema.enum) {
-            colsSchema.enum = this.getDefaultEnum()
-          }
-          if (device.device_type_id) {
-            /* getting protocol id */
-            const protocolResp = await this.$connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
-            this.mixins.requestStart("get channel protocols device types", { endpoint: 'getChannelProtocolsDeviceTypes', active:  device.device_type_id, fields: 'protocol_id' })
-            const protocolData = protocolResp.data
-            this.mixins.errorsCheck(protocolData)
-            const protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
-            /* gettings messages parameters */
-            const messageParamsResp = await this.$connector.gw.getChannelProtocols(protocolId, { fields: 'message_parameters' })
-            this.mixins.requestStart("get channel protocol", { endpoint: 'getChannelProtocols', active: protocolId, fields: 'message_parameters' })
-            const messageParamsData = messageParamsResp.data
-            this.mixins.errorsCheck(messageParamsData)
-            const messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters
-            /* initing columns by message parameters */
-            colsSchema.schemas._protocol = {
-              name: '_protocol',
-              cols: []
-            }
-            const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
-            messageParams.forEach((param) => {
-              const name = param.name
-              const enumCol = {
-                name,
-                type: param.type || '',
-                unit: param.unit || '',
-                description: param.info || ''
-              }
-              const schemaCol = {
-                name,
-                width: 150
-              }
-              if (name.match(/timestamp$/)) {
-                enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
-                enumCol.type = ''
-                enumCol.unit = ''
-                schemaCol.width = 190
-              }
-              if (name === 'timestamp') {
-                /* insert timestamp column in the first place */
-                colsSchema.schemas._protocol.cols.unshift(schemaCol)
-                colsSchema.enum.timestamp = enumCol
-              } else {
-                colsSchema.schemas._protocol.cols.push(schemaCol)
-                colsSchema.enum[name] = enumCol
-              }
-            })
-          }
-          if (needEtc) {
-            device.device_type_id && colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-            !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
-          }
-          colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
-          this.setCols(colsSchema)
-        } catch (e) {
-          errorHandler && errorHandler(e, deviceId)
-          if (process.env.DEV) { console.log(e) }
+      try {
+        /* getting device info */
+        const deviceResp = await this.$connector.gw.getDevices(deviceId)
+        const deviceData = deviceResp.data
+        this.mixins.errorsCheck(deviceData)
+        const device = deviceData.result && deviceData.result[0]
+        this.setDevice(device)
+        let colsFromStorage = this.getColsFromStore(LocalStorage)
+        const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas']) ? colsFromStorage['custom-cols-schemas'] : {}
+        colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])
+        const colsSchema = colsFromStorage || this.getDefaultColsSchema()
+        colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+        if (!colsSchema.enum) {
+          colsSchema.enum = this.getDefaultEnum()
         }
+        if (device.device_type_id) {
+          /* getting protocol id */
+          const protocolResp = await this.$connector.gw.getChannelProtocolsDeviceTypes('all', device.device_type_id, { fields: 'protocol_id' })
+          this.mixins.requestStart("get channel protocols device types", { endpoint: 'getChannelProtocolsDeviceTypes', active:  device.device_type_id, fields: 'protocol_id' })
+          const protocolData = protocolResp.data
+          this.mixins.errorsCheck(protocolData)
+          const protocolId = protocolData.result && protocolData.result[0] && protocolData.result[0].protocol_id
+          /* gettings messages parameters */
+          const messageParamsResp = await this.$connector.gw.getChannelProtocols(protocolId, { fields: 'message_parameters' })
+          this.mixins.requestStart("get channel protocol", { endpoint: 'getChannelProtocols', active: protocolId, fields: 'message_parameters' })
+          const messageParamsData = messageParamsResp.data
+          this.mixins.errorsCheck(messageParamsData)
+          const messageParams = messageParamsData.result && messageParamsData.result[0] && messageParamsData.result[0].message_parameters
+          /* initing columns by message parameters */
+          colsSchema.schemas._protocol = {
+            name: '_protocol',
+            cols: []
+          }
+          const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
+          messageParams.forEach((param) => {
+            const name = param.name
+            const enumCol = {
+              name,
+              type: param.type || '',
+              unit: param.unit || '',
+              description: param.info || ''
+            }
+            const schemaCol = {
+              name,
+              width: 150
+            }
+            if (name.match(/timestamp$/)) {
+              enumCol.addition = `${locale.slice(0, 3)}:${locale.slice(3)}`
+              enumCol.type = ''
+              enumCol.unit = ''
+              schemaCol.width = 190
+            }
+            if (name === 'timestamp') {
+              /* insert timestamp column in the first place */
+              colsSchema.schemas._protocol.cols.unshift(schemaCol)
+              colsSchema.enum.timestamp = enumCol
+            } else {
+              colsSchema.schemas._protocol.cols.push(schemaCol)
+              colsSchema.enum[name] = enumCol
+            }
+          })
+        }
+        if (needEtc) {
+          device.device_type_id && colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+          !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+        }
+        colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
+        this.setCols(colsSchema)
+      } catch (e) {
+        errorHandler && errorHandler(e, deviceId)
+        if (process.env.DEV) { console.log(e) }
       }
     },
     async getMessages (params) {
       let result = []
-      if (this.active) {
-        const isLoadingActive = this.isLoading
-        try {
-          if (!isLoadingActive) {
-            this.isLoading = true
-          }
-          const resp = await this.$connector.gw.getDevicesMessages(this.active, { data: JSON.stringify(params) })
-          this.mixins.requestStart("get device messages", { endpoint: 'getDevicesMessages', active: this.active, data: JSON.stringify(params) })
-          const data = resp.data
-          this.mixins.errorsCheck(data)
-          if (!isLoadingActive) {
-            this.isLoading = false
-          }
-          result = data.result || []
-        } catch (e) {
-          errorHandler && errorHandler(e, deviceId)
-          if (process.env.DEV) { console.log(e) }
-          if (!isLoadingActive) {
-            this.isLoading = false
-          }
+      const isLoadingActive = this.isLoading
+      try {
+        if (!isLoadingActive) {
+          this.isLoading = true
+        }
+        const resp = await this.$connector.gw.getDevicesMessages(deviceId, { data: JSON.stringify(params) })
+        this.mixins.requestStart("get device messages", { endpoint: 'getDevicesMessages', active: deviceId, data: JSON.stringify(params) })
+        const data = resp.data
+        this.mixins.errorsCheck(data)
+        if (!isLoadingActive) {
+          this.isLoading = false
+        }
+        result = data.result || []
+      } catch (e) {
+        errorHandler && errorHandler(e, deviceId)
+        if (process.env.DEV) { console.log(e) }
+        if (!isLoadingActive) {
+          this.isLoading = false
         }
       }
       return result
@@ -427,35 +419,33 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     },
     async getMissedMessages () {
       /* getting missed messages after offline */
-      if (this.active) {
-        try {
-          this.isLoading = true
-          const { start, end, lastMessageIndex } = this.offline
-          const params = {
-            from: start,
-            to: end
-          }
-          if (this.filter) { params.data.filter = this.filter }
-          const resp = await this.$connector.gw.getDevicesMessages(this.active, { data: JSON.stringify(params) })
-          this.mixins.requestStart("get devices messages", { endpoint: 'getDevicesMessages', active: this.active, data: JSON.stringify(params) })
-          const data = resp.data
-          this.mixins.errorsCheck(data)
-          this.setMissingMessages({ data: data.result, index: lastMessageIndex })
-          this.isLoading = false
-        } catch (e) {
-          errorHandler && errorHandler(e, deviceId)
-          if (process.env.DEV) { console.log(e) }
-          this.isLoading = false
+      try {
+        this.isLoading = true
+        const { start, end, lastMessageIndex } = this.offline
+        const params = {
+          from: start,
+          to: end
         }
+        if (this.filter) { params.data.filter = this.filter }
+        const resp = await this.$connector.gw.getDevicesMessages(deviceId, { data: JSON.stringify(params) })
+        this.mixins.requestStart("get devices messages", { endpoint: 'getDevicesMessages', active: deviceId, data: JSON.stringify(params) })
+        const data = resp.data
+        this.mixins.errorsCheck(data)
+        this.setMissingMessages({ data: data.result, index: lastMessageIndex })
+        this.isLoading = false
+      } catch (e) {
+        errorHandler && errorHandler(e, deviceId)
+        if (process.env.DEV) { console.log(e) }
+        this.isLoading = false
       }
     },
     async pollingGet () {
       const filter = this.filter ? `$filter/payload=${encodeURIComponent(this.filter)}` : undefined
-      await this.$connector.subscribeMessagesDevices(this.active, (message) => {
+      await this.$connector.subscribeMessagesDevices(deviceId, (message) => {
         this.messagesBuffer.push(JSON.parse(message))
       }, { rh: 2, prefix: filter })
       this.realtimeEnabled = true
-      console.log("[messages store]: pollingGet: subscribed to messagesDevices: ", this.active, this.filter || '')
+      console.log("[messages store]: pollingGet: subscribed to messagesDevices: ", deviceId, this.filter || '')
       return () => {
         this.loopId = this.initRenderLoop()
       }
@@ -467,9 +457,9 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
         this.loopId = 0
       }
       const filter = this.filter ? `$filter/payload=${encodeURIComponent(this.filter)}` : undefined
-      await this.$connector.unsubscribeMessagesDevices(this.active, undefined, { prefix: filter })
+      await this.$connector.unsubscribeMessagesDevices(deviceId, undefined, { prefix: filter })
       this.realtimeEnabled = false
-      // console.log("[messages store]: unsubscribePooling: unsubscribed from messages device: ", this.active, this.filter || '')
+      // console.log("[messages store]: unsubscribePooling: unsubscribed from messages device: ", deviceId, this.filter || '')
     }
   }
 })()

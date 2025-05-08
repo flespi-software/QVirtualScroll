@@ -258,7 +258,7 @@
               :col="editableCol"
               :row="editableRow"
               @add="colsAddition = true, addingRow = editableRow"
-              @remove="toggleCol"
+              @remove="removeCol"
               @action="(type) => clickHandler({ index: editableRow.index, type, content: editableRow.data })"
             />
           </slot>
@@ -347,15 +347,30 @@
           class="list__content absolute-top-left absolute-bottom-right text-center"
           :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
         >
-          <div :class="$q.platform.is.mobile ? ['text-h5 q-mt-sm'] : ['text-h4 q-mt-xl']" class='text-grey-5'>No columns to show.</div>
-          <div :class="$q.platform.is.mobile ? ['text-h7'] : ['text-h6']" class='text-grey-6'>Configure your custom columns:<q-btn flat dense round color="white" icon="mdi-dots-vertical" @click="$refs.tableMenu.show()"/></div>
+          <div
+            :class="$q.platform.is.mobile ? ['text-h5 q-mt-sm'] : ['text-h4 q-mt-xl']"
+            class='text-grey-5'
+          >
+            No columns to show.
+          </div>
+          <div
+            :class="$q.platform.is.mobile ? ['text-h7'] : ['text-h6']"
+            class='text-grey-6'
+          >
+            Configure your custom columns:
+            <q-btn flat dense round
+              color="white"
+              icon="mdi-dots-vertical"
+              @click="colAddingHandler"
+            />
+          </div>
         </div>
         <cols-adding
           v-if="colsAddition"
           style="width: 250px"
           class="absolute-bottom-right absolute-top-right"
           :cols="additionCols"
-          @add="addCustomColumnHandler"
+          @add="addCol"
           @done="colsAddition = false, addingRow = undefined"
         />
       </div>
@@ -377,7 +392,7 @@ import ColsMenu from './ColsMenu.vue'
 import ListItem from './ListItem.vue'
 import ColsAdding from './ColsAdding.vue'
 
-const { setVerticalScrollPosition } = scroll
+const { setVerticalScrollPosition, setHorizontalScrollPosition } = scroll
 
 const defaultConfig = {
   needShowFilter: false,
@@ -537,7 +552,21 @@ export default defineComponent({
     needShowToolbar() {
       return this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDateRange
     },
+    minRowTotalWidth () {
+      /* minumum total raw width - summ of all curent columns' widths and minimum width for etc column */
+      let res = 0
+      this.activeCols.forEach((col) => {
+        if (col.__dest === 'etc') {
+          res += 150
+        } else {
+          res += col.width
+        }
+        return res
+      })
+      return res
+    },
     rowTotalWidth () {
+      /* total raw width - summ of all curent columns' widths and current width for etc column */
       let res = 0
       res += this.rowColsWidthsArray.reduce((acc, width) => acc + width, 0)
       return res
@@ -556,7 +585,7 @@ export default defineComponent({
       ? this.cols.activeSchema
       : '_default'
     return {
-      activeCols: cloneDeep(this.cols.schemas[firstSchemaName].cols),
+      activeCols: cloneDeep(this.cols.schemas[firstSchemaName].cols), // list of columns of the current active schema
       addingRow: undefined,
       colsAddition: false,
       colsSchemaAdd: false,
@@ -573,13 +602,13 @@ export default defineComponent({
       hasItemClickHandler: false,
       headerHeight: this.itemHeight + 5,
       itemsCount: 0,
-      localCols,
+      localCols,                    // all awailable schemas of the columns, copy of the cols property
       logger: this.$logger ? this.$logger.extendName(this.name) : new Logger(this.name),
       needResizeControl: true,
       newSchemaName: 'Modified',
       prevDeleteSchemaName: undefined,
       resizing: false,
-      scrollStickToBottom: false,  // automatically scroll to the bottom of the table
+      scrollStickToBottom: false,   // automatically scroll to the bottom of the table
       showSearch: false,
       uid: 0,
       wrapperHeight: 0,
@@ -587,36 +616,43 @@ export default defineComponent({
     }
   },
   methods: {
-    addCustomColumnHandler (colName) {
-      const existingCol = this.localCols.enum[colName]
-      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
-      let scrollWidth = 0
-      const lastCol = this.activeCols[this.activeCols.length - 1] || { name: '', width: 0 }
-      const lastColSchema = this.localCols.enum[lastCol.name] || {}
-      if (!existingCol) {
+    addCol (colName) {
+      /* check if this column exists in enum of known columns */
+      if (!this.localCols.enum[colName]) {
         this.localCols.enum[colName] = { name: colName, custom: true }
       }
-      if (lastColSchema.__dest === 'etc') {
-        this.activeCols.splice(this.activeCols.length - 2, 0, { name: colName, width: 150 })
-        this.localCols.schemas[this.activeSchema].cols.splice(this.activeCols.length - 2, 0, { name: colName, width: 150 })
-        if (scrollEl) { scrollWidth = scrollEl.scrollWidth - lastCol.width }
+      const column = this.localCols.enum[colName]
+      column.width = 150
+      /* if the last column is etc - then insert new column before it, otherwise - to the end */
+      let etcColumnLast = false
+      if (this.activeCols.length && this.activeCols[this.activeCols.length - 1].__dest === 'etc'){
+        etcColumnLast = true
+        this.activeCols.splice(this.activeCols.length - 1, 0, column)
       } else {
-        this.activeCols.push({ name: colName, width: 150 })
-        this.localCols.schemas[this.activeSchema].cols.push({ name: colName, width: 150 })
-        if (scrollEl) { scrollWidth = scrollEl.scrollWidth }
+        this.activeCols.push(column)
       }
-      if (scrollWidth && scrollEl) {
-        this.$nextTick(() => { scrollEl.scrollLeft = scrollWidth - (this.wrapperWidth / 2) })
-      }
+      this.adjustEtcColWidth()
       this.updateCols()
+      /* scroll horizontally to the added column */
+      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
+      if (scrollEl) {
+        setHorizontalScrollPosition(scrollEl, this.rowTotalWidth - (etcColumnLast ? this.activeCols[this.activeCols.length - 1].width : 0))
+      }
     },
-    adjustLastEtcColWidth () {
+    adjustEtcColWidth () {
+      /* if grid contains etc column - it will occupy all awailable width of the wrapper remained after the rest of column */
+      /* width of etc column is calculated automatically, so that horizontal scroll appear only when current minimum total raw width  */
+      /* becomes more than wrapper width */
+      const wrapper = this.$refs.wrapper
+      if (!wrapper || !this.activeCols || !this.activeCols.length) { return }
+      /* available width of the grid wrapper element */
       const fullWidth = this.$refs.wrapper.offsetWidth
-      if (this.activeCols && this.activeCols.length && this.rowTotalWidth < fullWidth &&
-        this.activeCols[this.activeCols.length - 1].name === 'etc') {
-        // if active columns do not fill full screenview width - adjust the width of the last column
-        // so that is filled all the remained space to the right
-        this.activeCols[this.activeCols.length - 1].width = fullWidth - (this.rowTotalWidth - 150)
+      if (this.minRowTotalWidth < fullWidth) {
+        /* we still have space for etc column to grow */
+        const etcIndex = this.activeCols.findIndex(col => col.__dest === 'etc')
+        if (etcIndex < 0) { return }
+        /* set new width to etc column and sync columns to schema */
+        this.activeCols[etcIndex].width = fullWidth - (this.minRowTotalWidth - 150 + 15) // TODO: magic numbers
       }
     },
     clickHandler ({ index, type, content }) {
@@ -719,7 +755,10 @@ export default defineComponent({
       const wrapper = this.$refs.wrapper
       if (wrapper) {
         window.requestAnimationFrame(() => {
-          wrapper.querySelector('.list__header').scrollLeft = scrollInfo.position.left
+          const listHeader = wrapper.querySelector('.list__header')
+          if (listHeader) {
+            listHeader.scrollLeft = scrollInfo.position.left
+          }
         })
       }
     },
@@ -757,13 +796,20 @@ export default defineComponent({
     onResize (width, index) {
       if (typeof index === 'number') {
         this.activeCols[index].width = width
-        this.localCols.schemas[this.activeSchema].cols[index].width = width
+        this.adjustEtcColWidth()
         this.updateCols()
       }
       this.updateDynamicCSS()
     },
     removeCol () {
-      delete this.localCols.enum[this.editableCol.data.name]
+      if (!this.editableCol) { return }
+      const col = this.editableCol.data
+      const colEnum = this.localCols.enum[col.name]
+      if (colEnum && colEnum.custom) {
+        delete this.localCols.enum[this.editableCol.data.name]
+      }
+      this.activeCols.splice(this.editableCol.index, 1)
+      this.adjustEtcColWidth()
       this.updateCols()
     },
     scrollTo (index) {
@@ -801,18 +847,9 @@ export default defineComponent({
       // notify parent that user moved to the bottom of the list
       this.$emit('action-to-bottom')
     },
-    toggleCol () {
-      if (!this.editableCol) { return }
-      const col = this.editableCol.data
-      const colEnum = this.localCols.enum[col.name]
-      if (colEnum && colEnum.custom) {
-        this.removeCol()
-      }
-      this.activeCols.splice(this.editableCol.index, 1)
-      this.localCols.schemas[this.activeSchema].cols.splice(this.editableCol.index, 1)
-      this.updateCols()
-    },
     updateCols() {
+      /* sync active columns to columns schema */
+      this.localCols.schemas[this.activeSchema].cols = this.activeCols
       this.$emit('update-cols', this.localCols)
     },
     updateDynamicCSS () {
@@ -847,13 +884,12 @@ export default defineComponent({
     },
     wrapperResizeHandler () {
       const wrapper = this.$refs.wrapper
-      if (!wrapper) {
-        return false
-      }
-      // calculate the number of items that fit into the wrapper element
+      if (!wrapper) { return }
+      /* calculate the number of items that fit into the wrapper element */
       this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
       this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
+      this.adjustEtcColWidth()
     },
   },
   watch: {
@@ -862,10 +898,13 @@ export default defineComponent({
       handler (cols, oldCols) {
         if (cols === oldCols) {
           if (this.cols.activeSchema !== '_unsaved') {
-            this.setUnsavedSchema(cloneDeep(cols))
+            // this.setUnsavedSchema(cloneDeep(cols)) // TODO: new schema creation
           }
         }
-        this.adjustLastEtcColWidth()
+        if (!oldCols.length) {
+          /* adjust etc column width only first time when columns were initialized */
+          this.adjustEtcColWidth()
+        }
         this.updateDynamicCSS()
         this.needResizeControl = false
         this.$nextTick(() => {
@@ -895,21 +934,20 @@ export default defineComponent({
         this.currentViewConfig = Object.assign(this.defaultConfig, config)
       }
     },
-
     currentMode () {
       this.$emit('change-mode', Number(this.currentMode))
     }
-
   },
   created () {
-    // attach keys processing to enable iterating the table by one row with arrow keys
+    /* attach keys processing to enable iterating the table by one row with arrow keys */
     document.addEventListener('keydown', this.keysProcess, false)
   },
   mounted () {
-    this.adjustLastEtcColWidth()
-    // cell click will be processed by parent element - cursor-pinter will be shown on the grid cells
+    /*  if cell click is processed by parent element - cursor-pinter will be shown on the grid cells */
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
+    /* generate uid for message viewer class */
     this.uid = uid().split('-')[0]
+    /* update columns width programmatically */
     this.updateDynamicCSS()
   },
   unmounted () {

@@ -39,14 +39,16 @@ import cols from '../data/cols.json'
 
 function getCols (cols) {
   const schema = {
-    activeSchema: '_unsaved',
+    activeSchema: '_default',
     schemas: {
       _default: {
         name: '_default',
         cols: [
           { name: 'param#2', width: 150 },
           { name: 'param#3', width: 150 },
-          { name: 'param#4', width: 150 }
+          { name: 'param#4', width: 150 },
+          { name: 'param#5', width: 150 },
+          { name: "etc", width: 150, __dest: "etc"}
         ]
       },
       _protocol: {
@@ -98,7 +100,7 @@ export default defineComponent({
       currentVal: 1000,
       date: Date.now(),
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
-      defaultLimit: 1000,
+      defaultLimit: 30, //1000,
       filter: '',
       items: [],
       loading: true,
@@ -307,7 +309,8 @@ export default defineComponent({
       this.generateItems()
     },
     updateColsHandler (newCols) {
-      this.cols = newCols
+      // this.cols = newCols
+      console.log("columns updated", JSON.stringify(newCols))
     },
     updateDateRange (range) {
       this.dateRange = range
