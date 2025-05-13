@@ -224,7 +224,7 @@
         </div>
       </slot>
 
-      <div v-else-if="!items.length && loading && itemsCount > 0"
+      <div v-else-if="loading && itemsCount > 0"
         :style="{height: `${wrapperHeight + headerHeight - 0.5}px`, overflow: 'auto'}"
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted}"
         class="absolute-top-left absolute-bottom-right"
@@ -476,7 +476,6 @@ export default defineComponent({
         return []
       },
     },
-    loading: Boolean,
     mode: {
       type: Number,
       required: false,
@@ -603,9 +602,10 @@ export default defineComponent({
       editableCol: null,
       editableRow: null,
       hasItemClickHandler: false,
-      hasVerticalScroll: undefined,
+      hasVerticalScroll: undefined, // boolean indicator showing if grid has vertical scroll, used to adjust total row width by scroll width (15px)
       headerHeight: this.itemHeight + 5,
-      itemsCount: 0,
+      itemsCount: 0,                // the number of visible rows in the grid, accurding to the actual height of the wrapper element
+      loading: true,                // flag that shows if items for the grid are ready to be displayed, used for displaying table skeleton
       localCols,                    // all awailable schemas of the columns, copy of the cols property
       logger: this.$logger ? this.$logger.extendName(this.name) : new Logger(this.name),
       needResizeControl: true,
@@ -614,9 +614,8 @@ export default defineComponent({
       resizing: false,
       scrollStickToBottom: false,   // automatically scroll to the bottom of the table
       showSearch: false,
-      uid: 0,
-      wrapperHeight: 0,
-      wrapperWidth: 0,
+      uid: 0,                       // uid for unique message viewer class
+      wrapperHeight: 0              // height of the grid's wrapper element
     }
   },
   methods: {
@@ -892,13 +891,12 @@ export default defineComponent({
     wrapperResizeHandler () {
       const wrapper = this.$refs.wrapper
       if (!wrapper) { return }
-      /* calculate the number of items that fit into the wrapper element */
+      /* calculate the number of items that fit into the wrapper element's actual height */
       this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
-      this.wrapperWidth = wrapper.offsetWidth
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
-      const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
-      if (scrollEl) {
-        this.hasVerticalScroll = scrollEl.scrollHeight > scrollEl.clientHeight
+      /* check if we may now detect if vertical scroll is needed */
+      if (this.itemsCount > 0 && this.items.length > 0) {
+        this.hasVerticalScroll = (this.items.length > this.itemsCount) ? true : false
       }
       this.adjustEtcColWidth()
     },
@@ -942,14 +940,11 @@ export default defineComponent({
     items: {
       deep: true,
       handler () {
-        const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
-        if (scrollEl) {
-          if (scrollEl.scrollHeight - this.items.length * this.itemHeight < this.itemHeight){
-            /* total height of all displayed elements has become almost as viewport height - the next item will cause vertical scroll to appear */
-            this.hasVerticalScroll = true
-          }
+        /* check if we are goling to have vertical scroll soon */
+        if (!this.hasVerticalScroll && this.itemsCount > 0 && this.items.length > this.itemsCount - 2) {
+          this.hasVerticalScroll = true
           this.adjustEtcColWidth()
-          this.$refs.scroller.refresh()
+          this.updateDynamicCSS()
         }
       }
     },
@@ -972,8 +967,29 @@ export default defineComponent({
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
     /* generate uid for message viewer class */
     this.uid = uid().split('-')[0]
-    /* update columns width programmatically */
-    this.updateDynamicCSS()
+    /* start job that determines if vertical scroll is needed, until then  table skeleton will be displayed as grid placeholder */
+    console.log("#####====== QVS: mounted: hasVerticalScroll", this.hasVerticalScroll)
+    if (this.hasVerticalScroll === undefined) {
+      this.detectVeritcalScrollJob = setInterval(() => {
+        if (this.hasVerticalScroll === undefined) {
+          /* try until wrapper element appears on the page and gives available height and items count */
+          this.wrapperResizeHandler()
+        } else {
+          /* now to know if vertical scroll is needed and may display the grid */
+          clearInterval(this.detectVeritcalScrollJob)
+          this.adjustEtcColWidth()
+          this.updateDynamicCSS()
+          /* stop displaying table skeleton */
+          this.loading = false
+        }
+      }, 200)
+    } else {
+      setTimeout(() => {
+        this.updateDynamicCSS()
+        /* no need to display table skeleton */
+        this.loading = false
+      }, 1000)
+    }
   },
   unmounted () {
     document.removeEventListener('keydown', this.keysProcess)

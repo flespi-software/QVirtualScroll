@@ -11,7 +11,6 @@
             :filter="filter"
             :i18n="{from: 'FROM', to: 'TO'}"
             :items="filteredItems"
-            :loading="loading"
             :mode="mode"
             :panelActions="panelActions"
             :theme="theme"
@@ -103,7 +102,6 @@ export default defineComponent({
       defaultLimit: 30, //1000,
       filter: '',
       items: [],
-      loading: true,
       mode: 0,
       panelActions: [
         {
@@ -319,7 +317,6 @@ export default defineComponent({
   created () {
     setTimeout(() => {
       this.generateItems()
-      this.loading = false
     }, 3000)
   }
 })

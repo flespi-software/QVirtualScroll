@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.13] - 2025-05-13
+[fix] Fixed detection of total row width depending of the presence of vertical scroll and fixed displaying of table skeleton
+
 ### [2.0.12] - 2025-05-08
 [fix] Improved processing of vertical scroll
 
