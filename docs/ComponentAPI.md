@@ -14,7 +14,7 @@
 | panelActions  | Array | Additional actions applicable to the whole table, displayed in the the table menu | [] |
 | title | String | Dataset title  | '' |
 | theme | Object | Visual view of component | `{datetimepickerColor: 'grey', color: 'grey-9', bgColor: 'white', controlsInverted: false, contentInverted: false,  headerShow: true}` |
-| viewConfig |  Object | Functional view of component | `{needShowFilter: false, filterPlaceholder: 'position.speed<=5 || (plugin.geofence.name=="storage" && ble.sensor.temperature.1 > 10)', needShowDateRange: false, needKeysProcess: false }` |
+| viewConfig |  Object | Functional view of component | `{needShowFilter: false, filterPlaceholder: 'position.speed<=5', needShowDateRange: false, needKeysProcess: false }` |
 
 ## Cols
 ````javascript
@@ -75,7 +75,7 @@ item = [
     param#2: "String#1001",
     param#3: 1001,
     param#4: "String#1001",
-    timestamp": 1747653305430,
+    timestamp: 1747653305430,
     etc: "String#1001"
   },
   {
@@ -83,7 +83,7 @@ item = [
     param#2: "String#1002",
     param#3: 1002,
     param#4: "String#1002",
-    timestamp": 1747653305431,
+    timestamp: 1747653305431,
     etc: "String#1002"
   }
 ]
@@ -196,7 +196,7 @@ Simple example of template:
 ## Slots
 
 ### list-item
-Component for list-item slot has to be designed based on ListItem.vue. All props is required.
+Component for list-item slot has to be designed based on ListItem.vue. All props are required.
 ```html
   <virtual-scroll-list
     :actions="actions"
