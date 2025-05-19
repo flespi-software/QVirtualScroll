@@ -60,12 +60,7 @@
         v-model="dateModel"
         :theme="{ color: `${currentTheme.datetimepickerColor}` }"
       />
-      <q-checkbox dark
-        v-if="currentViewConfig.needShowMode && ((!showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)"
-        v-model="currentMode"
-        class="no-margin"
-        :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
-        unchecked-icon="mdi-play" checked-icon="mdi-pause"/>
+      <slot name="after-datetime"/>
 
       <q-btn flat dense round icon="mdi-dots-vertical" :loading="hasAsyncPanelActions">
         <template v-slot:loading>
@@ -229,8 +224,10 @@
         :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted}"
         class="absolute-top-left absolute-bottom-right"
       >
-        <div class="list__header" :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
-          v-if="(items.length || loading) && currentTheme.headerShow" :style="{height: `${headerHeight}px`, width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+        <div class="list__header"
+          v-if="(items.length || loading) && currentTheme.headerShow"
+          :style="{height: `${headerHeight}px`, width: colsAddition ? 'calc(100% - 250px)' : '100%'}"
+          ref="header"
         >
           <div class="header__inner" :style="{ width: `${rowTotalWidth}px` }">
             <template v-for="(prop, index) in activeCols" :key="prop.name">
@@ -326,7 +323,7 @@
             <q-scroll-observer axis="horizontal" @scroll="listScrollHorizontalHandler" />
           </template>
           <template v-slot="{ item, index }">
-            <slot name="listItem"
+            <slot name="list_item"
               :item="item"
               :index="index"
               :cols="activeCols"
@@ -410,7 +407,7 @@ const defaultTheme = {
   bgColor: 'white',
   controlsInverted: false,
   contentInverted: false,
-  headerShow: true,
+  headerShow: true
 }
 
 const dragOptions = ref({
@@ -425,16 +422,27 @@ export default defineComponent({
   emits: [
     'action',
     'action-to-bottom',
-    'change-mode',
+    'action-to-new-messages',
+    'action-to-new-messages-hide',
+    'arrowup',
+    'arrowdow',
+    'change-filter',
     'item-click',
     'update-cols'
   ],
   props: {
     actions: {
+      /*
+        Additional user defined actions that are applicable to the data in the grid cells.
+        Are displayed as additional menu items in the right-click menu of the grid cell.
+      */
       type: Array,
-      required: true
+      default() {
+        return []
+      }
     },
     cols: {
+      /* Columns schemas */
       type: Object,
       required: true,
       default() {
@@ -451,35 +459,32 @@ export default defineComponent({
       },
     },
     dateRange: {
+      /* Timestamps range in ms, used as to model value of DateRangeModal  */
       type: Array,
     },
     filter: {
       type: String,
       default: '',
     },
-    hasNewMessages: [Object, Boolean],
+    hasNewMessages: {
+      type: Boolean,
+      default() {
+        return false
+      }
+    },
     i18n: {
       type: Object,
+      default() {
+        return {}
+      }
     },
     itemHeight: {
       type: Number,
       default: 19
     },
-    itemprops: {
-      type: Function,
-      default: () => () => {}
-    },
     items: {
       type: Array,
-      required: true,
-      default() {
-        return []
-      },
-    },
-    mode: {
-      type: Number,
-      required: false,
-      default: 0
+      required: true
     },
     name: {
       type: String,
@@ -592,7 +597,6 @@ export default defineComponent({
       colsAddition: false,
       colsSchemaAdd: false,
       currentFilter: this.filter,
-      currentMode: this.mode === 1,
       currentViewConfig: Object.assign(defaultConfig, this.viewConfig),
       dateModel: this.dateRange,
       defaultConfig: defaultConfig,
@@ -733,7 +737,6 @@ export default defineComponent({
           'data-index': index
         }
       }
-      this.itemprops(index, props)
       return props
     },
     keysProcess (event) {
@@ -953,9 +956,6 @@ export default defineComponent({
       handler(config) {
         this.currentViewConfig = Object.assign(this.defaultConfig, config)
       }
-    },
-    currentMode () {
-      this.$emit('change-mode', Number(this.currentMode))
     }
   },
   created () {
@@ -968,7 +968,6 @@ export default defineComponent({
     /* generate uid for message viewer class */
     this.uid = uid().split('-')[0]
     /* start job that determines if vertical scroll is needed, until then  table skeleton will be displayed as grid placeholder */
-    console.log("#####====== QVS: mounted: hasVerticalScroll", this.hasVerticalScroll)
     if (this.hasVerticalScroll === undefined) {
       this.detectVeritcalScrollJob = setInterval(() => {
         if (this.hasVerticalScroll === undefined) {

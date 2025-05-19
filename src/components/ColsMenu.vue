@@ -15,7 +15,7 @@
         <q-item-section>{{action.label}}</q-item-section>
       </q-item>
     </template>
-    <q-separator v-if="row && row.actions" spaced inset dark />
+    <q-separator v-if="row && row.actions.length" spaced inset dark />
     <q-item clickable dense v-ripple @click="add" class="q-px-sm" v-close-popup>
       <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
         <q-icon name="mdi-plus-circle-outline" />

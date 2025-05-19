@@ -6,25 +6,24 @@
           <virtual-scroll-list
             :actions="actions"
             :cols="cols"
-            :date="date"
             :dateRange="dateRange"
             :filter="filter"
             :i18n="{from: 'FROM', to: 'TO'}"
             :items="filteredItems"
-            :mode="mode"
             :panelActions="panelActions"
             :theme="theme"
             :viewConfig="viewConfig"
             @action="actionHandler"
-            @change-date="dateChangeHandler"
-            @change-date-next="dateNextChangeHandler"
-            @change-date-prev="datePrevChangeHandler"
-            @change-date-range="updateDateRange"
             @change-filter="filterChangeHandler"
-            @change-mode="modeChange"
             @item-click="itemClickHandler"
             @update-cols="updateColsHandler"
-          />
+          >
+            <template #after-datetime>
+              <q-checkbox dark
+                v-model="run"
+                unchecked-icon="mdi-play" checked-icon="mdi-pause"/>
+            </template>
+        </virtual-scroll-list>
         </div>
       </q-page>
     </q-page-container>
@@ -83,13 +82,13 @@ export default defineComponent({
     return {
       actions: [
         {
-          icon: 'delete',
+          icon: 'mdi-delete',
           label: 'Delete',
           classes: 'text-grey-3',
           type: 'delete'
         },
         {
-          icon: 'edit',
+          icon: 'mdi-pencil',
           label: 'Edit',
           classes: '',
           type: 'edit'
@@ -97,12 +96,11 @@ export default defineComponent({
       ],
       cols: getCols(cols),
       currentVal: 1000,
-      date: Date.now(),
       dateRange: [Date.now() - (86400000 * 2), Date.now() - 86400000],
       defaultLimit: 30, //1000,
       filter: '',
       items: [],
-      mode: 0,
+      run: false,   // generate and append new items to immitate sending messages by device
       panelActions: [
         {
           label: 'CSV',
@@ -125,7 +123,6 @@ export default defineComponent({
         needShowDateRange: true,
         needShowDate: true,
         needShowFilter: true,
-        needShowMode: true,
         needShowEtc: true,
         needKeysProcess: true
       },
@@ -143,21 +140,6 @@ export default defineComponent({
           break
         }
       }
-    },
-    dateChangeHandler (timestamp) {
-      this.date = timestamp
-      this.items.length = 0
-      this.generateItems()
-    },
-    dateNextChangeHandler () {
-      this.date += 86400000
-      this.items.length = 0
-      this.generateItems()
-    },
-    datePrevChangeHandler () {
-      this.date -= 86400000
-      this.items.length = 0
-      this.generateItems()
     },
     deleteMessageHandler ({ index, content }) {
       alert(`delete item #${index}: ${JSON.stringify(content)}`)
@@ -243,7 +225,7 @@ export default defineComponent({
       }
     },
     generateItems () {
-      const limit = this.mode === 0 ? this.defaultLimit : 2
+      const limit = this.run === false ? this.defaultLimit : 2
       const randVal = () => {
         const types = ['String', 'Number', 'Boolean'],
           currentType = types[Math.round(Math.random() * 2)]
@@ -264,7 +246,7 @@ export default defineComponent({
           res[col.name] = randVal()
           return res
         }, {})
-        item.timestamp = this.date + this.currentVal
+        item.timestamp = this.dateRange[0] + this.currentVal
         this.items.push(item)
         this.currentVal += 1
       }
@@ -272,46 +254,30 @@ export default defineComponent({
     itemClickHandler (info) {
       console.log("itemClickHandler", info)
     },
-    modeChange (val) {
+    updateColsHandler () {
+      // console.log("columns updated", JSON.stringify(newCols))
+    }
+  },
+  watch: {
+    run (val) {
       switch (val) {
-        case 0: {
+        case false: {
           if (this.timerId) {
             clearInterval(this.timerId)
             this.timerId = 0
             break
           }
-          this.mode = val
           // this.items.length = 0
           this.generateItems()
           break
         }
-        case 1: {
-          this.mode = val
+        case true: {
           // this.items.length = 0
           this.generateItems()
           this.timerId = setInterval(this.generateItems, 2000)
           break
         }
       }
-    },
-    paginationNextChangeHandler () {
-      this.date = this.items[this.items.length - 1].timestamp + 1
-      this.currentVal += 1
-      this.items.length = 0
-      this.generateItems()
-    },
-    paginationPrevChangeHandler () {
-      this.date = this.items[0].timestamp - this.defaultLimit
-      this.currentVal -= this.defaultLimit
-      this.items.length = 0
-      this.generateItems()
-    },
-    updateColsHandler () {
-      // this.cols = newCols
-      // console.log("columns updated", JSON.stringify(newCols))
-    },
-    updateDateRange (range) {
-      this.dateRange = range
     },
   },
   created () {

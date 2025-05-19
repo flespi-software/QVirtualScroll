@@ -12,6 +12,9 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'ListItem',
+  emits: [
+    'item-click'
+  ],
   props: [
     'item',
     'index',

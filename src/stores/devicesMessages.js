@@ -22,7 +22,6 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     isLoading: false,       // some async request is in progress
     limit: 1000,
     loopId: 0,
-    lsNamespace: lsNamespace,
     offline: false,
     messages: shallowRef([]),         // messages of the device
     messagesBuffer: shallowRef([]),   // buffer to collect yet unrendered messages for realtime tracking
@@ -36,11 +35,11 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     mixins: useMixins(`messages-${deviceId}`, deviceId, errorHandler),
   }),
   getters: {
-    getColsFromStore: (state) => {
-      return useLS(state.lsNamespace).getColsFromStore
+    getColsFromStore: () => {
+      return useLS(lsNamespace).getColsFromStore
     },
-    setColsToStore: (state) => {
-      return useLS(state.lsNamespace).setColsToStore
+    setColsToStore: () => {
+      return useLS(lsNamespace).setColsToStore
     }
   },
   actions: {
