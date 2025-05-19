@@ -5,7 +5,7 @@
 | cols | Object | Schemas of the columns of the grid  | *Required* |
 | items |  Array | Items to be displayed in the grid  | *Required* |
 | actions | Array | Additional actions available for each cell of the grid, displayed in right-click menu | [] |
-| dateRange | [ Number, Number ] | Timestamps range for the dataset in millisecond | `[Date.now() - 86399000, Date.now()]` |
+| dateRange | [Number, Number] | Timestamps range for the dataset in millisecond | `[Date.now() - 86399000, Date.now()]` |
 | filter | String | Initialization text for the filter input | '' |
 | hasNewMessages | Boolean | Need show new messages indicator | false |
 | i18n | Object | Object with fields of translate some things | {} |
@@ -13,21 +13,8 @@
 | name | String | Module name for logger | VirtualScrollList |
 | panelActions  | Array | Additional actions applicable to the whole table, displayed in the the table menu | [] |
 | title | String | Dataset title  | '' |
-| theme | Object | Visual view of component | `{
-  datetimepickerColor: 'grey',
-  color: 'grey-9',
-  bgColor: 'white',
-  controlsInverted: false,
-  contentInverted: false,
-  headerShow: true,
-}` |
-| viewConfig |  Object | Functional view of component |`{
-  needShowFilter: false,
-  filterPlaceholder:
-    'position.speed<=5 || (plugin.geofence.name=="storage" && ble.sensor.temperature.1 > 10)',
-  needShowDateRange: false,
-  needKeysProcess: false,
-}`|
+| theme | Object | Visual view of component | `{datetimepickerColor: 'grey', color: 'grey-9', bgColor: 'white', controlsInverted: false, contentInverted: false,  headerShow: true}` |
+| viewConfig |  Object | Functional view of component | `{needShowFilter: false, filterPlaceholder: 'position.speed<=5 || (plugin.geofence.name=="storage" && ble.sensor.temperature.1 > 10)', needShowDateRange: false, needKeysProcess: false }` |
 
 ## Cols
 ````javascript
