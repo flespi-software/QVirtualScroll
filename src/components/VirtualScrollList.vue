@@ -982,6 +982,13 @@ export default defineComponent({
           this.loading = false
         }
       }, 200)
+      setTimeout(() => {
+        if (this.hasVerticalScroll === undefined && this.items.length === 0) {
+          /* empty items */
+          this.hasVerticalScroll = false
+          this.loading = false
+        }
+      }, 5000)
     } else {
       setTimeout(() => {
         this.updateDynamicCSS()
