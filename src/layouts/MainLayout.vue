@@ -42,6 +42,7 @@ function getCols (cols) {
       _default: {
         name: '_default',
         cols: [
+          { name: "timestamp", width: 150 },
           { name: 'param#2', width: 150 },
           { name: 'param#3', width: 150 },
           { name: 'param#4', width: 150 },

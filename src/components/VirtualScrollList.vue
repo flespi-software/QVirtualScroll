@@ -323,7 +323,7 @@
             <q-scroll-observer axis="horizontal" @scroll="listScrollHorizontalHandler" />
           </template>
           <template v-slot="{ item, index }">
-            <slot name="list_item"
+            <slot name="list-item"
               :item="item"
               :index="index"
               :cols="activeCols"
