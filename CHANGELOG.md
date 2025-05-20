@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.15] - 2025-05-20
+[fix] Slot name fixed
+
 ### [2.0.14] - 2025-05-19
 [update] Component API description is updated
 
