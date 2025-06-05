@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.17] - 2025-06-05
+[fix] Improved clear method, and added resetState method
+
 ### [2.0.16] - 2025-05-20
 [fix] Showing of table skeleton for empty items is fixed
 

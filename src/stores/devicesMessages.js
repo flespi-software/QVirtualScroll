@@ -253,8 +253,12 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
       this.timestampTo = 0
       this.limit = 1000
       this.reverse = false
-      await this.$connector.unsubscribeMessagesDevices(deviceId)
-      // console.log("[messages store]: clear: unsubscribeMessagesDevices: ", this.$id, deviceId)
+      if (this.realtimeEnabled) {
+        await this.unsubscribePooling()
+      } else {
+        await this.$connector.unsubscribeMessagesDevices(deviceId)
+        console.log("[messages store]: clear: unsubscribeMessagesDevices: ", this.$id, deviceId)
+      }
     },
     async get (initTimestamp) {
       if (this.isLoading) { return }
@@ -458,7 +462,15 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
       const filter = this.filter ? `$filter/payload=${encodeURIComponent(this.filter)}` : undefined
       await this.$connector.unsubscribeMessagesDevices(deviceId, undefined, { prefix: filter })
       this.realtimeEnabled = false
-      // console.log("[messages store]: unsubscribePooling: unsubscribed from messages device: ", deviceId, this.filter || '')
+      console.log("[messages store]: unsubscribePooling: unsubscribed from messages device: ", deviceId, this.filter || '')
+    },
+    resetState () {
+      if (this.loopId) {
+        clearInterval(this.loopId)
+        this.messagesBuffer = []
+        this.loopId = 0
+      }
+      this.realtimeEnabled = false
     }
   }
 })()
