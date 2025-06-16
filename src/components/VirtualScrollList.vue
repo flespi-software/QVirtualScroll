@@ -1000,7 +1000,9 @@ export default defineComponent({
   unmounted () {
     document.removeEventListener('keydown', this.keysProcess)
     const head = document.head || document.getElementsByTagName('head')[0]
-    head.removeChild(this.dynamicCSS)
+    if (head.contains(this.dynamicCSS)) {
+      head.removeChild(this.dynamicCSS)
+    }
   }
 })
 </script>

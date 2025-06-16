@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.18] - 2025-06-16
+[fix] Fixed error on deleting non-existing node
+
 ### [2.0.17] - 2025-06-05
 [fix] Improved clear method, and added resetState method
 
