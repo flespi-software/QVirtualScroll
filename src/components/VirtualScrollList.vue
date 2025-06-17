@@ -806,7 +806,6 @@ export default defineComponent({
       if (typeof index === 'number') {
         this.activeCols[index].width = width
         this.adjustEtcColWidth()
-        this.updateCols()
       }
       this.updateDynamicCSS()
     },
@@ -908,10 +907,10 @@ export default defineComponent({
     activeCols: {
       deep: true,
       handler (cols, oldCols) {
-        if (cols === oldCols) {
-          if (this.cols.activeSchema !== '_unsaved') {
-            // this.setUnsavedSchema(cloneDeep(cols)) // TODO: new schema creation
-          }
+        if (cols === oldCols && this.cols.activeSchema !== '_unsaved') {
+          /* this heppens only the first time when _unsaved cols schema is not yet set for the device type */
+          /* _unsaved schema will keep all the columns' customizations that are made by the user for this device type */
+          this.setUnsavedSchema(cloneDeep(cols))
         }
         if (!oldCols.length) {
           /* adjust etc column width only first time when columns were initialized */
@@ -963,7 +962,7 @@ export default defineComponent({
     document.addEventListener('keydown', this.keysProcess, false)
   },
   mounted () {
-    /*  if cell click is processed by parent element - cursor-pinter will be shown on the grid cells */
+    /*  if cell click is processed by parent element - cursor-pointer will be shown on the grid cells */
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
     /* generate uid for message viewer class */
     this.uid = uid().split('-')[0]

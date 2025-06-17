@@ -1,6 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+### [2.0.19] - 2025-06-17
+[fix] Fixed update of _unsaved columns schema for device types
+
 ### [2.0.18] - 2025-06-16
 [fix] Fixed error on deleting non-existing node
 

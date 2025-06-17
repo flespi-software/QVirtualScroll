@@ -246,6 +246,13 @@ export const useMessagesStore = (deviceId, lsNamespace, errorHandler) => defineS
     setTimestampTo (to) {
       this.timestampTo = to
     },
+    syncColsFromLS (device_type_id) {
+      let colsFromStorage = this.getColsFromStore(LocalStorage)
+      if (colsFromStorage && colsFromStorage[device_type_id] && this.cols && this.cols.enum) {
+        colsFromStorage[device_type_id].enum = this.cols.enum
+        this.setCols(colsFromStorage[device_type_id])
+      }
+    },
     async clear () {
       this.clearMessages()
       this.filter = ''
