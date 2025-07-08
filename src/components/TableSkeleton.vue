@@ -1,7 +1,12 @@
 <template>
   <section class="table-skeleton">
     <div class="table-skeleton__row">
-      <span class="row__item" v-for="(rowWidth, i) in rowsWidths" :key="i" :style="{ minWidth: `${rowWidth ? rowWidth : '150'}px` }">
+      <span
+        class="row__item"
+        v-for="(rowWidth, i) in rowsWidths"
+        :key="i"
+        :style="{ minWidth: `${rowWidth ? rowWidth : '150'}px` }"
+      >
         <div class="item__wrapper">
           <div class="item__skeleton"></div>
         </div>
@@ -17,11 +22,11 @@ export default defineComponent({
   name: 'TableSkeleton',
   props: ['rows'],
   computed: {
-    rowsWidths () {
+    rowsWidths() {
       const rows = this.rows ? this.rows : new Array(12)
       return rows
-    }
-  }
+    },
+  },
 })
 </script>
 

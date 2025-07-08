@@ -1,5 +1,10 @@
 <template>
-  <div class="message-viewer full-height" :class="{[`uid${uid}`]: true}" @contextmenu.prevent.stop @select.prevent.stop>
+  <div
+    class="message-viewer full-height"
+    :class="{ [`uid${uid}`]: true }"
+    @contextmenu.prevent.stop
+    @select.prevent.stop
+  >
     <q-toolbar
       v-if="needShowToolbar"
       class="viewer__toolbar"
@@ -17,7 +22,11 @@
         }"
         @click="showSearch = true"
       />
-      <q-input outlined hide-bottom-space dense clearable
+      <q-input
+        outlined
+        hide-bottom-space
+        dense
+        clearable
         v-if="
           currentViewConfig.needShowFilter &&
           ((showSearch && $q.platform.is.mobile) || $q.platform.is.desktop)
@@ -40,7 +49,10 @@
         @clear="searchSubmitHandler"
       >
         <template v-slot:prepend>
-          <q-btn flat round dense
+          <q-btn
+            flat
+            round
+            dense
             icon="mdi-magnify"
             :color="currentTheme.color"
             @click="searchSubmitHandler"
@@ -60,7 +72,7 @@
         v-model="dateModel"
         :theme="{ color: `${currentTheme.datetimepickerColor}` }"
       />
-      <slot name="after-datetime"/>
+      <slot name="after-datetime" />
 
       <q-btn flat dense round icon="mdi-dots-vertical" :loading="hasAsyncPanelActions">
         <template v-slot:loading>
@@ -70,7 +82,11 @@
         <q-menu ref="tableMenu" no-route-dismiss>
           <q-list dark class="bg-grey-7 q-py-xs" style="min-width: 180px; max-width: 500px">
             <template v-for="(action, index) in panelActions">
-              <q-item clickable dense v-ripple v-close-popup
+              <q-item
+                clickable
+                dense
+                v-ripple
+                v-close-popup
                 v-if="action.condition"
                 class="q-px-sm"
                 :key="index"
@@ -87,7 +103,11 @@
               </q-item>
             </template>
             <q-separator v-if="panelActions.length" />
-            <q-item clickable dense v-ripple v-close-popup
+            <q-item
+              clickable
+              dense
+              v-ripple
+              v-close-popup
               class="q-px-sm"
               @click="colAddingHandler"
             >
@@ -101,51 +121,68 @@
               Columns presets
             </q-item-label>
 
-              <q-item clickable dense v-ripple v-close-popup
-                class="q-px-sm schema-item"
-                active-class="schema--active"
-                :active="activeSchema === name"
-                @click="customSchemaApply(name)"
-                v-for="(schema, name) in cols.schemas"
-                :key="name"
+            <q-item
+              clickable
+              dense
+              v-ripple
+              v-close-popup
+              class="q-px-sm schema-item"
+              active-class="schema--active"
+              :active="activeSchema === name"
+              @click="customSchemaApply(name)"
+              v-for="(schema, name) in cols.schemas"
+              :key="name"
+            >
+              <div
+                @click.stop.prevent
+                class="absolute-botom-right absolute-top-left full-height full-width"
+                style="z-index: 1; padding-top: 3px; background-color: rgba(0, 0, 0, 0.5)"
+                v-if="prevDeleteSchemaName === name"
               >
-                <div
-                  @click.stop.prevent
-                  class="absolute-botom-right absolute-top-left full-height full-width"
-                  style="z-index: 1; padding-top: 3px; background-color: rgba(0, 0, 0, 0.5)"
-                  v-if="prevDeleteSchemaName === name"
-                >
-                  <q-btn class="q-mx-sm" color="red" label="delete" dense @click.stop="colsSchemaRemoveHandler(name)"/>
-                  <q-btn color="grey" label="cancel" dense @click.stop="closePreventRemoveSchema" />
-                </div>
-                <q-item-section avatar class="q-pr-sm" style="min-width: 32px">
-                  <q-icon v-if="name === '_default'" name="mdi-playlist-star" />
-                  <q-icon v-else-if="name === '_protocol'" name="mdi-playlist-check" />
-                  <q-icon v-else name="mdi-table-large" />
-                </q-item-section>
-                <q-item-section>
-                  <template v-if="name === '_default'">{{
-                    (i18n && i18n['Default columns']) || 'Default columns'
-                  }}</template>
-                  <template v-else-if="name === '_protocol'">{{
-                    (i18n && i18n['Columns by schema']) || 'Columns by schema'
-                  }}</template>
-                  <template v-else>{{ schema.name }}</template>
-                </q-item-section>
-                <q-item-section
-                  avatar
-                  v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'"
-                >
-                  <q-btn flat round dense
-                    icon="mdi-close"
-                    color="white"
-                    @click.stop="prevDeleteSchemaName = name"
-                  />
-                </q-item-section>
-              </q-item>
+                <q-btn
+                  class="q-mx-sm"
+                  color="red"
+                  label="delete"
+                  dense
+                  @click.stop="colsSchemaRemoveHandler(name)"
+                />
+                <q-btn color="grey" label="cancel" dense @click.stop="closePreventRemoveSchema" />
+              </div>
+              <q-item-section avatar class="q-pr-sm" style="min-width: 32px">
+                <q-icon v-if="name === '_default'" name="mdi-playlist-star" />
+                <q-icon v-else-if="name === '_protocol'" name="mdi-playlist-check" />
+                <q-icon v-else name="mdi-table-large" />
+              </q-item-section>
+              <q-item-section>
+                <template v-if="name === '_default'">{{
+                  (i18n && i18n['Default columns']) || 'Default columns'
+                }}</template>
+                <template v-else-if="name === '_protocol'">{{
+                  (i18n && i18n['Columns by schema']) || 'Columns by schema'
+                }}</template>
+                <template v-else>{{ schema.name }}</template>
+              </q-item-section>
+              <q-item-section
+                avatar
+                v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'"
+              >
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="mdi-close"
+                  color="white"
+                  @click.stop="prevDeleteSchemaName = name"
+                />
+              </q-item-section>
+            </q-item>
 
             <q-separator />
-            <q-item clickable dense v-ripple v-close-popup
+            <q-item
+              clickable
+              dense
+              v-ripple
+              v-close-popup
               active-class="schema--active"
               class="q-px-sm"
               :disable="!colsSchemaEdited"
@@ -155,96 +192,168 @@
                 <q-icon name="mdi-table-plus" />
               </q-item-section>
               <q-item-section>Save preset</q-item-section>
-              <q-tooltip v-if="!colsSchemaEdited">Configure columns schema first, then save</q-tooltip>
+              <q-tooltip v-if="!colsSchemaEdited"
+                >Configure columns schema first, then save</q-tooltip
+              >
               <q-tooltip v-else>Save current columns schema</q-tooltip>
             </q-item>
           </q-list>
         </q-menu>
       </q-btn>
     </q-toolbar>
-    <div ref="wrapper" class="list-wrapper" :class="{'bg-grey-9': currentTheme.contentInverted}" :style="{height: needShowToolbar ? 'calc(100% - 50px)' : '100%'}">
-      <q-resize-observer @resize="wrapperResizeHandler"/>
-      <div :class="[`bg-${currentTheme.controlsInverted ? 'grey-8' : 'white'}`]" class="absolute-top-right rounded-borders" style="z-index: 2; right: 20px;">
-        <q-input autofocus outlined hide-bottom-space dense
+    <div
+      ref="wrapper"
+      class="list-wrapper"
+      :class="{ 'bg-grey-9': currentTheme.contentInverted }"
+      :style="{ height: needShowToolbar ? 'calc(100% - 50px)' : '100%' }"
+    >
+      <q-resize-observer @resize="wrapperResizeHandler" />
+      <div
+        :class="[`bg-${currentTheme.controlsInverted ? 'grey-8' : 'white'}`]"
+        class="absolute-top-right rounded-borders"
+        style="z-index: 2; right: 20px"
+      >
+        <q-input
+          autofocus
+          outlined
+          hide-bottom-space
+          dense
           v-if="colsSchemaAdd"
           v-model="newSchemaName"
           label="Preset name"
           :dark="currentTheme.controlsInverted"
-          :color="!!cols.schemas[newSchemaName] ? 'yellow' : (!newSchemaName || newSchemaName.indexOf('_') === 0) ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
-          @keyup.enter="() => { if (newSchemaName && newSchemaName.indexOf('_') !== 0) {colsSchemaAddingDoneHandler()} }"
+          :color="
+            !!cols.schemas[newSchemaName]
+              ? 'yellow'
+              : !newSchemaName || newSchemaName.indexOf('_') === 0
+                ? 'red-4'
+                : currentTheme.controlsInverted
+                  ? 'white'
+                  : currentTheme.color
+          "
+          @keyup.enter="
+            () => {
+              if (newSchemaName && newSchemaName.indexOf('_') !== 0) {
+                colsSchemaAddingDoneHandler()
+              }
+            }
+          "
           @keyup.esc="colsSchemaAddingCloseHandler()"
           :bottom-slots="!!cols.schemas[newSchemaName]"
         >
           <q-btn
-            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-content-save-outline"
-            dense flat @click="colsSchemaAddingDoneHandler" :disable="(!newSchemaName || newSchemaName.indexOf('_') === 0)"
+            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
+            icon="mdi-content-save-outline"
+            dense
+            flat
+            @click="colsSchemaAddingDoneHandler"
+            :disable="!newSchemaName || newSchemaName.indexOf('_') === 0"
           />
           <q-btn
-            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-close"
-            dense flat @click="colsSchemaAddingCloseHandler()"
+            :color="currentTheme.controlsInverted ? 'white' : currentTheme.color"
+            icon="mdi-close"
+            dense
+            flat
+            @click="colsSchemaAddingCloseHandler()"
           />
           <template v-slot:hint>
-            <div  v-if="!!cols.schemas[newSchemaName]" class="text-yellow">Your schema will be owerwritten or change name</div>
+            <div v-if="!!cols.schemas[newSchemaName]" class="text-yellow">
+              Your schema will be owerwritten or change name
+            </div>
           </template>
         </q-input>
       </div>
 
-      <q-btn fab-mini flat
+      <q-btn
+        fab-mini
+        flat
         v-if="items.length && !scrollStickToBottom"
         icon="mdi-chevron-down"
-        class="absolute-bottom-right action action__to-bottom" style="z-index: 2"
-        :class="{ 'bg-white': currentTheme.contentInverted, 'text-grey-9': currentTheme.contentInverted }"
-        :style="{right: colsAddition ? '270px' : ''}"
+        class="absolute-bottom-right action action__to-bottom"
+        style="z-index: 2"
+        :class="{
+          'bg-white': currentTheme.contentInverted,
+          'text-grey-9': currentTheme.contentInverted,
+        }"
+        :style="{ right: colsAddition ? '270px' : '' }"
         @click="toBottomClickHandler"
       >
         <q-tooltip>To bottom</q-tooltip>
       </q-btn>
 
-      <q-chip removable clickable
+      <q-chip
+        removable
+        clickable
         v-if="hasNewMessages"
         icon="mdi-bell-outline"
         class="absolute-bottom-right action action__to-new-messages"
         color="amber-8"
-        text-color="grey-2" style="z-index: 2"
+        text-color="grey-2"
+        style="z-index: 2"
         @click="$emit('action-to-new-messages')"
         @remove="$emit('action-to-new-messages-hide')"
-
       >
         new messages
       </q-chip>
 
       <slot name="empty" v-if="!items.length && !loading">
-        <div class="no-messages text-center" :class="{'text-grey-6': currentTheme.contentInverted}" style="font-size: 3rem; padding-top: 40px;">
-          {{(i18n && i18n['Messages not found']) || 'Messages not found'}}
+        <div
+          class="no-messages text-center"
+          :class="{ 'text-grey-6': currentTheme.contentInverted }"
+          style="font-size: 3rem; padding-top: 40px"
+        >
+          {{ (i18n && i18n['Messages not found']) || 'Messages not found' }}
         </div>
       </slot>
 
-      <div v-else-if="loading && itemsCount > 0"
-        :style="{height: `${wrapperHeight + headerHeight - 0.5}px`, overflow: 'auto'}"
-        :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted}"
+      <div
+        v-else-if="loading && itemsCount > 0"
+        :style="{ height: `${wrapperHeight + headerHeight - 0.5}px`, overflow: 'auto' }"
+        :class="{
+          'bg-grey-9': currentTheme.contentInverted,
+          'text-white': currentTheme.contentInverted,
+        }"
         class="absolute-top-left absolute-bottom-right"
       >
-        <div class="list__header"
+        <div
+          class="list__header"
           v-if="(items.length || loading) && currentTheme.headerShow"
-          :style="{height: `${headerHeight}px`, width: colsAddition ? 'calc(100% - 250px)' : '100%'}"
+          :style="{
+            height: `${headerHeight}px`,
+            width: colsAddition ? 'calc(100% - 250px)' : '100%',
+          }"
           ref="header"
         >
           <div class="header__inner" :style="{ width: `${rowTotalWidth}px` }">
             <template v-for="(prop, index) in activeCols" :key="prop.name">
-              <div class="header__item"  :class="{[`item_${index}`]: true}">
+              <div class="header__item" :class="{ [`item_${index}`]: true }">
                 <span class="item__label">
-                  {{colsEnum[prop.name] && colsEnum[prop.name].title || prop.name}}
-                  <span v-if="colsEnum[prop.name] && colsEnum[prop.name].addition">({{colsEnum[prop.name].addition}})</span>
-                  <span v-if="colsEnum[prop.name] && colsEnum[prop.name].unit" style="font-size: .8rem" class="text-grey-4">, {{colsEnum[prop.name].unit}}</span>
+                  {{ (colsEnum[prop.name] && colsEnum[prop.name].title) || prop.name }}
+                  <span v-if="colsEnum[prop.name] && colsEnum[prop.name].addition"
+                    >({{ colsEnum[prop.name].addition }})</span
+                  >
+                  <span
+                    v-if="colsEnum[prop.name] && colsEnum[prop.name].unit"
+                    style="font-size: 0.8rem"
+                    class="text-grey-4"
+                    >, {{ colsEnum[prop.name].unit }}</span
+                  >
                 </span>
               </div>
             </template>
           </div>
         </div>
-        <table-skeleton v-for="(i, key) in new Array(itemsCount - 1).fill('')" :key="key" :rows="rowColsWidthsArray"/>
+        <table-skeleton
+          v-for="(i, key) in new Array(itemsCount - 1).fill('')"
+          :key="key"
+          :rows="rowColsWidthsArray"
+        />
       </div>
       <div v-else class="full-height">
-        <q-menu context-menu touch-position no-route-dismiss
+        <q-menu
+          context-menu
+          touch-position
+          no-route-dismiss
           v-if="items.length && !loading"
           ref="menu"
           @before-show="menuShow"
@@ -254,9 +363,12 @@
             <cols-menu
               :col="editableCol"
               :row="editableRow"
-              @add="colsAddition = true, addingRow = editableRow"
+              @add="((colsAddition = true), (addingRow = editableRow))"
               @remove="removeCol"
-              @action="(type) => clickHandler({ index: editableRow.index, type, content: editableRow.data })"
+              @action="
+                (type) =>
+                  clickHandler({ index: editableRow.index, type, content: editableRow.data })
+              "
             />
           </slot>
         </q-menu>
@@ -265,43 +377,70 @@
           v-if="(items.length || loading) && currentTheme.headerShow && activeCols.length"
           :class="[`text-${currentTheme.color}`, `bg-${currentTheme.header}`]"
           class="list__header"
-          :style="{height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%'}" ref="header"
+          :style="{ height: '100%', width: colsAddition ? 'calc(100% - 250px)' : '100%' }"
+          ref="header"
         >
-          <div class="header__inner" :style="{ width: `${rowTotalWidth + (hasVerticalScroll ? 15 : 0)}px` }">
+          <div
+            class="header__inner"
+            :style="{ width: `${rowTotalWidth + (hasVerticalScroll ? 15 : 0)}px` }"
+          >
             <draggable
               :list="activeCols"
               v-bind="dragOptions"
               class="draggable-list"
               item-key="index"
               @end="endDragHandler"
-              >
-                <template #item="{ element, index }">
-                  <div class="header__item"
-                    :class="{[`item_${index}`]: true}" style="cursor: move"
+            >
+              <template #item="{ element, index }">
+                <div class="header__item" :class="{ [`item_${index}`]: true }" style="cursor: move">
+                  <q-tooltip
+                    v-if="
+                      colsEnum[element.name] &&
+                      (colsEnum[element.name].description || colsEnum[element.name].title)
+                    "
                   >
-                    <q-tooltip v-if="colsEnum[element.name] && (colsEnum[element.name].description || colsEnum[element.name].title)">
-                      {{`${element.name}: ${colsEnum[element.name].description ? colsEnum[element.name].description : ''}`}}
-                    </q-tooltip>
-                    <span class="item__label">
-                      {{colsEnum[element.name] && colsEnum[element.name].title || element.name}}
-                      <span v-if="colsEnum[element.name] && colsEnum[element.name].addition">
-                        ({{colsEnum[element.name].addition}})
-                      </span>
-                      <span v-if="colsEnum[element.name] && colsEnum[element.name].unit" style="font-size: .8rem" class="text-grey-4">
-                        , {{colsEnum[element.name].unit}}
-                      </span>
+                    {{
+                      `${element.name}: ${colsEnum[element.name].description ? colsEnum[element.name].description : ''}`
+                    }}
+                  </q-tooltip>
+                  <span class="item__label">
+                    {{ (colsEnum[element.name] && colsEnum[element.name].title) || element.name }}
+                    <span v-if="colsEnum[element.name] && colsEnum[element.name].addition">
+                      ({{ colsEnum[element.name].addition }})
                     </span>
-                    <vue-draggable-resizable
-                      :ref="`drag${index}`"
-                      class="absolute-top-left"
-                      v-if="$q.platform.is.desktop && needResizeControl"
-                      :active="true" :draggable="false" :handles="['mr']" :w="element.width" :preventDeactivation="true"
-                      :h="(itemHeight * itemsCount) + headerHeight" :minw="50" :z='1'
-                      @resizing="() => { resizing = true }"
-                      @resize-stop="(left, top, width) => {onResize(width, index), updateCols(), resizing = false}"
-                    />
-                  </div>
-                </template>
+                    <span
+                      v-if="colsEnum[element.name] && colsEnum[element.name].unit"
+                      style="font-size: 0.8rem"
+                      class="text-grey-4"
+                    >
+                      , {{ colsEnum[element.name].unit }}
+                    </span>
+                  </span>
+                  <vue-draggable-resizable
+                    :ref="`drag${index}`"
+                    class="absolute-top-left"
+                    v-if="$q.platform.is.desktop && needResizeControl"
+                    :active="true"
+                    :draggable="false"
+                    :handles="['mr']"
+                    :w="element.width"
+                    :preventDeactivation="true"
+                    :h="itemHeight * itemsCount + headerHeight"
+                    :minw="50"
+                    :z="1"
+                    @resizing="
+                      () => {
+                        resizing = true
+                      }
+                    "
+                    @resize-stop="
+                      (left, top, width) => {
+                        onResize(width, index), updateCols(), (resizing = false)
+                      }
+                    "
+                  />
+                </div>
+              </template>
             </draggable>
           </div>
         </div>
@@ -314,16 +453,27 @@
           virtual-scroll-slice-ratio-after="2"
           virtual-scroll-slice-ratio-before="2"
           :virtual-scroll-item-size="itemHeight"
-          :style="{height: `${wrapperHeight}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
+          :style="{
+            height: `${wrapperHeight}px`,
+            overflow: 'auto',
+            top: `${headerHeight}px`,
+            zIndex: resizing ? '' : 1,
+            right: colsAddition ? '250px' : '',
+          }"
           class="list__content absolute-top-left absolute-bottom-right"
-          :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+          :class="{
+            'bg-grey-9': currentTheme.contentInverted,
+            'text-white': currentTheme.contentInverted,
+            'cursor-pointer': hasItemClickHandler,
+          }"
           @virtual-scroll="virtualScrollHandler"
         >
           <template #before>
             <q-scroll-observer axis="horizontal" @scroll="listScrollHorizontalHandler" />
           </template>
           <template v-slot="{ item, index }">
-            <slot name="list-item"
+            <slot
+              name="list-item"
               :item="item"
               :index="index"
               :cols="activeCols"
@@ -336,29 +486,43 @@
                 :cols="activeCols"
                 :itemHeight="itemHeight"
                 :rowWidth="rowTotalWidth"
-                :menuCellActive = "editableRow && editableCol ? { col: editableCol.index, row: editableRow.index } : null"
+                :menuCellActive="
+                  editableRow && editableCol
+                    ? { col: editableCol.index, row: editableRow.index }
+                    : null
+                "
               />
             </slot>
           </template>
         </q-virtual-scroll>
         <div
           v-else
-          :style="{height: `${wrapperHeight - 0.5}px`, overflow: 'auto', top: `${headerHeight}px`, zIndex: resizing ? '' : 1, right: colsAddition ? '250px' : ''}"
+          :style="{
+            height: `${wrapperHeight - 0.5}px`,
+            overflow: 'auto',
+            top: `${headerHeight}px`,
+            zIndex: resizing ? '' : 1,
+            right: colsAddition ? '250px' : '',
+          }"
           class="list__content absolute-top-left absolute-bottom-right text-center"
-          :class="{'bg-grey-9': currentTheme.contentInverted, 'text-white': currentTheme.contentInverted, 'cursor-pointer': hasItemClickHandler}"
+          :class="{
+            'bg-grey-9': currentTheme.contentInverted,
+            'text-white': currentTheme.contentInverted,
+            'cursor-pointer': hasItemClickHandler,
+          }"
         >
           <div
             :class="$q.platform.is.mobile ? ['text-h5 q-mt-sm'] : ['text-h4 q-mt-xl']"
-            class='text-grey-5'
+            class="text-grey-5"
           >
             No columns to show.
           </div>
-          <div
-            :class="$q.platform.is.mobile ? ['text-h7'] : ['text-h6']"
-            class='text-grey-6'
-          >
+          <div :class="$q.platform.is.mobile ? ['text-h7'] : ['text-h6']" class="text-grey-6">
             Configure your custom columns:
-            <q-btn flat dense round
+            <q-btn
+              flat
+              dense
+              round
               color="white"
               icon="mdi-dots-vertical"
               @click="colAddingHandler"
@@ -371,7 +535,7 @@
           class="absolute-bottom-right absolute-top-right"
           :cols="additionCols"
           @add="addCol"
-          @done="colsAddition = false, addingRow = undefined"
+          @done="((colsAddition = false), (addingRow = undefined))"
         />
       </div>
     </div>
@@ -407,7 +571,7 @@ const defaultTheme = {
   bgColor: 'white',
   controlsInverted: false,
   contentInverted: false,
-  headerShow: true
+  headerShow: true,
 }
 
 const dragOptions = ref({
@@ -415,7 +579,7 @@ const dragOptions = ref({
   group: 'description',
   disabled: false,
   ghostClass: 'ghost',
-});
+})
 
 export default defineComponent({
   name: 'VirtualScrollList',
@@ -428,7 +592,7 @@ export default defineComponent({
     'arrowdow',
     'change-filter',
     'item-click',
-    'update-cols'
+    'update-cols',
   ],
   props: {
     actions: {
@@ -439,7 +603,7 @@ export default defineComponent({
       type: Array,
       default() {
         return []
-      }
+      },
     },
     cols: {
       /* Columns schemas */
@@ -470,21 +634,21 @@ export default defineComponent({
       type: Boolean,
       default() {
         return false
-      }
+      },
     },
     i18n: {
       type: Object,
       default() {
         return {}
-      }
+      },
     },
     itemHeight: {
       type: Number,
-      default: 19
+      default: 19,
     },
     items: {
       type: Array,
-      required: true
+      required: true,
     },
     name: {
       type: String,
@@ -510,7 +674,7 @@ export default defineComponent({
     DateRangeModal,
     ListItem,
     TableSkeleton,
-    VueDraggableResizable
+    VueDraggableResizable,
   },
   computed: {
     activeSchema() {
@@ -521,16 +685,19 @@ export default defineComponent({
       }
       return this.cols.activeSchema
     },
-    additionCols () {
-      const activeColsNames = this.activeCols.map(col => col.name)
-      let cols = Object.values(this.cols.enum).reduce((res, col) => {
-        if (activeColsNames.includes(col.name)) {
-          res.existed[col.name] = true
-        } else {
-          res.notExisted[col.name] = true
-        }
-        return res
-      }, { existed: {}, notExisted: {} })
+    additionCols() {
+      const activeColsNames = this.activeCols.map((col) => col.name)
+      let cols = Object.values(this.cols.enum).reduce(
+        (res, col) => {
+          if (activeColsNames.includes(col.name)) {
+            res.existed[col.name] = true
+          } else {
+            res.notExisted[col.name] = true
+          }
+          return res
+        },
+        { existed: {}, notExisted: {} },
+      )
       if (this.addingRow) {
         const params = Object.keys(this.addingRow.data)
         params.forEach((param) => {
@@ -542,7 +709,7 @@ export default defineComponent({
       cols = Object.keys(cols.notExisted)
       return cols
     },
-    colsEnum () {
+    colsEnum() {
       return this.cols.enum
     },
     colsSchemaEdited() {
@@ -554,12 +721,12 @@ export default defineComponent({
       return theme
     },
     hasAsyncPanelActions() {
-      return !!this.panelActions.filter(action => action.async).length
+      return !!this.panelActions.filter((action) => action.async).length
     },
     needShowToolbar() {
       return this.currentViewConfig.needShowFilter || this.currentViewConfig.needShowDateRange
     },
-    minRowTotalWidth () {
+    minRowTotalWidth() {
       /* minumum total raw width - summ of all curent columns' widths and minimum width for etc column */
       let res = 0
       this.activeCols.forEach((col) => {
@@ -572,13 +739,13 @@ export default defineComponent({
       })
       return res
     },
-    rowTotalWidth () {
+    rowTotalWidth() {
       /* total raw width - summ of all curent columns' widths and current width for etc column */
       let res = 0
       res += this.rowColsWidthsArray.reduce((acc, width) => acc + width, 0)
       return res
     },
-    rowColsWidthsArray () {
+    rowColsWidthsArray() {
       const widths = []
       this.activeCols.forEach((col) => {
         widths.push(col.width)
@@ -586,7 +753,7 @@ export default defineComponent({
       return widths
     },
   },
-  data () {
+  data() {
     const localCols = cloneDeep(this.cols)
     const firstSchemaName = localCols.schemas[this.cols.activeSchema]
       ? this.cols.activeSchema
@@ -608,22 +775,22 @@ export default defineComponent({
       hasItemClickHandler: false,
       hasVerticalScroll: undefined, // boolean indicator showing if grid has vertical scroll, used to adjust total row width by scroll width (15px)
       headerHeight: this.itemHeight + 5,
-      itemsCount: 0,                // the number of visible rows in the grid, accurding to the actual height of the wrapper element
-      loading: true,                // flag that shows if items for the grid are ready to be displayed, used for displaying table skeleton
-      localCols,                    // all awailable schemas of the columns, copy of the cols property
+      itemsCount: 0, // the number of visible rows in the grid, accurding to the actual height of the wrapper element
+      loading: true, // flag that shows if items for the grid are ready to be displayed, used for displaying table skeleton
+      localCols, // all awailable schemas of the columns, copy of the cols property
       logger: this.$logger ? this.$logger.extendName(this.name) : new Logger(this.name),
       needResizeControl: true,
       newSchemaName: 'Modified',
       prevDeleteSchemaName: undefined,
       resizing: false,
-      scrollStickToBottom: false,   // automatically scroll to the bottom of the table
+      scrollStickToBottom: false, // automatically scroll to the bottom of the table
       showSearch: false,
-      uid: 0,                       // uid for unique message viewer class
-      wrapperHeight: 0              // height of the grid's wrapper element
+      uid: 0, // uid for unique message viewer class
+      wrapperHeight: 0, // height of the grid's wrapper element
     }
   },
   methods: {
-    addCol (colName) {
+    addCol(colName) {
       /* check if this column exists in enum of known columns */
       if (!this.localCols.enum[colName]) {
         this.localCols.enum[colName] = { name: colName, custom: true }
@@ -632,7 +799,7 @@ export default defineComponent({
       column.width = 150
       /* if the last column is etc - then insert new column before it, otherwise - to the end */
       let etcColumnLast = false
-      if (this.activeCols.length && this.activeCols[this.activeCols.length - 1].__dest === 'etc'){
+      if (this.activeCols.length && this.activeCols[this.activeCols.length - 1].__dest === 'etc') {
         etcColumnLast = true
         this.activeCols.splice(this.activeCols.length - 1, 0, column)
       } else {
@@ -643,29 +810,38 @@ export default defineComponent({
       /* scroll horizontally to the added column */
       const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
       if (scrollEl) {
-        setHorizontalScrollPosition(scrollEl, this.rowTotalWidth - (etcColumnLast ? this.activeCols[this.activeCols.length - 1].width : 0))
+        setHorizontalScrollPosition(
+          scrollEl,
+          this.rowTotalWidth -
+            (etcColumnLast ? this.activeCols[this.activeCols.length - 1].width : 0),
+        )
       }
     },
-    adjustEtcColWidth () {
+    adjustEtcColWidth() {
       /* if grid contains etc column - it will occupy all awailable width of the wrapper remained after the rest of column */
       /* width of etc column is calculated automatically, so that horizontal scroll appear only when current minimum total raw width  */
       /* becomes more than wrapper width */
       const wrapper = this.$refs.wrapper
-      if (!wrapper || !this.activeCols || !this.activeCols.length) { return }
+      if (!wrapper || !this.activeCols || !this.activeCols.length) {
+        return
+      }
       /* available width of the grid wrapper element */
       const fullWidth = this.$refs.wrapper.offsetWidth
-      const etcIndex = this.activeCols.findIndex(col => col.__dest === 'etc')
-      if (etcIndex < 0) { return }
+      const etcIndex = this.activeCols.findIndex((col) => col.__dest === 'etc')
+      if (etcIndex < 0) {
+        return
+      }
       if (this.minRowTotalWidth < fullWidth) {
         /* we still have space for etc column to grow */
         /* set new width to etc column and sync columns to schema */
-        this.activeCols[etcIndex].width = fullWidth - (this.minRowTotalWidth - 150 + (this.hasVerticalScroll ? 15 : 0))
+        this.activeCols[etcIndex].width =
+          fullWidth - (this.minRowTotalWidth - 150 + (this.hasVerticalScroll ? 15 : 0))
       } else if (this.rowTotalWidth > this.minRowTotalWidth) {
         /* we already don't have enough screenview width, but still may shrink etc column to its basic width */
         this.activeCols[etcIndex].width = 150
       }
     },
-    clickHandler ({ index, type, content }) {
+    clickHandler({ index, type, content }) {
       this.$emit('action', { index, type, content })
     },
     closePreventRemoveSchema() {
@@ -676,14 +852,14 @@ export default defineComponent({
     colAddingHandler() {
       this.colsAddition = true
     },
-    colsSchemaAddingCloseHandler () {
+    colsSchemaAddingCloseHandler() {
       this.colsSchemaAdd = false
       this.newSchemaName = 'Modified'
     },
-    colsSchemaAddingDoneHandler () {
+    colsSchemaAddingDoneHandler() {
       const colSchema = {
         name: this.newSchemaName,
-        cols: cloneDeep(this.activeCols)
+        cols: cloneDeep(this.activeCols),
       }
       this.localCols.schemas[colSchema.name] = colSchema
       this.localCols.activeSchema = colSchema.name
@@ -697,7 +873,7 @@ export default defineComponent({
         this.colsSchemaAdd = true
       }, 100)
     },
-    colsSchemaRemoveHandler (name) {
+    colsSchemaRemoveHandler(name) {
       setTimeout(() => {
         this.$delete(this.cols.schemas, name)
         this.updateCols()
@@ -708,11 +884,11 @@ export default defineComponent({
       this.localCols.activeSchema = name
       this.updateCols()
     },
-    endDragHandler () {
+    endDragHandler() {
       this.localCols.schemas[this.activeSchema].cols = cloneDeep(this.activeCols)
       this.updateCols()
     },
-    getDynamicCSS () {
+    getDynamicCSS() {
       let result = ''
       result += this.activeCols.reduce((acc, col, index) => {
         acc += `.uid${this.uid} .item_${index} { width: ${col.width}px }`
@@ -720,8 +896,11 @@ export default defineComponent({
       }, '')
       return result
     },
-    getItemProps (index) {
-      const active = this.editableRow && this.editableCol ? { col: this.editableCol.index, row: this.editableRow.index } : null
+    getItemProps(index) {
+      const active =
+        this.editableRow && this.editableCol
+          ? { col: this.editableCol.index, row: this.editableRow.index }
+          : null
       const props = {
         key: index,
         props: {
@@ -731,36 +910,47 @@ export default defineComponent({
           cols: this.activeCols,
           itemHeight: this.itemHeight,
           rowWidth: this.rowTotalWidth,
-          menuCellActive: active
+          menuCellActive: active,
         },
         attrs: {
-          'data-index': index
-        }
+          'data-index': index,
+        },
       }
       return props
     },
-    keysProcess (event) {
+    keysProcess(event) {
       // check if keys processing is enabled in config
-      if (!this.currentViewConfig.needKeysProcess) { return }
+      if (!this.currentViewConfig.needKeysProcess) {
+        return
+      }
       // process only keyUp and keyDown press
       const keyUpCode = 38
       const keyDownCode = 40
-      if (event.which !== keyUpCode && event.which !== keyDownCode) { return }
+      if (event.which !== keyUpCode && event.which !== keyDownCode) {
+        return
+      }
       // find scrolling list element and current active element
       const scrollEl = this.$refs.scroller && this.$refs.scroller.$el
       const activeEl = document.activeElement
-      if (scrollEl && activeEl && (activeEl === scrollEl || scrollEl.contains(activeEl) || activeEl.contains(scrollEl))) {
+      if (
+        scrollEl &&
+        activeEl &&
+        (activeEl === scrollEl || scrollEl.contains(activeEl) || activeEl.contains(scrollEl))
+      ) {
         // list element is active - process up and down keys pressed
         // prevent firing scroll events
-        event.preventDefault();
+        event.preventDefault()
         // move list on one line up or down
-        const up = (event.which === keyUpCode) ? true : false
-        setVerticalScrollPosition(scrollEl, up ? scrollEl.scrollTop - this.itemHeight : scrollEl.scrollTop + this.itemHeight)
+        const up = event.which === keyUpCode ? true : false
+        setVerticalScrollPosition(
+          scrollEl,
+          up ? scrollEl.scrollTop - this.itemHeight : scrollEl.scrollTop + this.itemHeight,
+        )
         // emit corresponding event
         this.$emit(up ? 'arrowup' : 'arrowdown')
       }
     },
-    listScrollHorizontalHandler (scrollInfo) {
+    listScrollHorizontalHandler(scrollInfo) {
       const wrapper = this.$refs.wrapper
       if (wrapper) {
         window.requestAnimationFrame(() => {
@@ -771,17 +961,19 @@ export default defineComponent({
         })
       }
     },
-    menuHide () {
+    menuHide() {
       this.editableCol = null
       this.editableRow = null
     },
-    menuShow (evt) {
+    menuShow(evt) {
       const el = evt.target.closest('[class*="item_"]')
       const colIndex = el ? el.className.replace(/.*item_(\d+).*/, '$1') : ''
-      this.editableCol = colIndex ? {
-        index: Number(colIndex),
-        data: this.activeCols[colIndex]
-      } : null
+      this.editableCol = colIndex
+        ? {
+            index: Number(colIndex),
+            data: this.activeCols[colIndex],
+          }
+        : null
       const rowEl = el ? el.closest('[class*="row_"]') : null
       const rowElIndex = rowEl ? rowEl.className.replace(/.*row_(\d+).*/, '$1') : ''
       if (rowEl && rowElIndex) {
@@ -798,19 +990,21 @@ export default defineComponent({
           index: rowIndex,
           data: rowContent,
           actions: rowData.props.actions,
-          dataHandler: rowData.dataHandler
+          dataHandler: rowData.dataHandler,
         }
       }
     },
-    onResize (width, index) {
+    onResize(width, index) {
       if (typeof index === 'number') {
         this.activeCols[index].width = width
         this.adjustEtcColWidth()
       }
       this.updateDynamicCSS()
     },
-    removeCol () {
-      if (!this.editableCol) { return }
+    removeCol() {
+      if (!this.editableCol) {
+        return
+      }
       const col = this.editableCol.data
       const colEnum = this.localCols.enum[col.name]
       if (colEnum && colEnum.custom) {
@@ -820,11 +1014,15 @@ export default defineComponent({
       this.adjustEtcColWidth()
       this.updateCols()
     },
-    scrollTo (index) {
+    scrollTo(index) {
       const scrollerElement = this.$refs.scroller.$el
-      if (typeof index !== 'number' || index < 0 || !scrollerElement) { return }
+      if (typeof index !== 'number' || index < 0 || !scrollerElement) {
+        return
+      }
       let height = index * this.itemHeight
-      if (index > this.items.length - this.itemsCount) { height = scrollerElement.scrollHeight }
+      if (index > this.items.length - this.itemsCount) {
+        height = scrollerElement.scrollHeight
+      }
       setVerticalScrollPosition(scrollerElement, height)
       // this.logger.info(`[scrollTo] Scroll ${JSON.stringify({scrollTop: height, offsetAll: scrollerElement.scrollHeight, index})}`)
     },
@@ -835,10 +1033,10 @@ export default defineComponent({
     setPreventRemoveSchema(name) {
       this.prevDeleteSchemaName = name
     },
-    setUnsavedSchema (cols) {
+    setUnsavedSchema(cols) {
       const colSchema = {
         name: 'Modified',
-        cols: cols
+        cols: cols,
       }
       this.localCols.schemas._unsaved = colSchema
       this.localCols.activeSchema = '_unsaved'
@@ -847,7 +1045,7 @@ export default defineComponent({
     searchSubmitHandler() {
       this.$emit('change-filter', this.currentFilter)
     },
-    toBottomClickHandler () {
+    toBottomClickHandler() {
       // scroll to the last list item
       this.$refs.scroller.scrollTo(this.items.length - 1)
       // activate auto scrollting to the bottom
@@ -860,7 +1058,7 @@ export default defineComponent({
       this.localCols.schemas[this.activeSchema].cols = this.activeCols
       this.$emit('update-cols', this.localCols)
     },
-    updateDynamicCSS () {
+    updateDynamicCSS() {
       this.dynamicCSS.type = 'text/css'
       const head = document.head || document.getElementsByTagName('head')[0]
       if (this.dynamicCSS.styleSheet) {
@@ -870,7 +1068,7 @@ export default defineComponent({
       }
       head.appendChild(this.dynamicCSS)
     },
-    virtualScrollHandler (info) {
+    virtualScrollHandler(info) {
       if (!this.scrollStickToBottom) {
         // check if user has scroller to the bottom to start sticking
         if (info.direction === 'increase' && info.index === info.to && info.index > 0) {
@@ -890,15 +1088,17 @@ export default defineComponent({
         }
       }
     },
-    wrapperResizeHandler () {
+    wrapperResizeHandler() {
       const wrapper = this.$refs.wrapper
-      if (!wrapper) { return }
+      if (!wrapper) {
+        return
+      }
       /* calculate the number of items that fit into the wrapper element's actual height */
       this.wrapperHeight = wrapper.offsetHeight - this.headerHeight // - header
       this.itemsCount = Math.ceil(this.wrapperHeight / this.itemHeight)
       /* check if we may now detect if vertical scroll is needed */
       if (this.itemsCount > 0 && this.items.length > 0) {
-        this.hasVerticalScroll = (this.items.length > this.itemsCount) ? true : false
+        this.hasVerticalScroll = this.items.length > this.itemsCount ? true : false
       }
       this.adjustEtcColWidth()
     },
@@ -906,7 +1106,7 @@ export default defineComponent({
   watch: {
     activeCols: {
       deep: true,
-      handler (cols, oldCols) {
+      handler(cols, oldCols) {
         if (cols === oldCols && this.cols.activeSchema !== '_unsaved') {
           /* this heppens only the first time when _unsaved cols schema is not yet set for the device type */
           /* _unsaved schema will keep all the columns' customizations that are made by the user for this device type */
@@ -921,15 +1121,15 @@ export default defineComponent({
         this.$nextTick(() => {
           this.needResizeControl = true
         })
-      }
+      },
     },
-    cols (cols, oldCols) {
+    cols(cols, oldCols) {
       if (cols !== oldCols) {
         this.activeCols = cloneDeep(cols.schemas[this.activeSchema].cols)
       }
       this.localCols = cloneDeep(cols)
     },
-    'cols.activeSchema' (schema, oldSchema) {
+    'cols.activeSchema'(schema, oldSchema) {
       if (schema !== oldSchema && this.cols.schemas[schema]) {
         this.activeCols = cloneDeep(this.cols.schemas[schema].cols)
       }
@@ -941,27 +1141,31 @@ export default defineComponent({
     },
     items: {
       deep: true,
-      handler () {
+      handler() {
         /* check if we are goling to have vertical scroll soon */
-        if (!this.hasVerticalScroll && this.itemsCount > 0 && this.items.length > this.itemsCount - 2) {
+        if (
+          !this.hasVerticalScroll &&
+          this.itemsCount > 0 &&
+          this.items.length > this.itemsCount - 2
+        ) {
           this.hasVerticalScroll = true
           this.adjustEtcColWidth()
           this.updateDynamicCSS()
         }
-      }
+      },
     },
     viewConfig: {
       deep: true,
       handler(config) {
         this.currentViewConfig = Object.assign(this.defaultConfig, config)
-      }
-    }
+      },
+    },
   },
-  created () {
+  created() {
     /* attach keys processing to enable iterating the table by one row with arrow keys */
     document.addEventListener('keydown', this.keysProcess, false)
   },
-  mounted () {
+  mounted() {
     /*  if cell click is processed by parent element - cursor-pointer will be shown on the grid cells */
     this.hasItemClickHandler = !!this.$attrs['onItemClick']
     /* generate uid for message viewer class */
@@ -996,13 +1200,13 @@ export default defineComponent({
       }, 1000)
     }
   },
-  unmounted () {
+  unmounted() {
     document.removeEventListener('keydown', this.keysProcess)
     const head = document.head || document.getElementsByTagName('head')[0]
     if (head.contains(this.dynamicCSS)) {
       head.removeChild(this.dynamicCSS)
     }
-  }
+  },
 })
 </script>
 

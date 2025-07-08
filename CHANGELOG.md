@@ -1,62 +1,88 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
+### [2.0.20] - 2025-07-08
+
+[fix] Fixed codestyle
+[fix] Selection by timestemp
+
 ### [2.0.19] - 2025-06-17
-[fix] Fixed update of _unsaved columns schema for device types
+
+[fix] Fixed update of \_unsaved columns schema for device types
 
 ### [2.0.18] - 2025-06-16
+
 [fix] Fixed error on deleting non-existing node
 
 ### [2.0.17] - 2025-06-05
+
 [fix] Improved clear method, and added resetState method
 
 ### [2.0.16] - 2025-05-20
+
 [fix] Showing of table skeleton for empty items is fixed
 
 ### [2.0.15] - 2025-05-20
+
 [fix] Slot name fixed
 
 ### [2.0.14] - 2025-05-19
+
 [update] Component API description is updated
 
 ### [2.0.13] - 2025-05-13
+
 [fix] Fixed detection of total row width depending of the presence of vertical scroll and fixed displaying of table skeleton
 
 ### [2.0.12] - 2025-05-08
+
 [fix] Improved processing of vertical scroll
 
 ### [2.0.11] - 2025-05-08
+
 [update] Dynamic calculation of etc column's width is refactored
 
 ### [2.0.10] - 2025-04-30
+
 [update] Device ID is passed into errorHandler as the second argument
 
 ### [2.0.9] - 2025-04-11
+
 [update] Storing to LS/reading from LS of the messages columns is remastered so that LS namespace can be passed as an argument from external application
 
 ### [2.0.8] - 2025-04-08
+
 [update] VirtualScrollList component: scrollTo method added
 
 ### [2.0.7] - 2025-03-31
+
 [fix] Device messages store: fixed setRealtimeMessages long execution
 
 ### [2.0.6] - 2025-03-20
+
 [update] Implemented devices' messages store
 
 ### [2.0.5] - 2025-03-20
+
 [fix] Item click handler fixed
 
 ### [2.0.4] - 2025-03-19
+
 [fix] Fixed sticking to the bottom of the list
 
 ### [2.0.3] - 2025-03-18
+
 [fix] Fixed calculation of the rightmost 'etc' column's width upon adding or deleting of the column
 
 ### [2.0.2] - 2025-03-06
+
 [update] Implemented "listItem" slot that allows to pass custom ListItem component to q-virtual-scroll's default slot
 
 ### [2.0.1] - 2025-03-05
+
 [fix] fixed path to main component in the index.js file
 
 ### [2.0.0] - 2025-02-03
+
 [update] VirtualScrollList component is migrated to Vue 3

@@ -1,6 +1,14 @@
 <template>
   <q-list dark class="bg-grey-7 q-py-sm">
-    <q-item clickable dense v-ripple v-if="selection" @click="copyHandler" class="q-px-sm" v-close-popup>
+    <q-item
+      clickable
+      dense
+      v-ripple
+      v-if="selection"
+      @click="copyHandler"
+      class="q-px-sm"
+      v-close-popup
+    >
       <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
         <q-icon name="mdi-content-copy" />
       </q-item-section>
@@ -8,11 +16,20 @@
     </q-item>
     <q-separator v-if="selection" spaced inset dark />
     <template v-if="row && row.actions">
-      <q-item clickable v-ripple @click="$emit('action', action.type)" dense class="q-px-sm" v-for="action in getActions(row.actions)" :key="action.label" v-close-popup>
+      <q-item
+        clickable
+        v-ripple
+        @click="$emit('action', action.type)"
+        dense
+        class="q-px-sm"
+        v-for="action in getActions(row.actions)"
+        :key="action.label"
+        v-close-popup
+      >
         <q-item-section avatar class="q-pr-sm" style="min-width: 20px">
           <q-icon :name="action.icon" />
         </q-item-section>
-        <q-item-section>{{action.label}}</q-item-section>
+        <q-item-section>{{ action.label }}</q-item-section>
       </q-item>
     </template>
     <q-separator v-if="row && row.actions.length" spaced inset dark />
@@ -38,38 +55,37 @@ import { copyToClipboard } from 'quasar'
 export default defineComponent({
   name: 'ColsMenu',
   props: ['col', 'row'],
-  data () {
+  data() {
     const selection = this.getSelection()
     return {
-      selection
+      selection,
     }
   },
   methods: {
-    copyHandler () {
+    copyHandler() {
       copyToClipboard(this.selection)
         .then(() => {})
         .catch(() => {})
     },
-    add () {
+    add() {
       this.$emit('add')
     },
-    getSelection () {
+    getSelection() {
       let data = this.col && this.row ? this.row.data[this.col.data.name] : null
       if (data && this.col.data.__dest) {
         data = null
-      } else if ((data !== undefined && data !== null) && this.row.dataHandler) {
+      } else if (data !== undefined && data !== null && this.row.dataHandler) {
         data = this.row.dataHandler(this.col, this.row, data)
       }
       return data
     },
-    getActions (actions) {
+    getActions(actions) {
       if (typeof actions === 'function') {
         return actions()
       } else {
         return actions
       }
-    }
-  }
+    },
+  },
 })
 </script>
-

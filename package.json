@@ -1,6 +1,6 @@
 {
   "name": "qvirtualscroll",
-  "version": "2.0.19",
+  "version": "2.0.20",
   "description": "Quasar component for displaing messages table grid with virtual scrolling",
   "productName": "QVirtualScroll",
   "capacitorId": "",
