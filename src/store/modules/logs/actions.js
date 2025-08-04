@@ -353,7 +353,10 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       }
     }
 
-    const filter = f.length ? `$filter/payload=${encodeURIComponent(f.join('&&'))}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
+    let filter = f.length ? `$filter/payload=${encodeURIComponent(f.join('&&'))}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
+    if (!filter && state.cid) {
+      filter = `$filter/${`cid=${state.cid}`}`
+    }
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       messagesBuffer.push(JSON.parse(message))
     }, { rh: 2, prefix: filter })
