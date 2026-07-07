@@ -66,7 +66,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     if (colsFromStorage && colsFromStorage[state.origin]) {
       const colsSchemaLS = colsFromStorage[state.origin]
       colsSchema.activeSchema = colsSchemaLS.activeSchema
-      colsSchema.schemas = { ...colsSchema.schemas, ...colsSchemaLS.schemas, ...customColsSchemas }
+      colsSchema.schemas = { ...colsSchema.schemas, ...colsSchemaLS.schemas, ...customColsSchemas, _default: colsSchema.schemas._default }
     }
     commit('setCols', colsSchema)
   }
@@ -186,12 +186,10 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     }
     const beforeMessages = await getLogs({ state, commit, rootState }, beforeMessagesParams)
     const afterMessagesParams = {
+      ...params,
       from: initTimestamp + 0.000001,
       to: state.to / 1000,
       count: state.limit - beforeMessages.length
-    }
-    if (state.itemtype) {
-      afterMessagesParams.item_type = state.itemtype
     }
     const afterMessages = await getLogs({ state, commit, rootState }, afterMessagesParams)
     const messages = [...beforeMessages.reverse(), ...afterMessages]
@@ -321,10 +319,14 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       }
     }, 500)
   }
-  async function pollingGet ({ state, commit, rootState }) {
+  /* build the realtime MQTT topic (api, origin and $filter prefix) for the
+     current state. MUST be used by both subscribe (pollingGet) and unsubscribe
+     (unsubscribePooling) so the exact same topic is targeted — otherwise the
+     old subscription is not removed and keeps delivering unfiltered logs. */
+  function getRealtimeTopic (state) {
     let api = state.origin.split('/')[0].replace(/\*/g, '+'),
       origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
-    let f = []
+    const f = []
     if (state.filter) {
       f.push(state.filter)
     }
@@ -352,16 +354,19 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
           break
       }
     }
-
-    let filter = f.length ? `$filter/payload=${encodeURIComponent(f.join('&&'))}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
-    if (!filter && state.cid) {
-      filter = `$filter/${`cid=${state.cid}`}`
+    let prefix = f.length ? `$filter/payload=${encodeURIComponent(f.join('&&'))}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
+    if (!prefix && state.cid) {
+      prefix = `$filter/cid=${state.cid}`
     }
+    return { api, origin, prefix }
+  }
+  async function pollingGet ({ state, commit, rootState }) {
+    const { api, origin, prefix } = getRealtimeTopic(state)
     await Vue.connector.subscribeLogs(api, origin, '#', (message) => {
       messagesBuffer.push(JSON.parse(message))
-    }, { rh: 2, prefix: filter })
+    }, { rh: 2, prefix })
     state.realtimeEnabled = true
-    logger.info(`subscribed to Logs ${api} ${origin} ${state.active} ${filter || ''}`)
+    logger.info(`subscribed to Logs ${api} ${origin} ${state.active} ${prefix || ''}`)
     return () => {
       loopId = initRenderLoop(state, commit)
     }
@@ -396,17 +401,15 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
 
   /* unsubscribe from current active topic */
   async function unsubscribePooling ({ state }) {
-    const api = state.origin.split('/')[0].replace(/\*/g, '+'),
-      origin = state.origin.replace(`${api}/`, '').replace(/\*/g, '+')
+    const { api, origin, prefix } = getRealtimeTopic(state)
     if (loopId) {
       clearInterval(loopId)
       messagesBuffer = []
       loopId = 0
     }
-    const filter = state.filter ? `$filter/payload=${encodeURIComponent(state.filter)}${state.cid ? `&cid=${state.cid}` : ''}` : undefined
-    await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { prefix: filter })
+    await Vue.connector.unsubscribeLogs(api, origin, '#', undefined, { prefix })
     state.realtimeEnabled = false
-    logger.info(`unsubscribed to Logs ${api} ${origin} ${state.active} ${filter || ''}`)
+    logger.info(`unsubscribed to Logs ${api} ${origin} ${state.active} ${prefix || ''}`)
   }
 
   async function newMessagesCheck ({ state }) {
