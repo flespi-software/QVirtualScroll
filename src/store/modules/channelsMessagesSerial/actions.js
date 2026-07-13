@@ -113,7 +113,8 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
           })
         }
         if (needEtc) {
-          colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
+          /* a channel without a protocol has no protocol schema to add the column to */
+          colsSchema.schemas._protocol && colsSchema.schemas._protocol.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
           !colsFromStorage && colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
         }
         colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }

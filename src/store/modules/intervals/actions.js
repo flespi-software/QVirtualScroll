@@ -69,6 +69,11 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
       colsSchema.enum = getDefaultEnum()
     }
     colsSchema.schemas = { ...colsSchema.schemas, ...customColsSchemas }
+    /* the protocol schema is not stored — rebuild it from the calculator counters on every load */
+    colsSchema.schemas._protocol = {
+      name: '_protocol',
+      cols: defaultCols.map(name => ({ name, width: 150 }))
+    }
     const locale = new Date().toString().match(/([-+][0-9]+)\s/)[1]
     counters.forEach(counter => {
       const name = counter.name
