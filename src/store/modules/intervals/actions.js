@@ -60,7 +60,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
 
 
   async function getCols ({ state, commit }, counters) {
-    let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+    let colsFromStorage = await getColsLS(LocalStorage, state.lsNamespace, state.name)
     colsFromStorage = colsFromStorage[state.active]
     const colsSchema = colsFromStorage || getDefaultColsSchema()
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])

@@ -1,5 +1,16 @@
-import _get from 'lodash/get'
-import _set from 'lodash/set'
+/*
+ * Column schemas are kept in one storage record per list (`<lsNamespace>.<name>`), so an app can
+ * load only the schemas of the lists it shows instead of the whole settings blob. A storage that
+ * cannot serve every record synchronously (IndexedDB and the like) may expose an async
+ * `getItemAsync` next to the synchronous `getItem`: reads go through it, and by the time a list
+ * saves its columns the record is already in the storage cache, so writes stay synchronous.
+ *
+ * The `_protocol` schema is never saved: it is rebuilt from the protocol message parameters on
+ * every getCols and holds a column per protocol parameter (thousands of them for some device types).
+ */
+function getStorageKey (lsNamespace, name) {
+  return lsNamespace ? `${lsNamespace}.${name}` : name
+}
 
 function splitSchemas (cols) {
   const customColsSchema = {
@@ -12,40 +23,77 @@ function splitSchemas (cols) {
     activeSchema: cols.activeSchema,
     schemas: {
       _default: cols.schemas._default,
-      _protocol: cols.schemas._protocol,
       _unsaved: cols.schemas._unsaved
     }
   }
   return { customColsSchema, defaultColsSchema }
 }
-function getColsLS (LocalStorage, lsNamespace, name) {
-  let colsFromStorage = {}
-  if (lsNamespace) {
-    const lsPath = lsNamespace.split('.'),
-      lsItemName = lsPath.shift(),
-      lsRouteToItem = `${lsPath.join('.')}.${name}`,
-      appStorage = LocalStorage.getItem(lsItemName)
-    colsFromStorage = _get(appStorage, lsRouteToItem, colsFromStorage)
-  } else {
-    colsFromStorage = LocalStorage.getItem(name) || colsFromStorage
+
+function isObject (value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+/*
+ * Storage is the one input nobody validates: a quota error while saving, a half-written record or a
+ * value left by an older version used to reach the lists as is and take the whole app down with a
+ * blank screen, curable only by clearing the storage by hand. Anything that does not look like a
+ * schema is dropped here instead.
+ */
+function sanitizeSchemas (schemas) {
+  return Object.keys(schemas).reduce((res, name) => {
+    const schema = schemas[name]
+    if (isObject(schema) && Array.isArray(schema.cols)) { res[name] = schema }
+    return res
+  }, {})
+}
+
+/* an entry without a usable `_default` is worse than no entry: the list has nothing to fall back to */
+function sanitizeEntry (entry) {
+  if (!isObject(entry) || !isObject(entry.schemas)) { return null }
+  const schemas = sanitizeSchemas(entry.schemas)
+  if (!schemas._default) { return null }
+  return {
+    activeSchema: typeof entry.activeSchema === 'string' ? entry.activeSchema : '_default',
+    schemas
   }
-  return colsFromStorage
+}
+
+function sanitizeCols (colsFromStorage) {
+  if (!isObject(colsFromStorage)) { return {} }
+  return Object.keys(colsFromStorage).reduce((res, key) => {
+    const value = colsFromStorage[key]
+    if (key === 'custom-cols-schemas') {
+      if (isObject(value)) { res[key] = sanitizeSchemas(value) }
+    } else {
+      const entry = sanitizeEntry(value)
+      if (entry) { res[key] = entry }
+    }
+    return res
+  }, {})
+}
+
+async function getColsLS (LocalStorage, lsNamespace, name) {
+  const key = getStorageKey(lsNamespace, name)
+  try {
+    const colsFromStorage = typeof LocalStorage.getItemAsync === 'function'
+      ? await LocalStorage.getItemAsync(key)
+      : LocalStorage.getItem(key)
+    return sanitizeCols(colsFromStorage)
+  } catch (e) {
+    return {}
+  }
 }
 
 function setColsLS (LocalStorage, lsNamespace, name, active, cols) {
-  const colsFromStorage = getColsLS(LocalStorage, lsNamespace, name) || {}
-  const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
-  colsFromStorage[active] = defaultColsSchema
-  colsFromStorage['custom-cols-schemas'] = { ...customColsSchema }
-  if (lsNamespace) {
-    const lsPath = lsNamespace.split('.'),
-      lsItemName = lsPath.shift(),
-      lsRouteToItem = `${lsPath.join('.')}.${name}`,
-      appStorage = LocalStorage.getItem(lsItemName) || {}
-    _set(appStorage, lsRouteToItem, colsFromStorage)
-    LocalStorage.set(lsItemName, appStorage)
-  } else {
-    LocalStorage.set(name, colsFromStorage)
+  const key = getStorageKey(lsNamespace, name)
+  try {
+    const colsFromStorage = sanitizeCols(LocalStorage.getItem(key))
+    const { customColsSchema, defaultColsSchema } = splitSchemas(cols)
+    colsFromStorage[active] = defaultColsSchema
+    colsFromStorage['custom-cols-schemas'] = { ...customColsSchema }
+    LocalStorage.set(key, colsFromStorage)
+  } catch (e) {
+    /* columns the user cannot store are still columns the user can work with */
   }
 }
 

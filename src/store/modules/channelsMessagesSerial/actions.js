@@ -60,7 +60,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     if (rootState.token && state.active) {
       try {
         Vue.set(state, 'isLoading', true)
-        let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        let colsFromStorage = await getColsLS(LocalStorage, state.lsNamespace, state.name)
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
         ? colsFromStorage['custom-cols-schemas'] : {}
         colsFromStorage = (colsFromStorage && colsFromStorage[state.active])

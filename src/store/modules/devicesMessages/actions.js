@@ -73,7 +73,7 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
         errorsCheck(commit, deviceData)
         const device = deviceData.result && deviceData.result[0]
         commit('setSettings', device)
-        let colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+        let colsFromStorage = await getColsLS(LocalStorage, state.lsNamespace, state.name)
         const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
         ? colsFromStorage['custom-cols-schemas'] : {}
         colsFromStorage = (colsFromStorage && colsFromStorage[device.device_type_id])

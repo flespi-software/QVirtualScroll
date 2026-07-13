@@ -55,12 +55,12 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
     }
   }
 
-  function getCols ({ state, commit }, initCols) {
+  async function getCols ({ state, commit }, initCols) {
     const colsSchema = getDefaultColsSchema(initCols || defaultCols)
     colsSchema.schemas._default.cols.push({ name: 'etc', width: 150, __dest: 'etc' })
     colsSchema.enum.etc = { name: 'etc', __dest: 'etc' }
     /* LS processing */
-    const colsFromStorage = getColsLS(LocalStorage, state.lsNamespace, state.name)
+    const colsFromStorage = await getColsLS(LocalStorage, state.lsNamespace, state.name)
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
       ? colsFromStorage['custom-cols-schemas'] : {}
     if (colsFromStorage && colsFromStorage[state.origin]) {

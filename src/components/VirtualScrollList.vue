@@ -362,6 +362,8 @@ export default {
     }
     const localCols = cloneDeep(this.cols)
     const firstSchemaName = localCols.schemas[this.cols.activeSchema] ? this.cols.activeSchema : '_default'
+    /* a broken schema in the storage must not take the whole list down — fall back to no columns */
+    const firstSchema = localCols.schemas[firstSchemaName] || {}
     return {
       localCols,
       uid: 0,
@@ -382,7 +384,7 @@ export default {
         contentInverted: false,
         headerShow: true
       },
-      activeCols: cloneDeep(this.cols.schemas[firstSchemaName].cols),
+      activeCols: cloneDeep(firstSchema.cols || []),
       defaultConfig: defaultConfig,
       hasItemClickHandler: false,
       currentScrollTop: 0,
