@@ -61,10 +61,11 @@ export default function ({ Vue, LocalStorage, errorHandler, logger }) {
 
   async function getCols ({ state, commit }, counters) {
     let colsFromStorage = await getColsLS(LocalStorage, state.lsNamespace, state.name)
-    colsFromStorage = colsFromStorage[state.active]
-    const colsSchema = colsFromStorage || getDefaultColsSchema()
+    /* named presets are shared by every calculator of the list, so they are read before narrowing down to one */
     const customColsSchemas = (colsFromStorage && colsFromStorage['custom-cols-schemas'])
       ? colsFromStorage['custom-cols-schemas'] : {}
+    colsFromStorage = colsFromStorage[state.active]
+    const colsSchema = colsFromStorage || getDefaultColsSchema()
     if (!colsSchema.enum) {
       colsSchema.enum = getDefaultEnum()
     }
