@@ -23,7 +23,9 @@ function splitSchemas (cols) {
     activeSchema: cols.activeSchema,
     schemas: {
       _default: cols.schemas._default,
-      _unsaved: cols.schemas._unsaved
+      /* the unsaved state is worth keeping only while it is in use — stored otherwise it outlives
+       * the session and comes back as a preset of its own named Modified */
+      _unsaved: cols.activeSchema === '_unsaved' ? cols.schemas._unsaved : undefined
     }
   }
   return { customColsSchema, defaultColsSchema }
@@ -52,10 +54,10 @@ function sanitizeEntry (entry) {
   if (!isObject(entry) || !isObject(entry.schemas)) { return null }
   const schemas = sanitizeSchemas(entry.schemas)
   if (!schemas._default) { return null }
-  return {
-    activeSchema: typeof entry.activeSchema === 'string' ? entry.activeSchema : '_default',
-    schemas
-  }
+  const activeSchema = typeof entry.activeSchema === 'string' ? entry.activeSchema : '_default'
+  /* records written by the versions that kept it around still carry a stale one */
+  if (activeSchema !== '_unsaved') { delete schemas._unsaved }
+  return { activeSchema, schemas }
 }
 
 function sanitizeCols (colsFromStorage) {
@@ -63,7 +65,14 @@ function sanitizeCols (colsFromStorage) {
   return Object.keys(colsFromStorage).reduce((res, key) => {
     const value = colsFromStorage[key]
     if (key === 'custom-cols-schemas') {
-      if (isObject(value)) { res[key] = sanitizeSchemas(value) }
+      if (isObject(value)) {
+        const schemas = sanitizeSchemas(value)
+        /* only named presets belong here — a built-in one would shadow the entry it is merged into */
+        delete schemas._default
+        delete schemas._protocol
+        delete schemas._unsaved
+        res[key] = schemas
+      }
     } else {
       const entry = sanitizeEntry(value)
       if (entry) { res[key] = entry }

@@ -64,7 +64,7 @@
             <template>
               <q-item
                 clickable v-ripple dense class="q-px-sm schema-item" :active="activeSchema === name" active-class="schema--active"
-                v-close-popup @click="customSchemaApply(name)" v-for="(schema, name) in cols.schemas" :key="name"
+                v-close-popup @click="customSchemaApply(name)" v-for="(schema, name) in listedSchemas" :key="name"
               >
                 <div @click.stop.prevent class="absolute-botom-right absolute-top-left full-height full-width" style="z-index: 1;padding-top: 3px;background-color: rgba(0,0,0,0.5);" v-if="prevDeleteSchemaName === name">
                   <q-btn class="q-mx-sm" color="red" label="delete" dense @click.stop="colsSchemaRemoveHandler(name)"/>
@@ -73,11 +73,13 @@
                 <q-item-section avatar class="q-pr-sm" style="min-width: 32px">
                   <q-icon v-if="name === '_default'" name="mdi-playlist-star" />
                   <q-icon v-else-if="name === '_protocol'" name="mdi-playlist-check" />
+                  <q-icon v-else-if="name === '_unsaved'" name="mdi-playlist-edit" />
                   <q-icon v-else name="mdi-table-large" />
                 </q-item-section>
                 <q-item-section>
                   <template v-if="name === '_default'">{{(i18n && i18n['Default columns']) || 'Default columns'}}</template>
                   <template v-else-if="name === '_protocol'">{{(i18n && i18n['Columns by schema']) || 'Columns by schema'}}</template>
+                  <template v-else-if="name === '_unsaved'">{{(i18n && i18n['Modified (unsaved)']) || 'Modified (unsaved)'}}</template>
                   <template v-else>{{schema.name}}</template>
                 </q-item-section>
                 <q-item-section avatar v-if="activeSchema !== name && name !== '_default' && name !== '_protocol'">
@@ -105,10 +107,10 @@
           v-model="newSchemaName" v-if="colsSchemaAdd" autofocus
           label="Preset name" outlined hide-bottom-space dense
           :dark="currentTheme.controlsInverted"
-          :color="!!cols.schemas[newSchemaName] ? 'yellow' : (!newSchemaName || newSchemaName.indexOf('_') === 0) ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
+          :color="!!cols.schemas[newSchemaName] ? 'yellow' : newSchemaName.indexOf('_') === 0 ? 'red-4' : currentTheme.controlsInverted ? 'white' : currentTheme.color"
           @keyup.enter="() => { if (newSchemaName && newSchemaName.indexOf('_') !== 0) {colsSchemaAddingDoneHandler()} }"
           @keyup.esc="colsSchemaAddingCloseHandler()"
-          :bottom-slots="!!cols.schemas[newSchemaName]"
+          :bottom-slots="!!cols.schemas[newSchemaName] || !newSchemaName"
         >
           <q-btn
             :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-content-save-outline"
@@ -118,7 +120,9 @@
             :color="currentTheme.controlsInverted ? 'white' : currentTheme.color" icon="mdi-close"
             dense flat @click="colsSchemaAddingCloseHandler()"
           />
-          <div slot="hint" v-if="!!cols.schemas[newSchemaName]" class="text-yellow">Your schema will be owerwritten or change name</div>
+          <div slot="hint" :class="{'text-yellow': !!cols.schemas[newSchemaName]}">
+            {{ !!cols.schemas[newSchemaName] ? 'Your schema will be owerwritten or change name' : 'Name the preset to save it' }}
+          </div>
         </q-input>
       </div>
       <q-btn
@@ -398,7 +402,9 @@ export default {
       colsAddition: false,
       menuModel: false,
       colsSchemaAdd: false,
-      newSchemaName: 'Modified',
+      /* no default name: it used to be the word the unsaved state is labelled with, so presets kept
+       * being saved as a second Modified nobody could tell from the first */
+      newSchemaName: '',
       prevDeleteSchemaName: undefined,
       logger: this.$logger ? this.$logger.extendName(this.name) : new Logger(this.name)
     }
@@ -411,6 +417,18 @@ export default {
         return '_default'
       }
       return this.cols.activeSchema
+    },
+    /*
+     * `_unsaved` is not a preset but the current, not yet saved state of the columns — it belongs in
+     * the list only while it is the one in use, otherwise it reads as a second preset named Modified.
+     */
+    listedSchemas () {
+      const schemas = this.cols.schemas
+      if (this.activeSchema === '_unsaved') { return schemas }
+      return Object.keys(schemas).reduce((res, name) => {
+        if (name !== '_unsaved') { res[name] = schemas[name] }
+        return res
+      }, {})
     },
     colsEnum () {
       return this.cols.enum
@@ -788,12 +806,12 @@ export default {
       this.colsAddition = true
     },
     colsSchemaAddingHandler () {
-      this.newSchemaName = 'Modified'
+      this.newSchemaName = ''
       setTimeout(() => { this.colsSchemaAdd = true }, 100)
     },
     colsSchemaAddingCloseHandler () {
       this.colsSchemaAdd = false
-      this.newSchemaName = 'Modified'
+      this.newSchemaName = ''
     },
     colsSchemaAddingDoneHandler () {
       const colSchema = {
@@ -803,7 +821,8 @@ export default {
       this.localCols.schemas[colSchema.name] = colSchema
       this.localCols.activeSchema = colSchema.name
       this.colsSchemaAddingCloseHandler()
-      this.$delete(this.cols.schemas, '_unsaved')
+      /* `localCols` is what updateCols sends out — dropping it from the `cols` prop is undone right back */
+      this.$delete(this.localCols.schemas, '_unsaved')
       this.updateCols()
     },
     setUnsavedSchema (cols) {
@@ -817,7 +836,9 @@ export default {
     },
     colsSchemaRemoveHandler (name) {
       setTimeout(() => {
-        this.$delete(this.cols.schemas, name)
+        /* the preset has to go from `localCols`: `cols` is overwritten by what updateCols sends out */
+        this.$delete(this.localCols.schemas, name)
+        if (this.localCols.activeSchema === name) { this.localCols.activeSchema = '_default' }
         this.updateCols()
         this.setPreventRemoveSchema(undefined)
       }, 200)
@@ -830,6 +851,8 @@ export default {
     },
     customSchemaApply (name) {
       this.localCols.activeSchema = name
+      /* leaving the unsaved state behind discards it — otherwise it stays in the list for good */
+      if (name !== '_unsaved') { this.$delete(this.localCols.schemas, '_unsaved') }
       this.updateCols()
     },
     keysProcess (event) {
